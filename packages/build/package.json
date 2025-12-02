@@ -1,0 +1,20 @@
+{
+  "name": "build",
+  "version": "0.0.0-dev",
+  "main": "index.js",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.28.5",
+    "@lvce-editor/verror": "^1.7.0",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@types/node": "^22.10.5",
+    "esbuild": "^0.27.0",
+    "execa": "^9.6.1",
+    "rollup": "^4.53.3"
+  }
+}

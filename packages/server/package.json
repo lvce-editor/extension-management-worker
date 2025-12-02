@@ -1,0 +1,17 @@
+{
+  "name": "@lvce-editor/extension-management-worker-server",
+  "version": "0.0.0-dev",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "postinstall": "node src/postinstall.js",
+    "dev": "node ./node_modules/@lvce-editor/server/bin/server.js --test-path=../e2e"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "@lvce-editor/server": "^0.68.3"
+  }
+}

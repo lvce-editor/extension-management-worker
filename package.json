@@ -1,0 +1,36 @@
+{
+  "name": "@lvce-editor/extension-management-worker-monorepo",
+  "version": "0.0.0-dev",
+  "license": "MIT",
+  "author": "Lvce Editor",
+  "type": "module",
+  "main": "src/extensionManagementWorkerMain.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "node packages/build/src/build.js",
+    "build:static": "node packages/build/src/build-static.js",
+    "build:watch": "./packages/build/node_modules/.bin/esbuild --external:node:buffer --external:electron --external:ws --external:node:worker_threads --format=esm --bundle --watch packages/extension-management-worker/src/extensionManagementWorkerMain.ts --outfile=.tmp/dist/dist/extensionManagementWorkerMain.js",
+    "dev": "node packages/build/src/dev.js",
+    "format": "prettier --write .",
+    "postinstall": "lerna bootstrap --ci",
+    "lint": "eslint . && prettier --check .",
+    "measure": "cd packages/memory && npm run measure",
+    "test": "lerna run test",
+    "type-check": "tsc -b"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 150
+  },
+  "devDependencies": {
+    "@lerna/legacy-package-management": "^8.2.4",
+    "@lvce-editor/eslint-config": "^2.26.0",
+    "eslint": "^9.39.1",
+    "lerna": "^8.2.4",
+    "prettier": "^3.7.3",
+    "typescript": "^5.9.3"
+  }
+}

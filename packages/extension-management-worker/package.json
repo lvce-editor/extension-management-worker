@@ -1,0 +1,62 @@
+{
+  "name": "@lvce-editor/extension-management-worker",
+  "version": "0.0.0-dev",
+  "description": "Webworker for the Extension Management functionality in Lvce Editor.",
+  "keywords": [
+    "web-worker"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lvce-editor/extension-management-worker.git"
+  },
+  "license": "MIT",
+  "author": "Lvce Editor",
+  "type": "module",
+  "main": "src/extensionManagementWorkerMain.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "test:watch": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
+  },
+  "jest": {
+    "injectGlobals": false,
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
+    "testMatch": [
+      "**/test/**"
+    ],
+    "collectCoverage": true,
+    "coverageThreshold": {
+      "global": {
+        "branches": 40,
+        "functions": 40,
+        "lines": 40
+      }
+    }
+  },
+  "devDependencies": {
+    "@lvce-editor/assert": "^1.4.0",
+    "@lvce-editor/rpc": "^4.20.0",
+    "@lvce-editor/rpc-registry": "^5.2.0",
+    "@lvce-editor/verror": "^1.7.0",
+    "@types/node": "^22.10.5",
+    "idb": "^8.0.3",
+    "jest": "^30.2.0",
+    "ky": "^1.14.0",
+    "ts-jest": "^29.4.6"
+  }
+}

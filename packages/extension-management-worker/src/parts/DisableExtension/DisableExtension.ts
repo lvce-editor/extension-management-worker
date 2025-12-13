@@ -12,7 +12,7 @@ export const disableExtension = async (id: string, isTest: boolean): Promise<unk
       }
       State.set(newState)
     } else {
-      await SharedProcess.invoke(/* ExtensionManagement.enable */ 'ExtensionManagement.enable', /* id */ id)
+      await SharedProcess.invoke('ExtensionManagement.disable', id)
     }
     await invalidateExtensionsCache()
     return undefined

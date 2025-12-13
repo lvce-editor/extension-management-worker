@@ -7,7 +7,10 @@ import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 export const commandMap = {
   'Extensions.disable': disableExtension,
   'Extensions.enable': enableExtension,
+<<<<<<< HEAD
   'Extensions.handleMessagePort': handleMessagePort,
+=======
+>>>>>>> origin/main
   'Extensions.install': installExtension,
   'Extensions.uninstall': uninstallExtension,
 }

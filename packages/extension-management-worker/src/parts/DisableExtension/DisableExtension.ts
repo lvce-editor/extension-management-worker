@@ -8,7 +8,7 @@ export const disableExtension = async (id: string, isTest: boolean): Promise<unk
       const oldState = State.get()
       const newState: State.State = {
         ...oldState,
-        disabledIds: oldState.disabledIds.filter((existing) => existing !== id),
+        disabledIds: [...oldState.disabledIds, id],
       }
       State.set(newState)
     } else {

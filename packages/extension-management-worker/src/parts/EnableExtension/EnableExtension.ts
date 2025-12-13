@@ -2,7 +2,7 @@ import { SharedProcess } from '@lvce-editor/rpc-registry'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import * as State from '../State/State.ts'
 
-export const enableExtension = async (id: string, isTest: boolean): Promise<void> => {
+export const enableExtension = async (id: string, isTest: boolean): Promise<unknown> => {
   try {
     if (isTest) {
       const oldState = State.get()

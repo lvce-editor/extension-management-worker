@@ -10,7 +10,7 @@ export const has = () => {
   return id in cache
 }
 
-export const set = (value) => {
+export const set = (value: any) => {
   cache[id] = value
 }
 

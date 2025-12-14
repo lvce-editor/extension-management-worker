@@ -3,9 +3,10 @@ import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/Invalida
 import * as State from '../State/State.ts'
 
 export const enableExtension = async (id: string, isTest: boolean): Promise<unknown> => {
+  const oldState = State.get()
+
   try {
     if (isTest) {
-      const oldState = State.get()
       const newState: State.State = {
         ...oldState,
         disabledIds: oldState.disabledIds.filter((existing) => existing !== id),

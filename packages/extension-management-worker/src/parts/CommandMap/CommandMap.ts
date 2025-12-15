@@ -8,6 +8,7 @@ import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
@@ -30,6 +31,7 @@ export const commandMap = {
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getExtension': getExtension,
   'Extensions.getLanguages': getLanguages,
+  'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.importExtension': importExtension,

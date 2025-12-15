@@ -1,7 +1,7 @@
+import { PlatformType } from '@lvce-editor/constants'
 import * as ExtensionMetaState from '../ExtensionMetaState/ExtensionMetaState.ts'
 import * as GetWebExtensions from '../GetWebExtensions/GetWebExtensions.ts'
 import * as Platform from '../Platform/Platform.ts'
-import * as PlatformType from '../PlatformType/PlatformType.ts'
 import * as Rpc from '../Rpc/Rpc.ts'
 
 const getSharedProcessExtensions = (): Promise<readonly any[]> => {

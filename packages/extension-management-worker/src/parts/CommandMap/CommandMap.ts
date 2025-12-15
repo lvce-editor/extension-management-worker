@@ -4,6 +4,7 @@ import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
@@ -16,6 +17,7 @@ export const commandMap = {
   'Extensions.enable': enableExtension,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getExtension': getExtension,
+  'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,

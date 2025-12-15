@@ -8,10 +8,10 @@ const getSharedProcessExtensions = (): Promise<readonly any[]> => {
   return Rpc.invoke(/* ExtensionManagement.getExtensions */ 'ExtensionManagement.getExtensions')
 }
 
-export const doGetExtensions = async () => {
+export const doGetExtensions = async (assetDir: string) => {
   const meta = ExtensionMetaState.state.webExtensions
   if (Platform.platform === PlatformType.Web) {
-    const webExtensions = await GetWebExtensions.getWebExtensions()
+    const webExtensions = await GetWebExtensions.getWebExtensions(assetDir)
     return [...webExtensions, ...meta]
   }
   if (Platform.platform === PlatformType.Remote) {

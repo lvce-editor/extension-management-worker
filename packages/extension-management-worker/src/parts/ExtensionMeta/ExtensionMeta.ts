@@ -3,19 +3,19 @@ import * as DoGetExtensions from '../DoGetExtensions/DoGetExtensions.ts'
 import * as GetExtensionsFromCache from '../GetExtensionsFromCache/GetExtensionsFromCache.ts'
 import * as SaveExtensionsInCache from '../SaveExtensionsInCache/SaveExtensionsInCache.ts'
 
-const getExtensionsCacheFirst = async (assetDir: string) => {
+const getExtensionsCacheFirst = async (assetDir: string, platform: number) => {
   const cached = await GetExtensionsFromCache.getExtensionsFromCache()
   if (cached) {
     return cached
   }
-  const items = await DoGetExtensions.doGetExtensions(assetDir)
+  const items = await DoGetExtensions.doGetExtensions(assetDir, platform)
   await SaveExtensionsInCache.saveExtensionsInCache(items)
   return items
 }
 
-export const getExtensions = async (assetDir: string) => {
+export const getExtensions = async (assetDir: string, platform: number) => {
   if (CacheEnabled.cacheEnabled) {
-    return getExtensionsCacheFirst(assetDir)
+    return getExtensionsCacheFirst(assetDir, platform)
   }
-  return DoGetExtensions.doGetExtensions(assetDir)
+  return DoGetExtensions.doGetExtensions(assetDir, platform)
 }

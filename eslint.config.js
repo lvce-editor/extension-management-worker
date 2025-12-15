@@ -9,6 +9,7 @@ export default [
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
       'github-actions/ci-versions': 'off',
+      '@typescript-eslint/no-deprecated': 'off',
     },
   },
 ]

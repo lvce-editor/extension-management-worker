@@ -10,6 +10,7 @@ import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
+import { getLanguages } from '../Languages/Languages.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
 export const commandMap = {
@@ -19,6 +20,7 @@ export const commandMap = {
   'Extensions.enable': enableExtension,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getExtension': getExtension,
+  'Extensions.getLanguages': getLanguages,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.importExtension': importExtension,

@@ -22,7 +22,7 @@ export const commandMap = {
   'Extensions.disable': disableExtension,
   'Extensions.enable': enableExtension,
   'Extensions.getAllExtensions': getAllExtensions,
-  'Extensions.getColorThemeCss': getColorThemeCss,
+  'Extensions.getColorThemeCssFromJson': getColorThemeCss,
   'Extensions.getColorThemeJson': getColorThemeJson,
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getExtension': getExtension,

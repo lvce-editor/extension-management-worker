@@ -1,3 +1,4 @@
+import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
 import * as CancelToken from '../CancelToken/CancelToken.ts'
 import * as GetExtensionId from '../GetExtensionId/GetExtensionId.ts'
@@ -19,7 +20,9 @@ const rejectAfterTimeout = async (timeout: number, token: any): Promise<void> =>
   throw new Error(`Activation timeout of ${timeout}ms exceeded`)
 }
 
-const activate = async (extension: any) => {}
+const activate = async (extensionId: string, extension: any) => {
+  await ExtensionHost.invoke('ExtensionHost.activateExtension3', extensionId, extension)
+}
 
 export const activateExtension2 = async (extensionId: string, extension: any, absolutePath: string) => {
   const token = CancelToken.create()
@@ -29,7 +32,7 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
       activationStartTime: startTime,
       status: RuntimeStatusType.Activating,
     })
-    await Promise.race([activate(extension), rejectAfterTimeout(activationTimeout, token)])
+    await Promise.race([activate(extensionId, extension), rejectAfterTimeout(activationTimeout, token)])
     const endTime = performance.now()
     const time = endTime - startTime
     RuntimeStatusState.update(extensionId, {

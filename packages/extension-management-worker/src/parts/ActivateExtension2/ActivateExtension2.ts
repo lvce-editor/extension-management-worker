@@ -1,3 +1,4 @@
+import * as Assert from '@lvce-editor/assert'
 import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
 import * as CancelToken from '../CancelToken/CancelToken.ts'
@@ -25,6 +26,9 @@ const activate = async (extensionId: string, extension: any) => {
 }
 
 export const activateExtension2 = async (extensionId: string, extension: any, absolutePath: string) => {
+  Assert.string(extensionId)
+  Assert.object(extension)
+  Assert.string(absolutePath)
   const token = CancelToken.create()
   try {
     const startTime = performance.now()

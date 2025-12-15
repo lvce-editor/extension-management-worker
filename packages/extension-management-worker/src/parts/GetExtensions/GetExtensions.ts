@@ -7,5 +7,5 @@ export const getAllExtensions = async () => {
   if (state.platform === PlatformType.Web) {
     return []
   }
-  return SharedProcess.invoke(/* ExtensionManagement.getAllExtensions */ 'ExtensionManagement.getAllExtensions')
+  return SharedProcess.invoke('ExtensionManagement.getAllExtensions')
 }

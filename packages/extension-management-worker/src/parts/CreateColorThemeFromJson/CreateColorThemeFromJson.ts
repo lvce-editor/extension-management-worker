@@ -20,7 +20,7 @@ const darken = () => {}
 // @ts-ignore
 const lighten = () => {}
 
-const transparent = (color, factor) => {
+const transparent = (color: any, factor: any) => {
   return color
 }
 
@@ -29,15 +29,15 @@ const isValidHexColor = (value) => {
   return true
 }
 
-const toColorRule = ([key, value]) => {
+const toColorRule = ([key, value]: any) => {
   return `  --${key}: ${value};`
 }
 
-const toTokenColorRule = (tokenColor) => {
+const toTokenColorRule = (tokenColor: any) => {
   return `.${tokenColor.name} { color: ${tokenColor.foreground} }`
 }
 
-const addFallbackColors = (colors) => {
+const addFallbackColors = (colors: any) => {
   const newColors = { ...colors }
   if (!newColors.ActivityBarInactiveForeground) {
     // TODO don't assign, avoid mutation
@@ -47,7 +47,7 @@ const addFallbackColors = (colors) => {
   return newColors
 }
 
-export const createColorThemeFromJson = (colorThemeId, colorThemeJson) => {
+export const createColorThemeFromJson = (colorThemeId: any, colorThemeJson: any) => {
   if (!colorThemeJson) {
     Logger.warn(`color theme json for "${colorThemeId}" is empty: "${colorThemeJson}"`)
     return ''

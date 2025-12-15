@@ -9,6 +9,7 @@ import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
+import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
 export const commandMap = {
@@ -23,5 +24,6 @@ export const commandMap = {
   'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
+  'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
   'Extensions.uninstall': uninstallExtension,
 }

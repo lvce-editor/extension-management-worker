@@ -1,3 +1,4 @@
+import * as Assert from '@lvce-editor/assert'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionHostSubWorkerUrl from '../ExtensionHostSubWorkerUrl/ExtensionHostSubWorkerUrl.ts'
 import * as RendererWorkerIpcParentType from '../RendererWorkerIpcParentType/RendererWorkerIpcParentType.ts'
@@ -6,6 +7,8 @@ import * as RendererWorkerIpcParentType from '../RendererWorkerIpcParentType/Ren
  * @deprecated use createWebViewWorkerRpc2 which passes the worker url as a parameter
  */
 export const createWebViewWorkerRpc = async (rpcInfo: any, port: MessagePort): Promise<void> => {
+  Assert.object(rpcInfo)
+  Assert.object(port)
   // TODO this function is called from the iframe worker to create a direct
   // connection between a webview/iframe and it's webworker. For this to work
   // the iframe worker creates a messagechannel and sends one messageport to the webview

@@ -22,7 +22,7 @@ export const importExtension = async (extensionId: string, absolutePath: string,
       status: RuntimeStatusType.Importing,
     })
     try {
-      await ExtensionHost.invoke('ExtneionHost.importExtension2', extensionId, absolutePath)
+      await ExtensionHost.invoke('ExtensionHost.importExtension2', extensionId, absolutePath)
       const endTime = performance.now()
       const time = endTime - startTime
       RuntimeStatusState.update(extensionId, {

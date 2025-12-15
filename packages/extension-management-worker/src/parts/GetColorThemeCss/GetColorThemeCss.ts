@@ -8,8 +8,8 @@ export const getColorThemeCssFromJson = async (colorThemeId: any, colorThemeJson
   // TODO generate color theme from jsonc
 }
 
-const getColorThemeCssNew = async (colorThemeId: any, platform: number) => {
-  const colorThemeJson = await GetColorThemeJson.getColorThemeJson(colorThemeId, platform)
+const getColorThemeCssNew = async (colorThemeId: any, platform: number, assetDir: string) => {
+  const colorThemeJson = await GetColorThemeJson.getColorThemeJson(colorThemeId, platform, assetDir)
   const colorThemeCss = await getColorThemeCssFromJson(colorThemeId, colorThemeJson)
   return colorThemeCss
 }

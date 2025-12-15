@@ -1,8 +1,7 @@
 import { PlatformType } from '@lvce-editor/constants'
 import * as GetRemoteUrl from '../GetRemoteUrl/GetRemoteUrl.ts'
-import * as Platform from '../Platform/Platform.ts'
 
-export const getLanguagesFromExtension = (extension: any): readonly any[] => {
+export const getLanguagesFromExtension = (extension: any, platform: number): readonly any[] => {
   // TODO what if extension is null? should not crash process, handle error gracefully
   // TODO what if extension languages is not of type array?
   // TODO what if language is null?
@@ -24,7 +23,7 @@ export const getLanguagesFromExtension = (extension: any): readonly any[] => {
         }
       }
       const relativePath = `${extensionPath}/${language.tokenize}`
-      const absolutePath = Platform.platform === PlatformType.Web ? relativePath : GetRemoteUrl.getRemoteUrl(relativePath)
+      const absolutePath = platform === PlatformType.Web ? relativePath : GetRemoteUrl.getRemoteUrl(relativePath)
 
       return {
         ...language,

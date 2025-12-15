@@ -1,4 +1,5 @@
 import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
+import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { addWebExtension } from '../AddWebExtension/AddWebExtension.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
@@ -18,6 +19,7 @@ import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
 export const commandMap = {
   'Extensions.activate2': activateExtension2,
+  'Extensions.activate3': activateExtension3,
   'Extensions.addWebExtension': addWebExtension,
   'Extensions.disable': disableExtension,
   'Extensions.enable': enableExtension,

@@ -1,6 +1,6 @@
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionHostSubWorkerUrl from '../ExtensionHostSubWorkerUrl/ExtensionHostSubWorkerUrl.ts'
 import * as RendererWorkerIpcParentType from '../RendererWorkerIpcParentType/RendererWorkerIpcParentType.ts'
-import * as ParentRpc from '../Rpc/Rpc.ts'
 
 /**
  * @deprecated use createWebViewWorkerRpc2 which passes the worker url as a parameter
@@ -14,7 +14,7 @@ export const createWebViewWorkerRpc = async (rpcInfo: any, port: MessagePort): P
 
   // TODO have a way so that the worker already includes the webview api and the extension
   // host subworker doesn't need to import the other file
-  await ParentRpc.invokeAndTransfer('IpcParent.create', {
+  await RendererWorker.invokeAndTransfer('IpcParent.create', {
     method: RendererWorkerIpcParentType.ModuleWorkerAndWorkaroundForChromeDevtoolsBug,
     name: rpcInfo.name,
     port,

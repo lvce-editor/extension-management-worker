@@ -2,6 +2,7 @@ import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
 import { addWebExtension } from '../AddWebExtension/AddWebExtension.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
+import { getColorThemeCss } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
@@ -21,6 +22,7 @@ export const commandMap = {
   'Extensions.disable': disableExtension,
   'Extensions.enable': enableExtension,
   'Extensions.getAllExtensions': getAllExtensions,
+  'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeJson': getColorThemeJson,
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getExtension': getExtension,

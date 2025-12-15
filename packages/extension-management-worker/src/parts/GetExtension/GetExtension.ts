@@ -1,7 +1,11 @@
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 
 export const getExtension = async (id: string): Promise<any> => {
-  // TODO
-  const extension = await RendererWorker.getExtension(id)
-  return extension
+  const allExtensions = await GetExtensions.getAllExtensions()
+  for (const extension of allExtensions) {
+    if (extension.id === id) {
+      return extension
+    }
+  }
+  return undefined
 }

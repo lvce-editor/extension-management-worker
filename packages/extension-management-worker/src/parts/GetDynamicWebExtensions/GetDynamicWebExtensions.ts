@@ -1,5 +1,5 @@
 import { state } from '../ExtensionMetaState/ExtensionMetaState.ts'
 
-export const getDynamicWebExtensions = async (assetDir: string) => {
+export const getDynamicWebExtensions = (): readonly any[] => {
   return state.webExtensions
 }

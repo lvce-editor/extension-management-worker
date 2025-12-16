@@ -8,6 +8,7 @@ import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
+import { getDynamicWebExtensions } from '../GetDynamicWebExtensions/GetDynamicWebExtensions.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlForWebView.ts'
@@ -34,6 +35,7 @@ export const commandMap = {
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,
   'Extensions.getColorThemeJson': getColorThemeJson,
   'Extensions.getColorThemeNames': getColorThemeNames,
+  'Extensions.getDynamicWebExtensions': getDynamicWebExtensions,
   'Extensions.getExtension': getExtension,
   'Extensions.getLanguages': getLanguages,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,

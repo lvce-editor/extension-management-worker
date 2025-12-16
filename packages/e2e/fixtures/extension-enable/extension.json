@@ -1,0 +1,13 @@
+{
+  "id": "test.extension-enable",
+  "name": "Test",
+  "description": "Test Description",
+  "main": "main.js",
+  "commands": [
+    {
+      "id": "test",
+      "label": "Test"
+    }
+  ],
+  "categories": ["Themes"]
+}

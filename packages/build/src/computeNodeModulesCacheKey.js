@@ -22,6 +22,7 @@ const locations = [
   '.github/workflows/ci.yml',
   '.github/workflows/release.yml',
   'packages/build/src/computeNodeModulesCacheKey.js',
+  'packages/server/src/postinstall.js',
 ]
 
 const packagesFolder = join(root, 'packages')

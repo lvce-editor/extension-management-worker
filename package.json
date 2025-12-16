@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "node packages/build/src/build.js",
-    "build:static": "node packages/build/src/build-static.js",
+    "build:static": "node packages/build/src/build-static.ts",
     "build:watch": "./packages/build/node_modules/.bin/esbuild --external:node:buffer --external:electron --external:ws --external:node:worker_threads --format=esm --bundle --watch packages/extension-management-worker/src/extensionManagementWorkerMain.ts --outfile=.tmp/dist/dist/extensionManagementWorkerMain.js",
     "dev": "node packages/build/src/dev.js",
     "format": "prettier --write .",

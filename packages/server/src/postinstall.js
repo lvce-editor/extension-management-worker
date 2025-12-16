@@ -1,35 +1,39 @@
-// import { readFile, writeFile } from 'node:fs/promises'
-// import { dirname, join } from 'node:path'
-// import { fileURLToPath, pathToFileURL } from 'node:url'
+import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
-// const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = import.meta.dirname
 
-// const root = join(__dirname, '..', '..', '..')
+const root = join(__dirname, '..', '..', '..')
 
-// export const getRemoteUrl = (path) => {
-//   const url = pathToFileURL(path).toString().slice(8)
-//   return `/remote/${url}`
-// }
+export const getRemoteUrl = (path) => {
+  const url = pathToFileURL(path).toString().slice(8)
+  return `/remote/${url}`
+}
 
-// const nodeModulesPath = join(root, 'packages', 'server', 'node_modules')
+const nodeModulesPath = join(root, 'packages', 'server', 'node_modules')
 
-// const extensionHostWorkerPath = join(root, '.tmp', 'dist', 'dist', 'extensionManagementWorkerMain.js')
+const workerPath = join(root, '.tmp', 'dist', 'dist', 'extensionManagementWorkerMain.js')
 
-// const staticPath = join(nodeModulesPath, '@lvce-editor', 'static-server', 'static')
-// const indexHtmlPath = join(staticPath, 'index.html')
+const serverStaticPath = join(nodeModulesPath, '@lvce-editor', 'static-server', 'static')
 
-// const indexHtmlContent = await readFile(indexHtmlPath, 'utf8')
+const RE_COMMIT_HASH = /^[a-z\d]+$/
+const isCommitHash = (dirent) => {
+  return dirent.length === 7 && dirent.match(RE_COMMIT_HASH)
+}
 
-// const remoteUrl = getRemoteUrl(extensionHostWorkerPath)
+const dirents = await readdir(serverStaticPath)
+const commitHash = dirents.find(isCommitHash) || ''
+const rendererWorkerMainPath = join(serverStaticPath, commitHash, 'packages', 'renderer-worker', 'dist', 'rendererWorkerMain.js')
 
-// const config = {
-//   'develop.extensionHostWorkerPath': remoteUrl,
-// }
-// const stringifiedConfig = JSON.stringify(config, null, 2)
-// const newContent = indexHtmlContent.replace(
-//   '</title>',
-//   `</title>
-//   <script type="application/json" id="Config">${stringifiedConfig}</script>`,
-// )
+const content = await readFile(rendererWorkerMainPath, 'utf-8')
 
-// await writeFile(indexHtmlPath, newContent)
+const remoteUrl = getRemoteUrl(workerPath)
+if (!content.includes('// const extensionManagementWorkerUrl = ')) {
+  const occurrence = `const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\``
+  const replacement = `// const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\`
+const extensionManagementWorkerUrl = \`${remoteUrl}\``
+
+  const newContent = content.replace(occurrence, replacement)
+  await writeFile(rendererWorkerMainPath, newContent)
+}

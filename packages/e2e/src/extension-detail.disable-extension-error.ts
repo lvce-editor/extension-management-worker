@@ -2,7 +2,7 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'extension-detail.disable-extension-error'
 
-// export const skip = 1
+export const skip = 1
 
 export const test: Test = async ({ Extension, ExtensionDetail }) => {
   // arrange

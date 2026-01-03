@@ -2,9 +2,9 @@ import { VError } from '@lvce-editor/verror'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 import * as GetLanguagesFromExtension from '../GetLanguagesFromExtension/GetLanguagesFromExtension.ts'
 
-export const getLanguages = async (platform: number) => {
+export const getLanguages = async (platform: number, assetDir: string) => {
   try {
-    const extensions = await GetExtensions.getAllExtensions()
+    const extensions = await GetExtensions.getAllExtensions(assetDir)
     const languages = extensions.flatMap((extension: any) => GetLanguagesFromExtension.getLanguagesFromExtension(extension, platform))
     return languages
   } catch (error) {

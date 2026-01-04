@@ -6,5 +6,5 @@ export const getColorThemeJson = (colorThemeId: string, platform: number, assetD
   if (platform === PlatformType.Web) {
     return GetColorThemeJsonWeb.getColorThemeJson(colorThemeId, assetDir)
   }
-  return GetColorThemeJsonRemote.getColorThemeJson(colorThemeId, assetDir)
+  return GetColorThemeJsonRemote.getColorThemeJson(colorThemeId, assetDir, platform)
 }

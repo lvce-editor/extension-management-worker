@@ -7,7 +7,7 @@ export const enableExtension2 = async (id: string, platform: number): Promise<un
   Assert.string(id)
   Assert.number(platform)
   if (platform === PlatformType.Remote || platform === PlatformType.Electron) {
-    const disabledExtensionsJsonPath = await RendererWorker.invoke('PlatformPaths.getBuiltinExtensionsJsonPath')
+    const disabledExtensionsJsonPath = await RendererWorker.invoke('WebView.compatSharedProcessInvoke', 'PlatformPaths.getDisabledExtensionsJsonUri')
     const exists = await FileSystemWorker.exists(disabledExtensionsJsonPath)
     if (!exists) {
       return undefined

@@ -5,7 +5,7 @@ import { createWebViewWorkerRpc2 } from '../CreateWebViewRpc2/CreateWebViewRpc2.
 import { createWebViewWorkerRpc } from '../CreateWebViewRpc/CreateWebViewRpc.ts'
 import { disableExtension2 } from '../DisableExtension2/DisableExtension2.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
-import { enableExtension2 } from '../EnableExtension2/EnableExtension.ts'
+import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'

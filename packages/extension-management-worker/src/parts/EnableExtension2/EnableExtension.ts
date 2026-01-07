@@ -1,8 +1,11 @@
+import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
 import { FileSystemWorker, RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionStorage from '../ExtensionStorage/ExtensionStorage.ts'
 
 export const enableExtension2 = async (id: string, platform: number): Promise<unknown> => {
+  Assert.string(id)
+  Assert.number(platform)
   if (platform === PlatformType.Remote || platform === PlatformType.Electron) {
     const disabledExtensionsJsonPath = await RendererWorker.invoke('PlatformPaths.getBuiltinExtensionsJsonPath')
     const exists = await FileSystemWorker.exists(disabledExtensionsJsonPath)

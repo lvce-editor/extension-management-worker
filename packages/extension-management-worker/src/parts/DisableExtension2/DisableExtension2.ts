@@ -6,7 +6,7 @@ export const disableExtension2 = async (id: string, platform: number): Promise<u
   Assert.string(id)
   Assert.number(platform)
   try {
-    await ExtensionStorage.disableextension2(id, platform)
+    await ExtensionStorage.disableExtension2(id, platform)
     await invalidateExtensionsCache()
     return undefined
   } catch (error) {

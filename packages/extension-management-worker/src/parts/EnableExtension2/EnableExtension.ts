@@ -22,6 +22,6 @@ export const enableExtension2 = async (id: string, platform: number): Promise<un
     const newContent = JSON.stringify(newData, null, 2) + '\n'
     await FileSystemWorker.writeFile(disabledExtensionsJsonPath, newContent)
   }
-  await ExtensionStorage.enableextension2(id, platform)
+  await ExtensionStorage.enableExtension2(id, platform)
   return undefined
 }

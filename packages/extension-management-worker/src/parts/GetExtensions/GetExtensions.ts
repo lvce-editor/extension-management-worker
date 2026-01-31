@@ -5,7 +5,7 @@ import { getDynamicWebExtensions } from '../GetDynamicWebExtensions/GetDynamicWe
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
 
 export const getAllExtensions = async (assetDir: string, platform: number) => {
-  if (!assetDir) {
+  if (typeof assetDir !== 'string') {
     assetDir = await RendererWorker.invoke('Layout.getAssetDir')
   }
   if (!platform) {

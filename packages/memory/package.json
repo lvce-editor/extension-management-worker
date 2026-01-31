@@ -7,7 +7,7 @@
     "measure:visible": "node --experimental-strip-types src/measureMemory.ts --no-headless"
   },
   "devDependencies": {
-    "@lvce-editor/measure-memory": "^3.0.2",
+    "@lvce-editor/measure-memory": "^3.1.0",
     "@types/node": "^22.10.5"
   }
 }

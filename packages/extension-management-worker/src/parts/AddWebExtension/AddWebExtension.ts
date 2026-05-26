@@ -7,7 +7,7 @@ export const addWebExtension = async (path: string): Promise<any> => {
   const manifestPath = GetWebManifestPath.getWebManifestPath(path)
   const manifest = await GetWebExtensionManifest.getWebExtensionManifest(path, manifestPath)
   // TODO avoid mutation if possible
-  ExtensionMetaState.state.webExtensions.push(manifest)
+  ExtensionMetaState.push(manifest)
   ExtensionsCache.clear()
   return manifest
 }

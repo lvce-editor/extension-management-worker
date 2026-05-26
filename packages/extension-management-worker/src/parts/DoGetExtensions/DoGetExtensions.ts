@@ -8,7 +8,7 @@ const getSharedProcessExtensions = (): Promise<readonly any[]> => {
 }
 
 export const doGetExtensions = async (assetDir: string, platform: number) => {
-  const meta = ExtensionMetaState.state.webExtensions
+  const meta = ExtensionMetaState.get()
   if (platform === PlatformType.Web) {
     const webExtensions = await GetWebExtensions.getWebExtensions(assetDir)
     return [...webExtensions, ...meta]

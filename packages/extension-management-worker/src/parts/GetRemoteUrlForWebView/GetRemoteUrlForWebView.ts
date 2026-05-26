@@ -6,8 +6,8 @@ import * as Rpc from '../Rpc/Rpc.ts'
 // TODO if webViewId is provided,
 // 1. read file as blob
 // 2. send blob to webview
-// 3. create objecturl in webview
-// 4. send back objecturl to extension host worker
+// 3. create object URL in webview
+// 4. send back object URL to extension host worker
 // 5. provide objectUrl to extension
 
 export const getRemoteUrlForWebView = async (uri: string, options: GetRemoteUrlOptions = {}): Promise<string> => {

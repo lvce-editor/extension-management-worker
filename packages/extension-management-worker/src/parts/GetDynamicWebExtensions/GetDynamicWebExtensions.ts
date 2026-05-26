@@ -1,5 +1,5 @@
-import { state } from '../ExtensionMetaState/ExtensionMetaState.ts'
+import * as ExtensionMetaState from '../ExtensionMetaState/ExtensionMetaState.ts'
 
 export const getDynamicWebExtensions = (): readonly any[] => {
-  return state.webExtensions
+  return ExtensionMetaState.get()
 }

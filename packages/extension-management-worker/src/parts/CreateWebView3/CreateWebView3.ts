@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
-import * as IframeWorker from '../IframeWorker/IframeWorker.ts'
+import { IframeWorker } from '@lvce-editor/rpc-registry'
 
 export const createWebView3 = async ({
   assetDir,

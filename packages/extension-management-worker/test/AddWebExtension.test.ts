@@ -26,8 +26,9 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     name: 'sample-extension',
   }
   const fetchSpy = jest.spyOn(globalThis, 'fetch').mockResolvedValue({
-    ok: true,
+    // @ts-ignore
     json: async () => manifest,
+    ok: true,
   } as Response)
   ExtensionsCache.set('cached-value')
 

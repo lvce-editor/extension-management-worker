@@ -1,16 +1,14 @@
-import * as ExtensionMetaState from '../ExtensionMetaState/ExtensionMetaState.ts'
-import * as ExtensionsCache from '../ExtensionsCache/ExtensionsCache.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as GetWebExtensionManifest from '../GetWebExtensionManifest/GetWebExtensionManifest.ts'
 import * as GetWebManifestPath from '../GetWebManifestPath/GetWebManifestPath.ts'
 
 export const addWebExtension = async (path: string): Promise<any> => {
-  if (ExtensionMetaState.hasUri(path)) {
+  if (ExtensionsState.hasWebExtensionUri(path)) {
     return undefined
   }
   const manifestPath = GetWebManifestPath.getWebManifestPath(path)
   const manifest = await GetWebExtensionManifest.getWebExtensionManifest(path, manifestPath)
-  // TODO avoid mutation if possible
-  ExtensionMetaState.push(manifest)
-  ExtensionsCache.clear()
+  ExtensionsState.addWebExtension(manifest)
+  ExtensionsState.clearCachedExtensions()
   return manifest
 }

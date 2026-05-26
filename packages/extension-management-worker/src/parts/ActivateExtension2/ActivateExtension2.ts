@@ -2,9 +2,9 @@ import * as Assert from '@lvce-editor/assert'
 import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
 import * as CancelToken from '../CancelToken/CancelToken.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as GetExtensionId from '../GetExtensionId/GetExtensionId.ts'
 import * as IsImportError from '../IsImportError/IsImportError.ts'
-import * as RuntimeStatusState from '../RuntimeStatusState/RuntimeStatusState.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
 import * as Timeout from '../Timeout/Timeout.ts'
 import * as TryToGetActualImportErrorMessage from '../TryToGetActualImportErrorMessage/TryToGetActualImportErrorMessage.ts'
@@ -32,14 +32,14 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
   const token = CancelToken.create()
   try {
     const startTime = performance.now()
-    RuntimeStatusState.update(extensionId, {
+    ExtensionsState.updateRuntimeStatus(extensionId, {
       activationStartTime: startTime,
       status: RuntimeStatusType.Activating,
     })
     await Promise.race([activate(extensionId, extension), rejectAfterTimeout(activationTimeout, token)])
     const endTime = performance.now()
     const time = endTime - startTime
-    RuntimeStatusState.update(extensionId, {
+    ExtensionsState.updateRuntimeStatus(extensionId, {
       activationEndTime: endTime,
       activationTime: time,
       status: RuntimeStatusType.Activated,
@@ -50,7 +50,7 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
       const actualErrorMessage = await TryToGetActualImportErrorMessage.tryToGetActualImportErrorMessage(absolutePath, error)
       throw new Error(`Failed to activate extension ${id}: ${actualErrorMessage}`, { cause: error })
     }
-    RuntimeStatusState.update(extensionId, {
+    ExtensionsState.updateRuntimeStatus(extensionId, {
       status: RuntimeStatusType.Error, // TODO maybe store error also in runtime status state
     })
 

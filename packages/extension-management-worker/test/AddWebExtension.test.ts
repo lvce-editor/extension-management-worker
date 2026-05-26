@@ -1,23 +1,21 @@
 import { beforeEach, expect, jest, test } from '@jest/globals'
 import { addWebExtension } from '../src/parts/AddWebExtension/AddWebExtension.ts'
-import * as ExtensionMetaState from '../src/parts/ExtensionMetaState/ExtensionMetaState.ts'
-import * as ExtensionsCache from '../src/parts/ExtensionsCache/ExtensionsCache.ts'
+import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 
 beforeEach(() => {
   jest.restoreAllMocks()
-  ExtensionMetaState.clear()
-  ExtensionsCache.clear()
+  ExtensionsState.reset()
 })
 
 test('addWebExtension - skips duplicate uri', async () => {
-  ExtensionMetaState.push({ uri: 'https://example.com/extension' })
+  ExtensionsState.setWebExtensions([{ uri: 'https://example.com/extension' }])
   const fetchSpy = jest.spyOn(globalThis, 'fetch')
 
   const result = await addWebExtension('https://example.com/extension')
 
   expect(result).toBe(undefined)
   expect(fetchSpy).not.toHaveBeenCalled()
-  expect(ExtensionMetaState.get()).toEqual([{ uri: 'https://example.com/extension' }])
+  expect(ExtensionsState.get().webExtensions).toEqual([{ uri: 'https://example.com/extension' }])
 })
 
 test('addWebExtension - adds new uri once and clears cache', async () => {
@@ -30,7 +28,7 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     json: async () => manifest,
     ok: true,
   } as Response)
-  ExtensionsCache.set('cached-value')
+  ExtensionsState.update({ cachedExtensions: 'cached-value' })
 
   const result = await addWebExtension(uri)
 
@@ -40,12 +38,12 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     path: uri,
     uri,
   })
-  expect(ExtensionMetaState.get()).toEqual([
+  expect(ExtensionsState.get().webExtensions).toEqual([
     {
       ...manifest,
       path: uri,
       uri,
     },
   ])
-  expect(ExtensionsCache.has()).toBe(false)
+  expect(ExtensionsState.get().cachedExtensions).toBe(undefined)
 })

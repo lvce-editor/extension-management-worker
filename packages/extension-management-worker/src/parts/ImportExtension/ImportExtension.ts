@@ -1,8 +1,8 @@
 import * as Assert from '@lvce-editor/assert'
 import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as IsImportError from '../IsImportError/IsImportError.ts'
-import * as RuntimeStatusState from '../RuntimeStatusState/RuntimeStatusState.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
 import * as TryToGetActualImportErrorMessage from '../TryToGetActualImportErrorMessage/TryToGetActualImportErrorMessage.ts'
 
@@ -10,7 +10,7 @@ export const importExtension = async (extensionId: string, absolutePath: string,
   try {
     Assert.string(absolutePath)
     const startTime = performance.now()
-    RuntimeStatusState.set({
+    ExtensionsState.setRuntimeStatus({
       activationEndTime: 0,
       activationEvent: activationEvent,
       activationStartTime: performance.now(),
@@ -25,12 +25,12 @@ export const importExtension = async (extensionId: string, absolutePath: string,
       await ExtensionHost.invoke('ExtensionHost.importExtension2', extensionId, absolutePath)
       const endTime = performance.now()
       const time = endTime - startTime
-      RuntimeStatusState.update(extensionId, {
+      ExtensionsState.updateRuntimeStatus(extensionId, {
         importEndTime: endTime,
         importTime: time,
       })
     } catch (error) {
-      RuntimeStatusState.update(extensionId, {
+      ExtensionsState.updateRuntimeStatus(extensionId, {
         status: RuntimeStatusType.Error, // TODO maybe store error also in runtime status state
       })
       if (IsImportError.isImportError(error)) {

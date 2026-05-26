@@ -1,7 +1,7 @@
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { initializeSharedProcess } from '../InitializeSharedProcess/InitializeSharedProcess.ts'
-import * as State from '../State/State.ts'
 
 export const initialize = async (platform: number) => {
-  State.update({ platform })
+  ExtensionsState.setPlatform(platform)
   await initializeSharedProcess(platform)
 }

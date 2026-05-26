@@ -1,5 +1,5 @@
 import { PlatformType } from '@lvce-editor/constants'
-import * as ExtensionMetaState from '../ExtensionMetaState/ExtensionMetaState.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as GetWebExtensions from '../GetWebExtensions/GetWebExtensions.ts'
 import * as Rpc from '../Rpc/Rpc.ts'
 
@@ -8,7 +8,7 @@ const getSharedProcessExtensions = (): Promise<readonly any[]> => {
 }
 
 export const doGetExtensions = async (assetDir: string, platform: number) => {
-  const meta = ExtensionMetaState.get()
+  const meta = ExtensionsState.get().webExtensions
   if (platform === PlatformType.Web) {
     const webExtensions = await GetWebExtensions.getWebExtensions(assetDir)
     return [...webExtensions, ...meta]

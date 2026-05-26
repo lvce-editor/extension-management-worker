@@ -1,3 +1,4 @@
+import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
 import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { addWebExtension } from '../AddWebExtension/AddWebExtension.ts'
@@ -27,6 +28,7 @@ import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 export const commandMap = {
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
+  'Extensions.activateByEvent': activateByEvent,
   'Extensions.addWebExtension': addWebExtension,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
   'Extensions.createWebViewWorkerRpc2': createWebViewWorkerRpc2,

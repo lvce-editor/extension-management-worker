@@ -4,23 +4,31 @@ import { TransferMessagePortRpcParent, WebSocketRpcParent2 } from '@lvce-editor/
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 
+const getRpcRemote = async () => {
+  const rpc = await WebSocketRpcParent2.create({
+    commandMap: CommandMapRef.commandMapRef,
+    type: 'shared-process',
+  })
+  return rpc
+}
+
+const getRpcElectron = async () => {
+  const rpc = TransferMessagePortRpcParent.create({
+    commandMap: CommandMapRef.commandMapRef,
+    async send(port) {
+      await RendererWorker.sendMessagePortToSharedProcess(port)
+    },
+  })
+  return rpc
+}
+
 const getRpc = async (platform: number): Promise<Rpc | undefined> => {
   // TODO create connection to shared process
   if (platform === PlatformType.Remote) {
-    const rpc = await WebSocketRpcParent2.create({
-      commandMap: CommandMapRef.commandMapRef,
-      type: 'shared-process',
-    })
-    return rpc
+    return getRpcRemote()
   }
   if (platform === PlatformType.Electron) {
-    const rpc = TransferMessagePortRpcParent.create({
-      commandMap: CommandMapRef.commandMapRef,
-      async send(port) {
-        await RendererWorker.sendMessagePortToSharedProcess(port)
-      },
-    })
-    return rpc
+    return getRpcElectron()
   }
   return undefined
 }

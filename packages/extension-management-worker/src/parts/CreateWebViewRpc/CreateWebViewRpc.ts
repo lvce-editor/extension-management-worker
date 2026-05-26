@@ -16,7 +16,7 @@ export const createWebViewWorkerRpc = async (rpcInfo: any, port: MessagePort): P
   // the two message ports
 
   // TODO have a way so that the worker already includes the webview api and the extension
-  // host subworker doesn't need to import the other file
+  // host sub-worker doesn't need to import the other file
   await RendererWorker.invokeAndTransfer('IpcParent.create', {
     method: RendererWorkerIpcParentType.ModuleWorkerAndWorkaroundForChromeDevtoolsBug,
     name: rpcInfo.name,

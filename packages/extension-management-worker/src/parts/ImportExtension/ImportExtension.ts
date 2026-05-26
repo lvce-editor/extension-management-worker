@@ -35,7 +35,7 @@ export const importExtension = async (extensionId: string, absolutePath: string,
       })
       if (IsImportError.isImportError(error)) {
         const actualErrorMessage = await TryToGetActualImportErrorMessage.tryToGetActualImportErrorMessage(absolutePath, error)
-        throw new Error(actualErrorMessage)
+        throw new Error(actualErrorMessage, { cause: error })
       }
       throw error
     }

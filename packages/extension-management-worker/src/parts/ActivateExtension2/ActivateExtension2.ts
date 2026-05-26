@@ -48,7 +48,7 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
     const id = GetExtensionId.getExtensionId(extension)
     if (IsImportError.isImportError(error)) {
       const actualErrorMessage = await TryToGetActualImportErrorMessage.tryToGetActualImportErrorMessage(absolutePath, error)
-      throw new Error(`Failed to activate extension ${id}: ${actualErrorMessage}`)
+      throw new Error(`Failed to activate extension ${id}: ${actualErrorMessage}`, { cause: error })
     }
     RuntimeStatusState.update(extensionId, {
       status: RuntimeStatusType.Error, // TODO maybe store error also in runtime status state

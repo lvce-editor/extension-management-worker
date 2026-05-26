@@ -4,6 +4,9 @@ import * as GetWebExtensionManifest from '../GetWebExtensionManifest/GetWebExten
 import * as GetWebManifestPath from '../GetWebManifestPath/GetWebManifestPath.ts'
 
 export const addWebExtension = async (path: string): Promise<any> => {
+  if (ExtensionMetaState.hasUri(path)) {
+    return undefined
+  }
   const manifestPath = GetWebManifestPath.getWebManifestPath(path)
   const manifest = await GetWebExtensionManifest.getWebExtensionManifest(path, manifestPath)
   // TODO avoid mutation if possible

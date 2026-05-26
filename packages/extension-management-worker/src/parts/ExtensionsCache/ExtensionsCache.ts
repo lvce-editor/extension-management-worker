@@ -1,3 +1,5 @@
+// TODO store one kind of ui state for whole extension management worker
+
 const cache = Object.create(null)
 
 const id = 1

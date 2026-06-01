@@ -10,6 +10,7 @@ export const getOrCreateIsolatedExtensionHostWorker = async (extensionId: string
   }
   const rpc = await TransferMessagePortRpcParent.create({
     commandMap: CommandMapRef.commandMapRef,
+    isMessagePortOpen: false,
     send(port: MessagePort) {
       return RendererWorker.invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId)
     },

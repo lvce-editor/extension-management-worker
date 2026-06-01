@@ -21,11 +21,11 @@ const rejectAfterTimeout = async (timeout: number, token: any): Promise<void> =>
   throw new Error(`Activation timeout of ${timeout}ms exceeded`)
 }
 
-const activate = async (extensionId: string, extension: any) => {
-  await ExtensionHost.invoke('ExtensionHost.activateExtension3', extensionId, extension)
+const activate = async (extensionId: string, extension: any, extensionHost: any) => {
+  await extensionHost.invoke('ExtensionHost.activateExtension3', extensionId, extension)
 }
 
-export const activateExtension2 = async (extensionId: string, extension: any, absolutePath: string) => {
+export const activateExtension2 = async (extensionId: string, extension: any, absolutePath: string, extensionHost: any = ExtensionHost) => {
   Assert.string(extensionId)
   Assert.object(extension)
   Assert.string(absolutePath)
@@ -36,7 +36,7 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
       activationStartTime: startTime,
       status: RuntimeStatusType.Activating,
     })
-    await Promise.race([activate(extensionId, extension), rejectAfterTimeout(activationTimeout, token)])
+    await Promise.race([activate(extensionId, extension, extensionHost), rejectAfterTimeout(activationTimeout, token)])
     const endTime = performance.now()
     const time = endTime - startTime
     ExtensionsState.updateRuntimeStatus(extensionId, {

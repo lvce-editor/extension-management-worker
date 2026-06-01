@@ -8,9 +8,10 @@ import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated
 export const activateExtension3 = async (extension: any, absolutePath: string, activationEvent: string, platform: number) => {
   HandleRpcInfos.handleRpcInfos(extension, platform)
   const extensionId = extension.id || interExtensionId(extension.uri)
-  const extensionHost = IsExtensionIsolated.isExtensionIsolated(extension)
-    ? await GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId)
-    : undefined
-  await importExtension(extensionId, absolutePath, activationEvent, extensionHost)
-  await activateExtension2(extensionId, extension, absolutePath, extensionHost)
+  if (IsExtensionIsolated.isExtensionIsolated(extension)) {
+    await GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath)
+    return
+  }
+  await importExtension(extensionId, absolutePath, activationEvent)
+  await activateExtension2(extensionId, extension, absolutePath)
 }

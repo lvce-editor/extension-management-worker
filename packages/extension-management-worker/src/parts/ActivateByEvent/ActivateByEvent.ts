@@ -1,12 +1,13 @@
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
-import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
+import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 const activatingExtensions: Record<string, Promise<void>> = Object.create(null)
 const runningExtensions: Record<string, boolean> = Object.create(null)
 
 const matchesEvent = (extension: any, event: string): boolean => {
-  return Array.isArray(extension.activation) && extension.activation.includes(event)
+  return IsExtensionIsolated.isExtensionIsolated(extension) && Array.isArray(extension.activation) && extension.activation.includes(event)
 }
 
 const getExtensionId = (extension: any): string => {

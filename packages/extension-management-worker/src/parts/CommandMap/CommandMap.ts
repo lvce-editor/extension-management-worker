@@ -17,6 +17,7 @@ import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlForWebView.ts'
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
+import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
@@ -47,6 +48,7 @@ export const commandMap = {
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
+  'Extensions.getStatusBarItems': getStatusBarItems,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,

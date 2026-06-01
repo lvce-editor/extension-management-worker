@@ -6,7 +6,7 @@ import * as IsImportError from '../IsImportError/IsImportError.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
 import * as TryToGetActualImportErrorMessage from '../TryToGetActualImportErrorMessage/TryToGetActualImportErrorMessage.ts'
 
-export const importExtension = async (extensionId: string, absolutePath: string, activationEvent: string) => {
+export const importExtension = async (extensionId: string, absolutePath: string, activationEvent: string, extensionHost: any = ExtensionHost) => {
   try {
     Assert.string(absolutePath)
     const startTime = performance.now()
@@ -22,7 +22,7 @@ export const importExtension = async (extensionId: string, absolutePath: string,
       status: RuntimeStatusType.Importing,
     })
     try {
-      await ExtensionHost.invoke('ExtensionHost.importExtension2', extensionId, absolutePath)
+      await extensionHost.invoke('ExtensionHost.importExtension2', extensionId, absolutePath)
       const endTime = performance.now()
       const time = endTime - startTime
       ExtensionsState.updateRuntimeStatus(extensionId, {

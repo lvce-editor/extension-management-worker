@@ -13,3 +13,9 @@ export const getAll = (): readonly Rpc[] => {
 export const set = (extensionId: string, rpc: Rpc): void => {
   rpcs[extensionId] = rpc
 }
+
+export const clear = (): void => {
+  for (const key of Object.keys(rpcs)) {
+    delete rpcs[key]
+  }
+}

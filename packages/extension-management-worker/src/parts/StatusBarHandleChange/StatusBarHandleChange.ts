@@ -1,5 +1,5 @@
-import * as RendererWorker from '../Rpc/Rpc.ts'
+import * as StatusBarWorker from '../StatusBarWorker/StatusBarWorker.ts'
 
 export const handleChange = async (id: string): Promise<void> => {
-  await RendererWorker.invoke('StatusBar.handleChange', id)
+  await StatusBarWorker.invoke('StatusBar.handleChange', id)
 }

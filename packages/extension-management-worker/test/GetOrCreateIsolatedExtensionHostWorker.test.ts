@@ -1,45 +1,38 @@
-import { afterEach, expect, jest, test } from '@jest/globals'
-import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+import type { Rpc } from '@lvce-editor/rpc'
+import { expect, test } from '@jest/globals'
+import * as GetOrCreateIsolatedExtensionHostWorker from '../src/parts/GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 
-const rpc = {
-  invoke: jest.fn(),
-}
-
-afterEach(() => {
-  jest.resetAllMocks()
-  IsolatedExtensionHostWorkerState.clear()
-})
-
-jest.unstable_mockModule('@lvce-editor/rpc', () => {
-  return {
-    TransferMessagePortRpcParent: {
-      create: jest.fn(async ({ send }) => {
-        await send('port')
-        return rpc
-      }),
-    },
+test('createIsolatedExtensionHostWorker launches extension main entry', async () => {
+  const launched: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => undefined,
+    invokeAndTransfer: async () => undefined,
+    send: () => {},
   }
-})
-
-jest.unstable_mockModule('../src/parts/Rpc/Rpc.ts', () => {
-  return {
-    invokeAndTransfer: jest.fn(),
+  const createRpc = async (options: {
+    readonly commandMap: any
+    readonly isMessagePortOpen: boolean
+    readonly send: (port: MessagePort) => Promise<void>
+  }): Promise<Rpc> => {
+    await options.send('port' as unknown as MessagePort)
+    return rpc
   }
-})
+  const invokeAndTransfer = async (method: string, ...params: readonly unknown[]): Promise<void> => {
+    launched.push(method, ...params)
+  }
 
-const Rpc = await import('../src/parts/Rpc/Rpc.ts')
-const GetOrCreateIsolatedExtensionHostWorker = await import(
-  '../src/parts/GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
-)
+  await GetOrCreateIsolatedExtensionHostWorker.createIsolatedExtensionHostWorker(
+    'sample.extension',
+    '/remote/sample/main.js',
+    createRpc,
+    invokeAndTransfer,
+  )
 
-test('getOrCreateIsolatedExtensionHostWorker launches extension main entry', async () => {
-  await GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js')
-
-  expect(Rpc.invokeAndTransfer).toHaveBeenCalledTimes(1)
-  expect(Rpc.invokeAndTransfer).toHaveBeenCalledWith(
+  expect(launched).toEqual([
     'LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker',
     'port',
     'sample.extension',
     '/remote/sample/main.js',
-  )
+  ])
 })

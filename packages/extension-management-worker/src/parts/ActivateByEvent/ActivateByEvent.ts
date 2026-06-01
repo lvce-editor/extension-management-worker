@@ -32,7 +32,7 @@ const activateExtension = async (extension: any, event: string, assetDir: string
   if (runningExtensions[extensionId]) {
     return
   }
-  if (!activatingExtensions[extensionId]) {
+  if (!Object.hasOwn(activatingExtensions, extensionId)) {
     const absolutePath = getAbsolutePath(extension, assetDir, platform)
     activatingExtensions[extensionId] = activateExtension3(extension, absolutePath, event, platform)
       .then(() => {

@@ -24,6 +24,7 @@ import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
+import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
 export const commandMap = {
@@ -55,4 +56,5 @@ export const commandMap = {
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
   'Extensions.uninstall': uninstallExtension,
+  'StatusBar.handleChange': StatusBarHandleChange.handleChange,
 }

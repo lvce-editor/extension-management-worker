@@ -4,16 +4,16 @@ import { getAbsolutePath, getExtensionId, getRpc } from '../GetIsolatedExtension
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 interface ManifestViewIframe {
-  readonly csp?: string
   readonly credentialless?: boolean
+  readonly csp?: string
   readonly path?: string
   readonly sandbox?: readonly string[]
 }
 
 interface ManifestView {
-  readonly iframe?: ManifestViewIframe
   readonly icon?: string
   readonly id?: string
+  readonly iframe?: ManifestViewIframe
   readonly title?: string
 }
 
@@ -21,8 +21,8 @@ interface ExtensionManifest {
   readonly browser?: string
   readonly builtin?: boolean
   readonly id?: string
-  readonly isWeb?: boolean
   readonly isolated?: boolean
+  readonly isWeb?: boolean
   readonly path?: string
   readonly uri?: string
   readonly views?: readonly ManifestView[]
@@ -35,8 +35,8 @@ interface RegisteredView {
 }
 
 interface ContributedViewIframe {
-  readonly csp: string
   readonly credentialless: boolean
+  readonly csp: string
   readonly sandbox: readonly string[]
   readonly src: string
 }
@@ -53,14 +53,19 @@ const getManifestView = (extension: ExtensionManifest, id: string): ManifestView
   return extension.views?.find((view) => view.id === id)
 }
 
-const getIframe = (extension: ExtensionManifest, manifestView: ManifestView | undefined, assetDir: string, platform: number): ContributedViewIframe | undefined => {
+const getIframe = (
+  extension: ExtensionManifest,
+  manifestView: ManifestView | undefined,
+  assetDir: string,
+  platform: number,
+): ContributedViewIframe | undefined => {
   const iframe = manifestView?.iframe
   if (!iframe || typeof iframe.path !== 'string' || iframe.path.length === 0) {
     return undefined
   }
   return {
-    csp: iframe.csp || '',
     credentialless: iframe.credentialless !== false,
+    csp: iframe.csp || '',
     sandbox: Array.isArray(iframe.sandbox) ? iframe.sandbox.filter((item): item is string => typeof item === 'string') : ['allow-scripts'],
     src: getAbsolutePath(
       {

@@ -59,11 +59,11 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
           views: [
             {
               icon: 'symbol-beaker',
+              id: 'sample.views.testing',
               iframe: {
                 path: 'view.html',
                 sandbox: ['allow-scripts'],
               },
-              id: 'sample.views.testing',
               title: 'Testing',
             },
           ],
@@ -98,8 +98,8 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
       icon: 'symbol-beaker',
       id: 'sample.views.testing',
       iframe: {
-        csp: '',
         credentialless: true,
+        csp: '',
         sandbox: ['allow-scripts'],
         src: '/extensions/extension-one/view.html',
       },

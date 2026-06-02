@@ -9,6 +9,7 @@ import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
+import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
@@ -41,7 +42,9 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': executeCommand,
+  'Extensions.executeCompletionProvider': executeCompletionProvider,
   'Extensions.executeFormattingProvider': executeFormattingProvider,
+  'Extensions.executeResolveCompletionItemProvider': executeResolveCompletionItemProvider,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,

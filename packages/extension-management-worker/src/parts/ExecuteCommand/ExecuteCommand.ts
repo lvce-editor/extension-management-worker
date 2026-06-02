@@ -1,25 +1,37 @@
+import type { Rpc } from '@lvce-editor/rpc'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
-import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
-const getExtensionId = (extension: any): string => {
-  return extension.id || interExtensionId(extension.uri || extension.path)
+interface ExtensionCommand {
+  readonly id: string
 }
 
-const contributesCommand = (extension: any, id: string): boolean => {
-  return Array.isArray(extension.commands) && extension.commands.some((command: any): boolean => command.id === id)
+interface ExtensionManifest {
+  readonly commands?: readonly ExtensionCommand[]
+  readonly id?: string
+  readonly path?: string
+  readonly uri?: string
 }
 
-const getContributingExtension = async (id: string, platform: number): Promise<any | undefined> => {
+const getExtensionId = (extension: ExtensionManifest): string => {
+  return extension.id || interExtensionId(extension.uri || extension.path || '')
+}
+
+const contributesCommand = (extension: ExtensionManifest, id: string): boolean => {
+  return Array.isArray(extension.commands) && extension.commands.some((command): boolean => command.id === id)
+}
+
+const getContributingExtension = async (id: string, platform: number): Promise<ExtensionManifest | undefined> => {
   const extensions = await getAllExtensions('', platform)
-  return extensions.find((extension: any): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesCommand(extension, id))
+  return extensions.find((extension: ExtensionManifest): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesCommand(extension, id))
 }
 
-const getRpcForCommand = async (id: string, platform: number): Promise<any | undefined> => {
+const getRpcForCommand = async (id: string, platform: number): Promise<Rpc | undefined> => {
   const extension = await getContributingExtension(id, platform)
   if (!extension) {
     return undefined

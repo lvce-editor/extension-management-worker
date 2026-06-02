@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
-import { IframeWorker } from '@lvce-editor/rpc-registry'
+import * as IframeWorkerState from '../IframeWorkerState/IframeWorkerState.ts'
 
 export const createWebView3 = async ({
   assetDir,
@@ -18,7 +18,8 @@ export const createWebView3 = async ({
   webViewScheme: string
   useNewWebViewHandler: boolean
 }): Promise<void> => {
-  await IframeWorker.invoke('WebView.create3', {
+  const rpc = IframeWorkerState.get()
+  await rpc.invoke('WebView.create3', {
     assetDir,
     id,
     isGitpod,

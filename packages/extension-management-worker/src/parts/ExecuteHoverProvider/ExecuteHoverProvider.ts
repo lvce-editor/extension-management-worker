@@ -1,11 +1,10 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
 import type { Rpc } from '@lvce-editor/rpc'
-import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
-import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
-import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
-import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
-import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
+import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
+import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
-import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 interface HoverProviderContribution {
   readonly languageId?: string
@@ -25,54 +24,34 @@ interface TextDocument {
   readonly languageId: string
 }
 
-const getExtensionId = (extension: ExtensionManifest): string => {
-  return extension.id || interExtensionId(extension.uri || extension.path || '')
-}
-
 const contributesHoverProvider = (extension: ExtensionManifest, languageId: string): boolean => {
   return Array.isArray(extension.hoverProviders) && extension.hoverProviders.some((provider) => provider.languageId === languageId)
 }
 
-const getOrigin = (): string => {
-  return globalThis.location?.origin || 'http://localhost'
-}
-
-const getAbsolutePath = (extension: ExtensionManifest, assetDir: string, platform: number): string => {
-  return getExtensionAbsolutePath(
-    getExtensionId(extension),
-    extension.isWeb === true,
-    extension.builtin === true,
-    extension.uri || extension.path || '',
-    extension.browser || '',
-    getOrigin(),
-    platform,
-    assetDir,
+const getMatchingExtensions = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  assetDir: string,
+  platform: number,
+): Promise<readonly ExtensionManifest[]> => {
+  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
+  return extensions.filter(
+    (extension): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesHoverProvider(extension, textDocument.languageId),
   )
-}
-
-const getMatchingExtensions = async (textDocument: TextDocument, assetDir: string, platform: number): Promise<readonly ExtensionManifest[]> => {
-  const extensions = await getAllExtensions(assetDir, platform)
-  return extensions.filter((extension): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesHoverProvider(extension, textDocument.languageId))
-}
-
-const getRpc = async (extension: ExtensionManifest, assetDir: string, platform: number): Promise<Rpc> => {
-  const extensionId = getExtensionId(extension)
-  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
-  if (existingRpc) {
-    return existingRpc
-  }
-  const absolutePath = getAbsolutePath(extension, assetDir, platform)
-  return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath)
 }
 
 const executeRpcHoverProvider = async (rpc: Rpc, textDocument: TextDocument, args: readonly unknown[]): Promise<unknown> => {
   return rpc.invoke('ExtensionApi.executeHoverProvider', textDocument, ...args)
 }
 
-export const executeHoverProvider = async (textDocument: TextDocument, ...args: readonly unknown[]): Promise<unknown> => {
-  const { platform } = ExtensionsState.get()
+export const executeHoverProvider = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  ...args: readonly unknown[]
+): Promise<unknown> => {
+  const { platform } = extensionsState
   const assetDir = ''
-  const extensions = await getMatchingExtensions(textDocument, assetDir, platform)
+  const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
   const results = await Promise.all(rpcs.map((rpc) => executeRpcHoverProvider(rpc, textDocument, args)))
   return results[0]

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
+import type { ExtensionsState as ExtensionState } from '../ExtensionsState/ExtensionsState.ts'
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
 import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
@@ -12,6 +15,7 @@ import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -31,6 +35,12 @@ import { getLanguages } from '../Languages/Languages.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
+export const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
+  return (...args: readonly any[]): any => {
+    return command(ExtensionsState.get(), ...args)
+  }
+}
+
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
@@ -43,10 +53,10 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': executeCommand,
-  'Extensions.executeCompletionProvider': executeCompletionProvider,
-  'Extensions.executeFormattingProvider': executeFormattingProvider,
-  'Extensions.executeHoverProvider': executeHoverProvider,
-  'Extensions.executeResolveCompletionItemProvider': executeResolveCompletionItemProvider,
+  'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
+  'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
+  'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
+  'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,

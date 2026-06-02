@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
 import type { Rpc } from '@lvce-editor/rpc'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
+import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
-import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
-import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -26,15 +28,15 @@ const contributesCommand = (extension: ExtensionManifest, id: string): boolean =
   return Array.isArray(extension.commands) && extension.commands.some((command): boolean => command.id === id)
 }
 
-const getContributingExtension = async (id: string, platform: number): Promise<ExtensionManifest | undefined> => {
-  const extensions = await getAllExtensions('', platform)
+const getContributingExtension = async (extensionsState: ExtensionsState, id: string, platform: number): Promise<ExtensionManifest | undefined> => {
+  const extensions = await getAllExtensionsWithState(extensionsState, '', platform)
   return extensions.find(
     (extension: ExtensionManifest): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesCommand(extension, id),
   )
 }
 
-const getRpcForCommand = async (id: string, platform: number): Promise<Rpc | undefined> => {
-  const extension = await getContributingExtension(id, platform)
+const getRpcForCommand = async (extensionsState: ExtensionsState, id: string, platform: number): Promise<Rpc | undefined> => {
+  const extension = await getContributingExtension(extensionsState, id, platform)
   if (!extension) {
     return undefined
   }
@@ -51,9 +53,9 @@ const executeRendererCommand = (id: string, args: readonly unknown[]): Promise<u
   return RendererWorker.invoke(id, ...args)
 }
 
-export const executeCommand = async (id: string, ...args: readonly unknown[]): Promise<unknown> => {
-  const { platform } = ExtensionsState.get()
-  const rpc = await getRpcForCommand(id, platform)
+export const executeCommand = async (extensionsState: ExtensionsState, id: string, ...args: readonly unknown[]): Promise<unknown> => {
+  const { platform } = extensionsState
+  const rpc = await getRpcForCommand(extensionsState, id, platform)
   if (rpc) {
     return rpc.invoke('ExtensionApi.executeCommand', id, ...args)
   }

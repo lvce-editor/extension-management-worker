@@ -52,7 +52,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.disable2': disableExtension2,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
-  'Extensions.executeCommand': executeCommand,
+  'Extensions.executeCommand': wrapCommand(executeCommand),
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),

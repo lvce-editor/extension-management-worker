@@ -19,7 +19,7 @@ const getAbsolutePath = (extension: any, assetDir: string, platform: number): st
     extension.id,
     extension.isWeb,
     extension.builtin,
-    extension.uri || extension.path,
+    extension.path || extension.uri,
     extension.browser,
     globalThis.location.origin,
     platform,

@@ -9,6 +9,7 @@ import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
+import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -28,7 +29,7 @@ import { getLanguages } from '../Languages/Languages.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
-export const commandMap = {
+export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,
@@ -40,6 +41,7 @@ export const commandMap = {
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': executeCommand,
+  'Extensions.executeFormattingProvider': executeFormattingProvider,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,

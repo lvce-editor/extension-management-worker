@@ -13,6 +13,7 @@ import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
+import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
@@ -26,6 +27,7 @@ import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlFo
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
+import { getViews } from '../GetViews/GetViews.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
@@ -54,6 +56,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': wrapCommand(executeCommand),
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
+  'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
@@ -69,6 +72,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItems': getStatusBarItems,
+  'Extensions.getViews': getViews,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,

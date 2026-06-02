@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { afterEach, expect, test } from '@jest/globals'
+import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteCompletionProvider from '../src/parts/ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
-import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const createRpc = (
@@ -26,8 +26,19 @@ const createRpc = (
   }
 }
 
+const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState => {
+  return {
+    activatedExtensions: Object.create(null),
+    cachedActivationEvents: Object.create(null),
+    cachedExtensions: undefined,
+    disabledIds: [],
+    platform: 1,
+    runtimeStatuses: Object.create(null),
+    webExtensions,
+  }
+}
+
 afterEach(() => {
-  ExtensionsState.reset()
   IsolatedExtensionHostWorkerState.clear()
 })
 
@@ -37,41 +48,38 @@ test('executeCompletionProvider asks matching isolated completion providers and 
     text: 'const value=1',
     uri: 'file:///test.js',
   }
-  ExtensionsState.update({
-    platform: 1,
-    webExtensions: [
-      {
-        completionProviders: [
-          {
-            id: 'completion.javascript.one',
-            languageId: 'javascript',
-          },
-        ],
-        id: 'extension-one',
-        isolated: true,
-      },
-      {
-        completionProviders: [
-          {
-            id: 'completion.javascript.two',
-            languageId: 'javascript',
-          },
-        ],
-        id: 'extension-two',
-        isolated: true,
-      },
-      {
-        completionProviders: [
-          {
-            id: 'completion.css',
-            languageId: 'css',
-          },
-        ],
-        id: 'extension-css',
-        isolated: true,
-      },
-    ],
-  })
+  const extensionsState = createExtensionsState([
+    {
+      completionProviders: [
+        {
+          id: 'completion.javascript.one',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-one',
+      isolated: true,
+    },
+    {
+      completionProviders: [
+        {
+          id: 'completion.javascript.two',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-two',
+      isolated: true,
+    },
+    {
+      completionProviders: [
+        {
+          id: 'completion.css',
+          languageId: 'css',
+        },
+      ],
+      id: 'extension-css',
+      isolated: true,
+    },
+  ])
   const firstResult = [
     {
       label: 'first',
@@ -89,31 +97,28 @@ test('executeCompletionProvider asks matching isolated completion providers and 
   IsolatedExtensionHostWorkerState.set('extension-one', firstRpc.rpc)
   IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
 
-  await expect(ExecuteCompletionProvider.executeCompletionProvider(textDocument, 4)).resolves.toEqual(firstResult)
+  await expect(ExecuteCompletionProvider.executeCompletionProvider(extensionsState, textDocument, 4)).resolves.toEqual(firstResult)
 
   expect(firstRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
   expect(secondRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
 })
 
 test('executeCompletionProvider returns empty completions when no matching isolated completion provider exists', async () => {
-  ExtensionsState.update({
-    platform: 1,
-    webExtensions: [
-      {
-        completionProviders: [
-          {
-            id: 'completion.css',
-            languageId: 'css',
-          },
-        ],
-        id: 'extension-css',
-        isolated: true,
-      },
-    ],
-  })
+  const extensionsState = createExtensionsState([
+    {
+      completionProviders: [
+        {
+          id: 'completion.css',
+          languageId: 'css',
+        },
+      ],
+      id: 'extension-css',
+      isolated: true,
+    },
+  ])
 
   await expect(
-    ExecuteCompletionProvider.executeCompletionProvider({
+    ExecuteCompletionProvider.executeCompletionProvider(extensionsState, {
       languageId: 'javascript',
     }),
   ).resolves.toEqual([])

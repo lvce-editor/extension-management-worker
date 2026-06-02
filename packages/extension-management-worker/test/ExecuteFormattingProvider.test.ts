@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { afterEach, expect, test } from '@jest/globals'
+import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteFormattingProvider from '../src/parts/ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
-import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const createRpc = (
@@ -26,8 +26,19 @@ const createRpc = (
   }
 }
 
+const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState => {
+  return {
+    activatedExtensions: Object.create(null),
+    cachedActivationEvents: Object.create(null),
+    cachedExtensions: undefined,
+    disabledIds: [],
+    platform: 1,
+    runtimeStatuses: Object.create(null),
+    webExtensions,
+  }
+}
+
 afterEach(() => {
-  ExtensionsState.reset()
   IsolatedExtensionHostWorkerState.clear()
 })
 
@@ -37,41 +48,38 @@ test('executeFormattingProvider asks matching isolated formatting providers and 
     text: 'const value=1',
     uri: 'file:///test.js',
   }
-  ExtensionsState.update({
-    platform: 1,
-    webExtensions: [
-      {
-        formattingProviders: [
-          {
-            id: 'format.javascript.one',
-            languageId: 'javascript',
-          },
-        ],
-        id: 'extension-one',
-        isolated: true,
-      },
-      {
-        formattingProviders: [
-          {
-            id: 'format.javascript.two',
-            languageId: 'javascript',
-          },
-        ],
-        id: 'extension-two',
-        isolated: true,
-      },
-      {
-        formattingProviders: [
-          {
-            id: 'format.css',
-            languageId: 'css',
-          },
-        ],
-        id: 'extension-css',
-        isolated: true,
-      },
-    ],
-  })
+  const extensionsState = createExtensionsState([
+    {
+      formattingProviders: [
+        {
+          id: 'format.javascript.one',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-one',
+      isolated: true,
+    },
+    {
+      formattingProviders: [
+        {
+          id: 'format.javascript.two',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-two',
+      isolated: true,
+    },
+    {
+      formattingProviders: [
+        {
+          id: 'format.css',
+          languageId: 'css',
+        },
+      ],
+      id: 'extension-css',
+      isolated: true,
+    },
+  ])
   const firstResult = [
     {
       endOffset: 13,
@@ -91,31 +99,28 @@ test('executeFormattingProvider asks matching isolated formatting providers and 
   IsolatedExtensionHostWorkerState.set('extension-one', firstRpc.rpc)
   IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
 
-  await expect(ExecuteFormattingProvider.executeFormattingProvider(textDocument)).resolves.toEqual(firstResult)
+  await expect(ExecuteFormattingProvider.executeFormattingProvider(extensionsState, textDocument)).resolves.toEqual(firstResult)
 
   expect(firstRpc.invocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
   expect(secondRpc.invocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
 })
 
 test('executeFormattingProvider returns empty edits when no matching isolated formatting provider exists', async () => {
-  ExtensionsState.update({
-    platform: 1,
-    webExtensions: [
-      {
-        formattingProviders: [
-          {
-            id: 'format.css',
-            languageId: 'css',
-          },
-        ],
-        id: 'extension-css',
-        isolated: true,
-      },
-    ],
-  })
+  const extensionsState = createExtensionsState([
+    {
+      formattingProviders: [
+        {
+          id: 'format.css',
+          languageId: 'css',
+        },
+      ],
+      id: 'extension-css',
+      isolated: true,
+    },
+  ])
 
   await expect(
-    ExecuteFormattingProvider.executeFormattingProvider({
+    ExecuteFormattingProvider.executeFormattingProvider(extensionsState, {
       languageId: 'javascript',
     }),
   ).resolves.toEqual([])

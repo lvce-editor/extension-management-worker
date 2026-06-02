@@ -52,7 +52,9 @@ const getAbsolutePath = (extension: ExtensionManifest, assetDir: string, platfor
 
 const getMatchingExtensions = async (textDocument: TextDocument, assetDir: string, platform: number): Promise<readonly ExtensionManifest[]> => {
   const extensions = await getAllExtensions(assetDir, platform)
-  return extensions.filter((extension): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesFormattingProvider(extension, textDocument.languageId))
+  return extensions.filter(
+    (extension): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesFormattingProvider(extension, textDocument.languageId),
+  )
 }
 
 const getRpc = async (extension: ExtensionManifest, assetDir: string, platform: number): Promise<Rpc> => {

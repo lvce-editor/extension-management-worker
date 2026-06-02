@@ -4,8 +4,14 @@ import * as ExecuteFormattingProvider from '../src/parts/ExecuteFormattingProvid
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
-const createRpc = (result: readonly unknown[], invocations: unknown[]): Rpc => {
-  return {
+const createRpc = (
+  result: readonly unknown[],
+): {
+  readonly invocations: readonly unknown[]
+  readonly rpc: Rpc
+} => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
     dispose: async () => {},
     invoke: async (method: string, ...params: readonly unknown[]): Promise<readonly unknown[]> => {
       invocations.push([method, ...params])
@@ -13,6 +19,10 @@ const createRpc = (result: readonly unknown[], invocations: unknown[]): Rpc => {
     },
     invokeAndTransfer: async (): Promise<void> => {},
     send: (): void => {},
+  }
+  return {
+    invocations,
+    rpc,
   }
 }
 
@@ -76,15 +86,15 @@ test('executeFormattingProvider asks matching isolated formatting providers and 
       startOffset: 0,
     },
   ]
-  const firstInvocations: unknown[] = []
-  const secondInvocations: unknown[] = []
-  IsolatedExtensionHostWorkerState.set('extension-one', createRpc(firstResult, firstInvocations))
-  IsolatedExtensionHostWorkerState.set('extension-two', createRpc(secondResult, secondInvocations))
+  const firstRpc = createRpc(firstResult)
+  const secondRpc = createRpc(secondResult)
+  IsolatedExtensionHostWorkerState.set('extension-one', firstRpc.rpc)
+  IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
 
   await expect(ExecuteFormattingProvider.executeFormattingProvider(textDocument)).resolves.toEqual(firstResult)
 
-  expect(firstInvocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
-  expect(secondInvocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
+  expect(firstRpc.invocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
+  expect(secondRpc.invocations).toEqual([['ExtensionApi.executeFormattingProvider', textDocument]])
 })
 
 test('executeFormattingProvider returns empty edits when no matching isolated formatting provider exists', async () => {

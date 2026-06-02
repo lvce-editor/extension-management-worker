@@ -1,0 +1,120 @@
+import type { Rpc } from '@lvce-editor/rpc'
+import { afterEach, expect, test } from '@jest/globals'
+import * as ExecuteCompletionProvider from '../src/parts/ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
+import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+
+const createRpc = (
+  result: readonly unknown[],
+): {
+  readonly invocations: readonly unknown[]
+  readonly rpc: Rpc
+} => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]): Promise<readonly unknown[]> => {
+      invocations.push([method, ...params])
+      return result
+    },
+    invokeAndTransfer: async (): Promise<void> => {},
+    send: (): void => {},
+  }
+  return {
+    invocations,
+    rpc,
+  }
+}
+
+afterEach(() => {
+  ExtensionsState.reset()
+  IsolatedExtensionHostWorkerState.clear()
+})
+
+test('executeCompletionProvider asks matching isolated completion providers and returns the first result', async () => {
+  const textDocument = {
+    languageId: 'javascript',
+    text: 'const value=1',
+    uri: 'file:///test.js',
+  }
+  ExtensionsState.update({
+    platform: 1,
+    webExtensions: [
+      {
+        completionProviders: [
+          {
+            id: 'completion.javascript.one',
+            languageId: 'javascript',
+          },
+        ],
+        id: 'extension-one',
+        isolated: true,
+      },
+      {
+        completionProviders: [
+          {
+            id: 'completion.javascript.two',
+            languageId: 'javascript',
+          },
+        ],
+        id: 'extension-two',
+        isolated: true,
+      },
+      {
+        completionProviders: [
+          {
+            id: 'completion.css',
+            languageId: 'css',
+          },
+        ],
+        id: 'extension-css',
+        isolated: true,
+      },
+    ],
+  })
+  const firstResult = [
+    {
+      label: 'first',
+      type: 1,
+    },
+  ]
+  const secondResult = [
+    {
+      label: 'second',
+      type: 1,
+    },
+  ]
+  const firstRpc = createRpc(firstResult)
+  const secondRpc = createRpc(secondResult)
+  IsolatedExtensionHostWorkerState.set('extension-one', firstRpc.rpc)
+  IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
+
+  await expect(ExecuteCompletionProvider.executeCompletionProvider(textDocument, 4)).resolves.toEqual(firstResult)
+
+  expect(firstRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
+  expect(secondRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
+})
+
+test('executeCompletionProvider returns empty completions when no matching isolated completion provider exists', async () => {
+  ExtensionsState.update({
+    platform: 1,
+    webExtensions: [
+      {
+        completionProviders: [
+          {
+            id: 'completion.css',
+            languageId: 'css',
+          },
+        ],
+        id: 'extension-css',
+        isolated: true,
+      },
+    ],
+  })
+
+  await expect(
+    ExecuteCompletionProvider.executeCompletionProvider({
+      languageId: 'javascript',
+    }),
+  ).resolves.toEqual([])
+})

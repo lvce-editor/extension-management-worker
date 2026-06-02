@@ -10,11 +10,11 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.29.7",
     "@lvce-editor/verror": "^1.7.0",
-    "@rollup/plugin-babel": "^7.0.0",
+    "@rollup/plugin-babel": "^7.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^22.10.5",
     "esbuild": "^0.28.0",
     "execa": "^9.6.1",
-    "rollup": "^4.60.4"
+    "rollup": "^4.61.0"
   }
 }

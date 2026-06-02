@@ -28,7 +28,9 @@ const contributesCommand = (extension: ExtensionManifest, id: string): boolean =
 
 const getContributingExtension = async (id: string, platform: number): Promise<ExtensionManifest | undefined> => {
   const extensions = await getAllExtensions('', platform)
-  return extensions.find((extension: ExtensionManifest): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesCommand(extension, id))
+  return extensions.find(
+    (extension: ExtensionManifest): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesCommand(extension, id),
+  )
 }
 
 const getRpcForCommand = async (id: string, platform: number): Promise<Rpc | undefined> => {

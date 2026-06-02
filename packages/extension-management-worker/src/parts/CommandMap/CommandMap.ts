@@ -8,6 +8,7 @@ import { disableExtension2 } from '../DisableExtension2/DisableExtension2.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
+import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -38,6 +39,7 @@ export const commandMap = {
   'Extensions.disable2': disableExtension2,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
+  'Extensions.executeCommand': executeCommand,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,

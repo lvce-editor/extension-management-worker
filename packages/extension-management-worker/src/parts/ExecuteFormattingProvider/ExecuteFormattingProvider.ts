@@ -7,7 +7,14 @@ import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensio
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 interface FormattingProviderContribution {
+  readonly id?: string
   readonly languageId?: string
+}
+
+interface FormattingProviderRegistrySnapshot {
+  readonly providers?: readonly {
+    readonly id?: string
+  }[]
 }
 
 interface ExtensionManifest {
@@ -44,6 +51,31 @@ const executeRpcFormattingProvider = async (rpc: Rpc, textDocument: TextDocument
   return rpc.invoke('ExtensionApi.executeFormattingProvider', textDocument, ...args)
 }
 
+const throwForMissingFormattingProviderRegistration = async (extension: ExtensionManifest, rpc: Rpc, textDocument: TextDocument): Promise<void> => {
+  const manifestProviders = extension.formattingProviders?.filter((provider) => provider.languageId === textDocument.languageId && typeof provider.id === 'string') || []
+  const snapshot: FormattingProviderRegistrySnapshot = await rpc.invoke('ExtensionApi.getFormattingProviderRegistrySnapshot')
+  const registeredProviderIds = new Set((snapshot.providers || []).map((provider) => provider.id))
+  for (const provider of manifestProviders) {
+    if (!registeredProviderIds.has(provider.id)) {
+      throw new Error(`formatting provider ${provider.id} is contributed in extension.json but not registered`)
+    }
+  }
+}
+
+const executeValidatedRpcFormattingProvider = async (
+  extension: ExtensionManifest,
+  rpc: Rpc,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+): Promise<readonly unknown[]> => {
+  try {
+    return await executeRpcFormattingProvider(rpc, textDocument, args)
+  } catch (error) {
+    await throwForMissingFormattingProviderRegistration(extension, rpc, textDocument)
+    throw error
+  }
+}
+
 export const executeFormattingProvider = async (
   extensionsState: ExtensionsState,
   textDocument: any,
@@ -53,6 +85,6 @@ export const executeFormattingProvider = async (
   const assetDir = ''
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcFormattingProvider(rpc, textDocument, args)))
+  const results = await Promise.all(rpcs.map((rpc, index) => executeValidatedRpcFormattingProvider(extensions[index], rpc, textDocument, args)))
   return results[0] || []
 }

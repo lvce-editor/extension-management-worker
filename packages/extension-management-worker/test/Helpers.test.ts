@@ -2,6 +2,7 @@ import { expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { getExtensionAbsolutePath } from '../src/parts/GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import { getExtensionId } from '../src/parts/GetExtensionId/GetExtensionId.ts'
+import { getLanguagesFromExtension } from '../src/parts/GetLanguagesFromExtension/GetLanguagesFromExtension.ts'
 import { getUrlPrefix } from '../src/parts/GetUrlPrefix/GetUrlPrefix.ts'
 import { isImportError } from '../src/parts/IsImportError/IsImportError.ts'
 import { isImportErrorChrome } from '../src/parts/IsImportErrorChrome/IsImportErrorChrome.ts'
@@ -32,6 +33,27 @@ test('getUrlPrefix returns remote-aware extension prefixes', () => {
   expect(getUrlPrefix(PlatformType.Web, 'extensions/sample')).toBe('extensions/sample')
   expect(getUrlPrefix(PlatformType.Electron, '/extensions/sample')).toBe('/remote/extensions/sample')
   expect(getUrlPrefix(PlatformType.Electron, 'extensions/sample')).toBe('/remote/extensions/sample')
+})
+
+test('getLanguagesFromExtension preserves remote web extension tokenizer urls', () => {
+  const extension = {
+    id: 'sample.extension',
+    languages: [
+      {
+        id: 'mock',
+        tokenize: 'src/tokenizeMock.js',
+      },
+    ],
+    path: 'https://example.com/extension',
+  }
+
+  expect(getLanguagesFromExtension(extension, PlatformType.Electron)).toEqual([
+    {
+      extensionPath: 'https://example.com/extension',
+      id: 'mock',
+      tokenize: 'https://example.com/extension/src/tokenizeMock.js',
+    },
+  ])
 })
 
 test('getExtensionId infers ids from extension metadata', () => {

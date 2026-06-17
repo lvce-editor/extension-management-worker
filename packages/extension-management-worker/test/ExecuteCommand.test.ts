@@ -6,7 +6,9 @@ import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsSta
 import * as ExecuteCommand from '../src/parts/ExecuteCommand/ExecuteCommand.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
-let rendererWorker: DisposableMockRpc | undefined
+const state: { rendererWorker: DisposableMockRpc | undefined } = {
+  rendererWorker: undefined,
+}
 
 const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState => {
   return {
@@ -22,8 +24,8 @@ const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState =
 
 afterEach(() => {
   IsolatedExtensionHostWorkerState.clear()
-  rendererWorker?.[Symbol.dispose]()
-  rendererWorker = undefined
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = undefined
 })
 
 test('executeCommand executes the isolated worker that contributes the command', async () => {
@@ -58,11 +60,11 @@ test('executeCommand executes the isolated worker that contributes the command',
 
 test('executeCommand falls back to renderer worker for non-isolated commands', async () => {
   const extensionsState = createExtensionsState([])
-  rendererWorker = RendererWorker.registerMockRpc({
+  state.rendererWorker = RendererWorker.registerMockRpc({
     'About.showAbout': async () => 'renderer-result',
   })
 
   await expect(ExecuteCommand.executeCommand(extensionsState, 'About.showAbout')).resolves.toBe('renderer-result')
 
-  expect(rendererWorker.invocations).toEqual([['About.showAbout']])
+  expect(state.rendererWorker.invocations).toEqual([['About.showAbout']])
 })

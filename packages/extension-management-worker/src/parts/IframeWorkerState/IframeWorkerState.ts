@@ -1,18 +1,20 @@
 import type { Rpc } from '@lvce-editor/rpc'
 
-let rpc: Rpc | undefined
+const state: { rpc: Rpc | undefined } = {
+  rpc: undefined,
+}
 
 export const get = (): Rpc => {
-  if (!rpc) {
+  if (!state.rpc) {
     throw new Error('Iframe worker rpc not initialized')
   }
-  return rpc
+  return state.rpc
 }
 
 export const set = (newRpc: Rpc): void => {
-  rpc = newRpc
+  state.rpc = newRpc
 }
 
 export const clear = (): void => {
-  rpc = undefined
+  state.rpc = undefined
 }

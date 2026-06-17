@@ -10,6 +10,7 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       'github-actions/ci-versions': 'off',
       '@typescript-eslint/no-deprecated': 'off',
+      'unicorn/consistent-json-file-read': 'off',
     },
   },
 ]

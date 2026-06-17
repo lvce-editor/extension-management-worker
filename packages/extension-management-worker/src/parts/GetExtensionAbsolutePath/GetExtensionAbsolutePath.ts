@@ -12,9 +12,9 @@ export const getExtensionAbsolutePath = (
 ) => {
   if (path.startsWith('http')) {
     if (path.endsWith('/')) {
-      return new URL(relativePath, path).toString()
+      return new URL(relativePath, path).href
     }
-    return new URL(relativePath, path + '/').toString()
+    return new URL(relativePath, path + '/').href
   }
   if (!path.startsWith('/')) {
     path = '/' + path
@@ -28,5 +28,5 @@ export const getExtensionAbsolutePath = (
   if (isBuiltin) {
     return `${assetDir}/extensions/${id}/${relativePath}`
   }
-  return new URL('/remote' + path + '/' + relativePath, origin).toString()
+  return new URL('/remote' + path + '/' + relativePath, origin).href
 }

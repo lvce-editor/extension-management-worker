@@ -7,8 +7,6 @@ export const handleRpcInfos = (extension: any, platform: any): void => {
       return
     }
     const rpcs = extension.rpc
-    const urlPrefix = GetUrlPrefix.getUrlPrefix(platform, extension.path)
-
     if (!rpcs) {
       return
     }
@@ -16,6 +14,7 @@ export const handleRpcInfos = (extension: any, platform: any): void => {
       return
     }
 
+    const urlPrefix = GetUrlPrefix.getUrlPrefix(platform, extension.path)
     for (const rpc of rpcs) {
       rpc.url = `${urlPrefix}/${rpc.url}`
       ExtensionHostRpcState.add(rpc.id, rpc)

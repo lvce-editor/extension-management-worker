@@ -39,25 +39,27 @@ const createEmptyRuntimeStatus = (id: string): RuntimeStatus => {
   }
 }
 
-let extensionsState: ExtensionsState = createInitialState()
+const state = {
+  extensionsState: createInitialState(),
+}
 
 export const get = (): ExtensionsState => {
-  return extensionsState
+  return state.extensionsState
 }
 
 export const set = (newState: ExtensionsState): void => {
-  extensionsState = newState
+  state.extensionsState = newState
 }
 
 export const update = (newState: Partial<ExtensionsState>): void => {
   set({
-    ...extensionsState,
+    ...state.extensionsState,
     ...newState,
   })
 }
 
 export const reset = (): void => {
-  extensionsState = createInitialState()
+  state.extensionsState = createInitialState()
 }
 
 export const setPlatform = (platform: number): void => {
@@ -65,7 +67,7 @@ export const setPlatform = (platform: number): void => {
 }
 
 export const hasWebExtensionUri = (uri: string): boolean => {
-  return extensionsState.webExtensions.some((extension) => extension.uri === uri)
+  return state.extensionsState.webExtensions.some((extension) => extension.uri === uri)
 }
 
 export const setWebExtensions = (webExtensions: readonly any[]): void => {
@@ -74,7 +76,7 @@ export const setWebExtensions = (webExtensions: readonly any[]): void => {
 
 export const addWebExtension = (extension: any): void => {
   update({
-    webExtensions: [...extensionsState.webExtensions, extension],
+    webExtensions: [...state.extensionsState.webExtensions, extension],
   })
 }
 
@@ -85,14 +87,14 @@ export const clearCachedExtensions = (): void => {
 export const setRuntimeStatus = (status: RuntimeStatus): void => {
   update({
     runtimeStatuses: {
-      ...extensionsState.runtimeStatuses,
+      ...state.extensionsState.runtimeStatuses,
       [status.id]: { ...status },
     },
   })
 }
 
 export const updateRuntimeStatus = (id: string, statusUpdate: Partial<RuntimeStatus>): void => {
-  const previousStatus = extensionsState.runtimeStatuses[id] || createEmptyRuntimeStatus(id)
+  const previousStatus = state.extensionsState.runtimeStatuses[id] || createEmptyRuntimeStatus(id)
   setRuntimeStatus({
     ...previousStatus,
     ...statusUpdate,
@@ -101,7 +103,7 @@ export const updateRuntimeStatus = (id: string, statusUpdate: Partial<RuntimeSta
 }
 
 export const getRuntimeStatus = (extensionId: string): RuntimeStatus | undefined => {
-  return extensionsState.runtimeStatuses[extensionId]
+  return state.extensionsState.runtimeStatuses[extensionId]
 }
 
 export const resetRuntimeStatuses = (): void => {

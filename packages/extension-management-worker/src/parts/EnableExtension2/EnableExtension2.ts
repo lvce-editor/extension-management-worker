@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/consistent-json-file-read */
 import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
 import { FileSystemWorker, RendererWorker } from '@lvce-editor/rpc-registry'

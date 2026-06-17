@@ -27,6 +27,16 @@ const getAbsolutePath = (extension: any, assetDir: string, platform: number): st
   )
 }
 
+const doActivateExtension = async (extension: any, absolutePath: string, event: string, platform: number): Promise<void> => {
+  const extensionId = getExtensionId(extension)
+  try {
+    await activateExtension3(extension, absolutePath, event, platform)
+    runningExtensions[extensionId] = true
+  } finally {
+    delete activatingExtensions[extensionId]
+  }
+}
+
 const activateExtension = async (extension: any, event: string, assetDir: string, platform: number): Promise<void> => {
   const extensionId = getExtensionId(extension)
   if (runningExtensions[extensionId]) {
@@ -34,13 +44,7 @@ const activateExtension = async (extension: any, event: string, assetDir: string
   }
   if (!Object.hasOwn(activatingExtensions, extensionId)) {
     const absolutePath = getAbsolutePath(extension, assetDir, platform)
-    activatingExtensions[extensionId] = activateExtension3(extension, absolutePath, event, platform)
-      .then(() => {
-        runningExtensions[extensionId] = true
-      })
-      .finally(() => {
-        delete activatingExtensions[extensionId]
-      })
+    activatingExtensions[extensionId] = doActivateExtension(extension, absolutePath, event, platform)
   }
   await activatingExtensions[extensionId]
 }

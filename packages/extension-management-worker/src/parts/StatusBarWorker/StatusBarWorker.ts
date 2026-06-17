@@ -1,12 +1,14 @@
-let rpc: any
+const state = {
+  rpc: undefined as any,
+}
 
 export const set = (value: any): void => {
-  rpc = value
+  state.rpc = value
 }
 
 export const invoke = async (method: string, ...params: readonly any[]): Promise<any> => {
-  if (!rpc) {
+  if (!state.rpc) {
     return undefined
   }
-  return rpc.invoke(method, ...params)
+  return state.rpc.invoke(method, ...params)
 }

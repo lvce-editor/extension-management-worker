@@ -4,7 +4,7 @@ export const createResponseFromData = (data: any): Response => {
   const responseString = JSON.stringify(data)
   const response = new Response(responseString, {
     headers: {
-      [HttpHeader.ContentLength]: `${responseString.length}`,
+      [HttpHeader.ContentLength]: String(responseString.length),
       [HttpHeader.ContentType]: 'application/json',
     },
   })

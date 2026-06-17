@@ -26,16 +26,10 @@ export const organizeExtensions = (extensions: readonly any[]): any => {
   const rejected = []
   const resolved = []
   for (const extension of extensions) {
-    switch (extension.status) {
-      case ExtensionManifestStatus.Rejected:
-        rejected.push(extension)
-        break
-      case ExtensionManifestStatus.Resolved:
-        resolved.push(extension)
-        break
-      default:
-        resolved.push(extension)
-        break
+    if (extension.status === ExtensionManifestStatus.Rejected) {
+      rejected.push(extension)
+    } else {
+      resolved.push(extension)
     }
   }
   return {

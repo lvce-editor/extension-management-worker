@@ -16,8 +16,8 @@ import { executeCompletionProvider, executeResolveCompletionItemProvider } from 
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
-import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -49,10 +49,13 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addWebExtension': addWebExtension,
+  'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
   'Extensions.createWebViewWorkerRpc2': createWebViewWorkerRpc2,
   'Extensions.disable': disableExtension,
   'Extensions.disable2': disableExtension2,
+  'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
+  'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': wrapCommand(executeCommand),
@@ -61,7 +64,6 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
-  'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,
@@ -75,8 +77,6 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItems': getStatusBarItems,
   'Extensions.getViews': getViews,
-  'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
-  'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,

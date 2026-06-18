@@ -2,9 +2,9 @@ import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
+import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { createViewInstance, dispatchViewEvent, disposeViewInstance } from '../src/parts/ExtensionView/ExtensionView.ts'
 import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
-import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const state: {

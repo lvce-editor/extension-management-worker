@@ -7,8 +7,8 @@ import {
   getRpc,
   type ExtensionManifest as RpcExtensionManifest,
 } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
-import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 interface ManifestView {
   readonly id?: string
@@ -49,13 +49,7 @@ const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, 
   return getRpcForView(viewId, assetDir, platform)
 }
 
-export const createViewInstance = async (
-  viewId: string,
-  uid: number,
-  context: unknown,
-  assetDir: string,
-  platform: number,
-): Promise<unknown> => {
+export const createViewInstance = async (viewId: string, uid: number, context: unknown, assetDir: string, platform: number): Promise<unknown> => {
   const rpc = await getRpcForView(viewId, assetDir, platform)
   const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
   ExtensionViewInstanceState.set(uid, {
@@ -65,13 +59,7 @@ export const createViewInstance = async (
   return result
 }
 
-export const dispatchViewEvent = async (
-  viewId: string,
-  uid: number,
-  event: unknown,
-  assetDir: string,
-  platform: number,
-): Promise<unknown> => {
+export const dispatchViewEvent = async (viewId: string, uid: number, event: unknown, assetDir: string, platform: number): Promise<unknown> => {
   const rpc = await getRpcForInstance(viewId, uid, assetDir, platform)
   return rpc.invoke('ExtensionApi.dispatchViewEvent', uid, event)
 }

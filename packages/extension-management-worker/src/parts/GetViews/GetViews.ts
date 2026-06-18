@@ -14,6 +14,7 @@ interface ManifestView {
   readonly icon?: string
   readonly id?: string
   readonly iframe?: ManifestViewIframe
+  readonly kind?: string
   readonly title?: string
 }
 
@@ -31,6 +32,7 @@ interface ExtensionManifest {
 interface RegisteredView {
   readonly icon?: string
   readonly id?: string
+  readonly kind?: string
   readonly title?: string
 }
 
@@ -86,6 +88,7 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
     icon: registeredView.icon || manifestView?.icon || '',
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
+    kind: registeredView.kind || manifestView?.kind || '',
     title: registeredView.title || manifestView?.title || id,
   }
 }

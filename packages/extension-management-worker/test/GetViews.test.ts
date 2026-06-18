@@ -103,6 +103,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
         sandbox: ['allow-scripts'],
         src: '/extensions/extension-one/view.html',
       },
+      kind: '',
       title: 'Testing',
     },
     {
@@ -110,6 +111,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
       icon: 'symbol-output',
       id: 'sample.views.output',
       iframe: undefined,
+      kind: '',
       title: 'Output',
     },
   ])
@@ -145,4 +147,43 @@ test('getViewsFromExtensionWorkers ignores invalid registry snapshots', async ()
       1,
     ),
   ).resolves.toEqual([])
+})
+
+test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        id: 'sample.views.testing',
+        kind: 'virtualDom',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          views: [
+            {
+              id: 'sample.views.testing',
+            },
+          ],
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'extension-one',
+      icon: '',
+      id: 'sample.views.testing',
+      iframe: undefined,
+      kind: 'virtualDom',
+      title: 'sample.views.testing',
+    },
+  ])
 })

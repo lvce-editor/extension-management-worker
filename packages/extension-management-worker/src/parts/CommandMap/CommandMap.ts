@@ -17,6 +17,7 @@ import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteD
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -48,10 +49,13 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addWebExtension': addWebExtension,
+  'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
   'Extensions.createWebViewWorkerRpc2': createWebViewWorkerRpc2,
   'Extensions.disable': disableExtension,
   'Extensions.disable2': disableExtension2,
+  'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
+  'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.executeCommand': wrapCommand(executeCommand),
@@ -78,6 +82,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
+  'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
 }

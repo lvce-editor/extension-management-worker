@@ -35,6 +35,7 @@ import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
+import { getPreference, setPreference } from '../Preferences/Preferences.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
@@ -73,6 +74,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getDynamicWebExtensions': getDynamicWebExtensions,
   'Extensions.getExtension': getExtension,
   'Extensions.getLanguages': getLanguages,
+  'Extensions.getPreference': getPreference,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
@@ -85,6 +87,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
+  'Extensions.setPreference': setPreference,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
 }

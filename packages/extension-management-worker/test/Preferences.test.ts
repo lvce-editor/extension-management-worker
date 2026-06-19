@@ -1,6 +1,6 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as Preferences from '../src/parts/Preferences/Preferences.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {

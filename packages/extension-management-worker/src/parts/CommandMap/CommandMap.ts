@@ -35,6 +35,7 @@ import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
+import { readFile } from '../ReadFile/ReadFile.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
@@ -46,6 +47,7 @@ export const wrapCommand = (command: (extensionsState: ExtensionState, ...args: 
 }
 
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
+  'ExtensionApi.readFile': readFile,
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,

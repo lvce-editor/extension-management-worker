@@ -4,15 +4,17 @@ import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
 import { readFile } from '../src/parts/ReadFile/ReadFile.ts'
 
-let rendererWorker: DisposableMockRpc | undefined
+const state: { rendererWorker: DisposableMockRpc | undefined } = {
+  rendererWorker: undefined,
+}
 
 afterEach(() => {
-  rendererWorker?.[Symbol.dispose]()
-  rendererWorker = undefined
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = undefined
 })
 
 test('readFile reads through the renderer file system', async () => {
-  rendererWorker = RendererWorker.registerMockRpc({
+  state.rendererWorker = RendererWorker.registerMockRpc({
     'FileSystem.readFile': async (uri: string): Promise<string> => {
       return `content:${uri}`
     },
@@ -20,7 +22,7 @@ test('readFile reads through the renderer file system', async () => {
 
   await expect(readFile('memfs:///workspace/.prettierignore')).resolves.toBe('content:memfs:///workspace/.prettierignore')
 
-  expect(rendererWorker.invocations).toEqual([['FileSystem.readFile', 'memfs:///workspace/.prettierignore']])
+  expect(state.rendererWorker.invocations).toEqual([['FileSystem.readFile', 'memfs:///workspace/.prettierignore']])
 })
 
 test('commandMap exposes extension api readFile', () => {

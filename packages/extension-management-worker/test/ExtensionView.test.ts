@@ -13,6 +13,8 @@ const state: {
   sharedProcess: undefined,
 }
 
+const { dispose } = Symbol
+
 const createRpc = (): {
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
@@ -49,7 +51,7 @@ afterEach(() => {
   ExtensionViewInstanceState.clear()
   ExtensionsState.reset()
   IsolatedExtensionHostWorkerState.clear()
-  state.sharedProcess?.[Symbol.dispose]()
+  state.sharedProcess?.[dispose]()
   state.sharedProcess = undefined
 })
 

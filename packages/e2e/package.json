@@ -11,6 +11,6 @@
     "type-check": "tsc"
   },
   "devDependencies": {
-    "@lvce-editor/test-with-playwright": "^20.1.0"
+    "@lvce-editor/test-with-playwright": "^20.2.0"
   }
 }

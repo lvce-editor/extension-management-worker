@@ -20,7 +20,8 @@
     "noUncheckedSideEffectImports": true,
     "exactOptionalPropertyTypes": true,
     "allowImportingTsExtensions": true,
-    "composite": true
+    "composite": true,
+    "skipLibCheck": true
   },
   "include": ["src", "test"]
 }

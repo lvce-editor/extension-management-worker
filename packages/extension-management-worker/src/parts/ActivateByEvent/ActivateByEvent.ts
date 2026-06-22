@@ -4,8 +4,8 @@ import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 export interface ActivateByEventResult {
-  readonly hasActivatedExtensions: boolean
   readonly error: Error | undefined
+  readonly hasActivatedExtensions: boolean
 }
 
 const activatingExtensions: Record<string, Promise<void>> = Object.create(null)
@@ -59,8 +59,8 @@ export const activateByEvent = async (event: string, assetDir: string, platform:
     if (event === 'none') {
       await Promise.all(Object.values(activatingExtensions))
       return {
-        hasActivatedExtensions: Object.keys(activatingExtensions).length > 0,
         error: undefined,
+        hasActivatedExtensions: Object.keys(activatingExtensions).length > 0,
       }
     }
     const extensions = await getAllExtensions(assetDir, platform)
@@ -69,13 +69,13 @@ export const activateByEvent = async (event: string, assetDir: string, platform:
       await activateExtension(extension, event, assetDir, platform)
     }
     return {
-      hasActivatedExtensions: matchingExtensions.length > 0,
       error: undefined,
+      hasActivatedExtensions: matchingExtensions.length > 0,
     }
   } catch (error) {
     return {
-      hasActivatedExtensions: false,
       error: error instanceof Error ? error : new Error(String(error)),
+      hasActivatedExtensions: false,
     }
   }
 }

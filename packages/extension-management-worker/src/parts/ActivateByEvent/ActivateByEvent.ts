@@ -3,6 +3,11 @@ import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensi
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
+export interface ActivateByEventResult {
+  readonly hasActivatedExtensions: boolean
+  readonly error: Error | undefined
+}
+
 const activatingExtensions: Record<string, Promise<void>> = Object.create(null)
 const runningExtensions: Record<string, boolean> = Object.create(null)
 
@@ -49,14 +54,28 @@ const activateExtension = async (extension: any, event: string, assetDir: string
   await activatingExtensions[extensionId]
 }
 
-export const activateByEvent = async (event: string, assetDir: string, platform: number): Promise<void> => {
-  if (event === 'none') {
-    await Promise.all(Object.values(activatingExtensions))
-    return
-  }
-  const extensions = await getAllExtensions(assetDir, platform)
-  const matchingExtensions = extensions.filter((extension) => matchesEvent(extension, event))
-  for (const extension of matchingExtensions) {
-    await activateExtension(extension, event, assetDir, platform)
+export const activateByEvent = async (event: string, assetDir: string, platform: number): Promise<ActivateByEventResult> => {
+  try {
+    if (event === 'none') {
+      await Promise.all(Object.values(activatingExtensions))
+      return {
+        hasActivatedExtensions: Object.keys(activatingExtensions).length > 0,
+        error: undefined,
+      }
+    }
+    const extensions = await getAllExtensions(assetDir, platform)
+    const matchingExtensions = extensions.filter((extension) => matchesEvent(extension, event))
+    for (const extension of matchingExtensions) {
+      await activateExtension(extension, event, assetDir, platform)
+    }
+    return {
+      hasActivatedExtensions: matchingExtensions.length > 0,
+      error: undefined,
+    }
+  } catch (error) {
+    return {
+      hasActivatedExtensions: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+    }
   }
 }

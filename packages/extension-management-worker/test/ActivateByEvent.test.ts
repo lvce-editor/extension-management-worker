@@ -30,8 +30,8 @@ test('activateByEvent returns hasActivatedExtensions false when no extensions ma
   const result = await activateByEvent('onCommand:test', '', 2)
 
   expect(result).toEqual({
-    hasActivatedExtensions: false,
     error: undefined,
+    hasActivatedExtensions: false,
   })
 })
 
@@ -53,8 +53,8 @@ test('activateByEvent returns hasActivatedExtensions false when event is none an
   const result = await activateByEvent('none', '', 1)
 
   expect(result).toEqual({
-    hasActivatedExtensions: false,
     error: undefined,
+    hasActivatedExtensions: false,
   })
 })
 

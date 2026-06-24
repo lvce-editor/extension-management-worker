@@ -13,7 +13,7 @@ test('addWebExtension - skips duplicate uri', async () => {
 
   const result = await addWebExtension('https://example.com/extension')
 
-  expect(result).toBe(undefined)
+  expect(result).toBeUndefined()
   expect(fetchSpy).not.toHaveBeenCalled()
   expect(ExtensionsState.get().webExtensions).toEqual([{ uri: 'https://example.com/extension' }])
 })
@@ -45,5 +45,5 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
       uri,
     },
   ])
-  expect(ExtensionsState.get().cachedExtensions).toBe(undefined)
+  expect(ExtensionsState.get().cachedExtensions).toBeUndefined()
 })

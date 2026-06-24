@@ -10,8 +10,6 @@ const state: { rendererWorker: DisposableMockRpc | undefined } = {
   rendererWorker: undefined,
 }
 
-const { dispose } = Symbol
-
 const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState => {
   return {
     activatedExtensions: Object.create(null),
@@ -26,7 +24,7 @@ const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState =
 
 afterEach(() => {
   IsolatedExtensionHostWorkerState.clear()
-  state.rendererWorker?.[dispose]()
+  state.rendererWorker?.[Symbol.dispose]()
   state.rendererWorker = undefined
 })
 

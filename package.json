@@ -15,7 +15,7 @@
     "dev": "node packages/build/src/dev.js",
     "format": "prettier --write .",
     "postinstall": "lerna bootstrap --ci",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . && prettier --check . && knip --no-config-hints",
     "measure": "cd packages/memory && npm run measure",
     "test": "lerna run test",
     "type-check": "tsc -b"
@@ -28,7 +28,9 @@
   "devDependencies": {
     "@lerna/legacy-package-management": "^8.2.4",
     "@lvce-editor/eslint-config": "^13.5.0",
+    "@lvce-editor/eslint-plugin-github-actions": "^13.5.0",
     "eslint": "^10.5.0",
+    "knip": "^6.20.0",
     "lerna": "^8.2.4",
     "prettier": "^3.8.4",
     "typescript": "^6.0.3"

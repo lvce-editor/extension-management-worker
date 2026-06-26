@@ -42,7 +42,7 @@ import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSyste
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
-export const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
+const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
   return (...args: readonly any[]): any => {
     return command(ExtensionsState.get(), ...args)
   }

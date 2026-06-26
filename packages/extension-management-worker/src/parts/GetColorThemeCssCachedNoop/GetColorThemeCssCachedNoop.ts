@@ -1,7 +1,12 @@
-export const get = (colorThemeId: any) => {
+const get = (colorThemeId: any) => {
   return ''
 }
 
-export const set = (colorThemeId: any, data: any) => {
+const set = (colorThemeId: any, data: any) => {
   //  noop
+}
+
+export const cache = {
+  get,
+  set,
 }

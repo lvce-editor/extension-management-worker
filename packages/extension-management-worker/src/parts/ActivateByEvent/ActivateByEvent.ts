@@ -12,7 +12,12 @@ const activatingExtensions: Record<string, Promise<void>> = Object.create(null)
 const runningExtensions: Record<string, boolean> = Object.create(null)
 
 const matchesEvent = (extension: any, event: string): boolean => {
-  return IsExtensionIsolated.isExtensionIsolated(extension) && Array.isArray(extension.activation) && extension.activation.includes(event)
+  return (
+    !extension.disabled &&
+    IsExtensionIsolated.isExtensionIsolated(extension) &&
+    Array.isArray(extension.activation) &&
+    extension.activation.includes(event)
+  )
 }
 
 const getExtensionId = (extension: any): string => {

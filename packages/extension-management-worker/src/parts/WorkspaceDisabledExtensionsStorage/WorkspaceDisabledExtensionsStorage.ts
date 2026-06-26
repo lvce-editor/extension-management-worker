@@ -26,7 +26,7 @@ const getWorkspaceConfigDirUri = async (): Promise<string> => {
   return joinUri(workspaceUri, WorkspaceConfigFolderName)
 }
 
-export const getWorkspaceDisabledExtensionsJsonUri = async (): Promise<string> => {
+const getWorkspaceDisabledExtensionsJsonUri = async (): Promise<string> => {
   const configDirUri = await getWorkspaceConfigDirUri()
   return joinUri(configDirUri, DisabledExtensionsFileName)
 }
@@ -48,7 +48,7 @@ const readDisabledExtensionIdsFromUri = async (uri: string): Promise<readonly st
   return parseDisabledExtensions(content)
 }
 
-export const readDisabledExtensionIds = async (): Promise<readonly string[]> => {
+const readDisabledExtensionIds = async (): Promise<readonly string[]> => {
   const uri = await getWorkspaceDisabledExtensionsJsonUri()
   return readDisabledExtensionIdsFromUri(uri)
 }

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["*.js"],
+      "ignoreDependencies": ["@lerna/legacy-package-management"]
+    },
+    "packages/build": {
+      "entry": ["src/build.js", "src/build-static.ts", "src/dev.js"],
+      "project": ["src/**/*.js", "src/**/*.ts"],
+      "ignoreDependencies": ["esbuild"]
+    },
+    "packages/e2e": {
+      "entry": ["src/**/*.ts", "fixtures/**/main.js"],
+      "project": ["src/**/*.ts", "fixtures/**/*.js"]
+    },
+    "packages/extension-management-worker": {
+      "entry": ["test/**/*.test.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"],
+      "ignoreFiles": [
+        "src/parts/ActivateExtension/ActivateExtension.ts",
+        "src/parts/CacheEnabled/CacheEnabled.ts",
+        "src/parts/CreateLegacyRpc/CreateLegacyRpc.ts",
+        "src/parts/CreateRpcWithId/CreateRpcWithId.ts",
+        "src/parts/CreateWebView3/CreateWebView3.ts",
+        "src/parts/DeactivateExtension/DeactivateExtension.ts",
+        "src/parts/DoGetExtensions/DoGetExtensions.ts",
+        "src/parts/ExtensionHostRpc/ExtensionHostRpc.ts",
+        "src/parts/ExtensionHostWorkerContentSecurityPolicy/ExtensionHostWorkerContentSecurityPolicy.ts",
+        "src/parts/ExtensionManifestStatus/ExtensionManifestStatus.ts",
+        "src/parts/ExtensionMeta/ExtensionMeta.ts",
+        "src/parts/ExtensionsCacheKey/ExtensionsCacheKey.ts",
+        "src/parts/GetExtensionsEtag/GetExtensionsEtag.ts",
+        "src/parts/GetExtensionsFromCache/GetExtensionsFromCache.ts",
+        "src/parts/GetOrCreateRpcWithId/GetOrCreateRpcWithId.ts",
+        "src/parts/GetWebSocketUrl/GetWebSocketUrl.ts",
+        "src/parts/GetWebViews/GetWebViews.ts",
+        "src/parts/GetWebViewsFromExtensions/GetWebViewsFromExtensions.ts",
+        "src/parts/Id/Id.ts",
+        "src/parts/IframeWorkerCommandMap/IframeWorkerCommandMap.ts",
+        "src/parts/IpcParent/IpcParent.ts",
+        "src/parts/IpcParentModule/IpcParentModule.ts",
+        "src/parts/IpcParentType/IpcParentType.ts",
+        "src/parts/IpcParentWithElectronMessagePort/IpcParentWithElectronMessagePort.ts",
+        "src/parts/IpcParentWithModuleWorkerAndWorkaroundForChromeDevtoolsBug/IpcParentWithModuleWorkerAndWorkaroundForChromeDevtoolsBug.ts",
+        "src/parts/IpcParentWithNode/IpcParentWithNode.ts",
+        "src/parts/IpcParentWithWebSocket/IpcParentWithWebSocket.ts",
+        "src/parts/LoadExtensions/LoadExtensions.ts",
+        "src/parts/Platform/Platform.ts",
+        "src/parts/RpcState/RpcState.ts",
+        "src/parts/SaveExtensionsInCache/SaveExtensionsInCache.ts",
+        "src/parts/SendMessagePortToElectron/SendMessagePortToElectron.ts",
+        "src/parts/WebSocketProtocol/WebSocketProtocol.ts"
+      ],
+      "ignoreIssues": {
+        "src/parts/Character/Character.ts": ["exports"],
+        "src/parts/CommandMap/CommandMap.ts": ["exports"],
+        "src/parts/ExtensionHostRpcState/ExtensionHostRpcState.ts": ["exports"],
+        "src/parts/ExtensionHostWebViewState/ExtensionHostWebViewState.ts": ["exports"],
+        "src/parts/ExtensionsState/ExtensionsState.ts": ["exports"],
+        "src/parts/GetColorThemeCssCachedNoop/GetColorThemeCssCachedNoop.ts": ["exports"],
+        "src/parts/HttpHeader/HttpHeader.ts": ["exports"],
+        "src/parts/IframeWorkerState/IframeWorkerState.ts": ["exports"],
+        "src/parts/Logger/Logger.ts": ["exports"],
+        "src/parts/Path/Path.ts": ["exports"],
+        "src/parts/RendererWorkerIpcParentType/RendererWorkerIpcParentType.ts": ["exports"],
+        "src/parts/RpcId/RpcId.ts": ["exports"]
+      }
+    },
+    "packages/memory": {
+      "entry": ["src/measureMemory.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["playwright"]
+    },
+    "packages/server": {
+      "project": ["src/**/*.js"]
+    }
+  }
+}

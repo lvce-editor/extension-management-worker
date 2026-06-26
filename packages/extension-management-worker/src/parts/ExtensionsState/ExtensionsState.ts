@@ -105,7 +105,3 @@ export const updateRuntimeStatus = (id: string, statusUpdate: Partial<RuntimeSta
 export const getRuntimeStatus = (extensionId: string): RuntimeStatus | undefined => {
   return state.extensionsState.runtimeStatuses[extensionId]
 }
-
-export const resetRuntimeStatuses = (): void => {
-  update({ runtimeStatuses: Object.create(null) })
-}

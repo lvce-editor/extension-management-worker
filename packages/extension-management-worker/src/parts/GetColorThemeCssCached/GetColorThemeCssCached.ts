@@ -1,4 +1,4 @@
-import * as GetColorThemeCssCachedNoop from '../GetColorThemeCssCachedNoop/GetColorThemeCssCachedNoop.ts'
+import { cache as GetColorThemeCssCachedNoop } from '../GetColorThemeCssCachedNoop/GetColorThemeCssCachedNoop.ts'
 // TODO make storage configurable via settings as localstorage or indexeddb
 // also allow disabling caching via settings
 // then measure which option could be fastest

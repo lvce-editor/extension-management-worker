@@ -2,6 +2,7 @@ import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
 import { FileSystemWorker, RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionStorage from '../ExtensionStorage/ExtensionStorage.ts'
+import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 
 export const enableExtension2 = async (id: string, platform: number): Promise<void> => {
   Assert.string(id)
@@ -23,4 +24,5 @@ export const enableExtension2 = async (id: string, platform: number): Promise<vo
     await FileSystemWorker.writeFile(disabledExtensionsJsonPath, newContent)
   }
   await ExtensionStorage.enableExtension2(id, platform)
+  await invalidateExtensionsCache()
 }

@@ -1,10 +1,21 @@
-import { beforeEach, expect, jest, test } from '@jest/globals'
+import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { addWebExtension } from '../src/parts/AddWebExtension/AddWebExtension.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+
+const state: { rendererWorker: DisposableMockRpc | undefined } = {
+  rendererWorker: undefined,
+}
 
 beforeEach(() => {
   jest.restoreAllMocks()
   ExtensionsState.reset()
+})
+
+afterEach(() => {
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = undefined
 })
 
 test('addWebExtension - skips duplicate uri', async () => {
@@ -19,6 +30,9 @@ test('addWebExtension - skips duplicate uri', async () => {
 })
 
 test('addWebExtension - adds new uri once and clears cache', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'ExtensionManagement.invalidateExtensionsCache'() {},
+  })
   const uri = 'https://example.com/extension'
   const manifest = {
     name: 'sample-extension',
@@ -46,4 +60,5 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     },
   ])
   expect(ExtensionsState.get().cachedExtensions).toBeUndefined()
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
 })

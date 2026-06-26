@@ -1,0 +1,58 @@
+import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
+import { afterEach, beforeEach, expect, test } from '@jest/globals'
+import { PlatformType } from '@lvce-editor/constants'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { disableExtension2 } from '../src/parts/DisableExtension2/DisableExtension2.ts'
+import { enableExtension2 } from '../src/parts/EnableExtension2/EnableExtension2.ts'
+import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import { installExtension } from '../src/parts/InstallExtension/InstallExtension.ts'
+import { uninstallExtension } from '../src/parts/UninstallExtension/UninstallExtension.ts'
+
+const state: { rendererWorker: DisposableMockRpc | undefined } = {
+  rendererWorker: undefined,
+}
+
+const getRendererWorker = (): DisposableMockRpc => {
+  if (!state.rendererWorker) {
+    throw new Error('Missing renderer worker')
+  }
+  return state.rendererWorker
+}
+
+beforeEach(() => {
+  ExtensionsState.reset()
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'ExtensionManagement.invalidateExtensionsCache'() {},
+  })
+})
+
+afterEach(() => {
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = undefined
+})
+
+test('disableExtension2 invalidates extension cache', async () => {
+  await disableExtension2('sample.extension', PlatformType.Test)
+
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+})
+
+test('enableExtension2 invalidates extension cache', async () => {
+  ExtensionsState.update({ disabledIds: ['sample.extension'] })
+
+  await enableExtension2('sample.extension', PlatformType.Test)
+
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+})
+
+test('uninstallExtension invalidates extension cache', async () => {
+  await uninstallExtension()
+
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+})
+
+test('installExtension invalidates extension cache', async () => {
+  await installExtension()
+
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+})

@@ -5,6 +5,31 @@ import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
+import * as WorkspaceDisabledExtensionsStorage from '../WorkspaceDisabledExtensionsStorage/WorkspaceDisabledExtensionsStorage.ts'
+
+const withWorkspaceDisabledState = (extensions: readonly any[], disabledIds: readonly string[]): readonly any[] => {
+  if (disabledIds.length === 0) {
+    return extensions
+  }
+  const disabledIdsSet = new Set(disabledIds)
+  return extensions.map((extension) => {
+    if (!disabledIdsSet.has(extension.id)) {
+      return extension
+    }
+    return {
+      ...extension,
+      disabled: true,
+    }
+  })
+}
+
+const getExtensionsWithWorkspaceState = async (extensions: readonly any[]): Promise<readonly any[]> => {
+  if (extensions.length === 0) {
+    return extensions
+  }
+  const workspaceDisabledIds = await WorkspaceDisabledExtensionsStorage.readDisabledExtensionIdsSafe()
+  return withWorkspaceDisabledState(extensions, workspaceDisabledIds)
+}
 
 export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number) => {
   if (typeof assetDir !== 'string') {
@@ -18,8 +43,8 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
   const meta = extensionsState.webExtensions
   if (platform === PlatformType.Web) {
     const webExtensions = await getWebExtensions(assetDir)
-    return [...webExtensions, ...meta]
+    return getExtensionsWithWorkspaceState([...webExtensions, ...meta])
   }
   const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
-  return [...local, ...meta]
+  return getExtensionsWithWorkspaceState([...local, ...meta])
 }

@@ -54,10 +54,34 @@ const executeRendererCommand = (id: string, args: readonly unknown[]): Promise<u
 }
 
 export const executeCommand = async (extensionsState: ExtensionsState, id: string, ...args: readonly unknown[]): Promise<unknown> => {
+  const { result, wasFound } = await executeExtensionCommand(extensionsState, id, ...args)
+  if (wasFound) {
+    return result
+  }
+  return executeRendererCommand(id, args)
+}
+
+interface ExecuteCommandResult {
+  readonly result: unknown
+  readonly wasFound: boolean
+}
+
+export const executeExtensionCommand = async (
+  extensionsState: ExtensionsState,
+  id: string,
+  ...args: readonly unknown[]
+): Promise<ExecuteCommandResult> => {
   const { platform } = extensionsState
   const rpc = await getRpcForCommand(extensionsState, id, platform)
   if (rpc) {
-    return rpc.invoke('ExtensionApi.executeCommand', id, ...args)
+    const result = await rpc.invoke('ExtensionApi.executeCommand', id, ...args)
+    return {
+      result,
+      wasFound: true,
+    }
   }
-  return executeRendererCommand(id, args)
+  return {
+    result: undefined,
+    wasFound: false,
+  }
 }

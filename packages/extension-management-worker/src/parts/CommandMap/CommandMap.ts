@@ -13,7 +13,7 @@ import { disableWorkspaceExtension } from '../DisableWorkspaceExtension/DisableW
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
-import { executeCommand } from '../ExecuteCommand/ExecuteCommand.ts'
+import { executeCommand, executeExtensionCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
@@ -67,6 +67,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeCommand': wrapCommand(executeCommand),
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
+  'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),

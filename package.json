@@ -29,7 +29,7 @@
     "@lerna/legacy-package-management": "^8.2.4",
     "@lvce-editor/eslint-config": "^13.6.0",
     "@lvce-editor/eslint-plugin-github-actions": "^13.6.0",
-    "eslint": "^10.5.0",
+    "eslint": "^10.6.0",
     "knip": "^6.21.0",
     "lerna": "^8.2.4",
     "prettier": "^3.8.5",

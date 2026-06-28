@@ -1,7 +1,8 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
-import { getAbsolutePath, getExtensionId, getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
+import { getAbsolutePath, getExtensionId } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 interface ManifestViewIframe {
   readonly credentialless?: boolean
@@ -97,13 +98,33 @@ const getRpcViewRegistrySnapshot = async (rpc: Rpc): Promise<ViewRegistrySnapsho
   return rpc.invoke('ExtensionApi.getViewRegistrySnapshot')
 }
 
-const getExtensionViews = async (extension: ExtensionManifest, assetDir: string, platform: number): Promise<readonly any[]> => {
-  const rpc = await getRpc(extension, assetDir, platform)
-  const snapshot = await getRpcViewRegistrySnapshot(rpc)
-  if (!Array.isArray(snapshot.views)) {
-    return []
+const hasViewId = (view: ManifestView): view is ManifestView & { readonly id: string } => {
+  return typeof view.id === 'string'
+}
+
+const toRegisteredView = (view: ManifestView & { readonly id: string }): RegisteredView => {
+  return {
+    ...(typeof view.icon === 'string' ? { icon: view.icon } : {}),
+    id: view.id,
+    ...(typeof view.kind === 'string' ? { kind: view.kind } : {}),
+    ...(typeof view.title === 'string' ? { title: view.title } : {}),
   }
-  return snapshot.views.filter((view) => view && typeof view.id === 'string').map((view) => toView(extension, view, assetDir, platform))
+}
+
+const getManifestRegisteredViews = (extension: ExtensionManifest): readonly RegisteredView[] => {
+  return (extension.views || []).filter(hasViewId).map(toRegisteredView)
+}
+
+const getExtensionViews = async (extension: ExtensionManifest, assetDir: string, platform: number): Promise<readonly any[]> => {
+  const manifestViews = getManifestRegisteredViews(extension)
+  const existingRpc = IsolatedExtensionHostWorkerState.get(getExtensionId(extension))
+  if (!existingRpc) {
+    return manifestViews.map((view) => toView(extension, view, assetDir, platform))
+  }
+  const snapshot = await getRpcViewRegistrySnapshot(existingRpc)
+  const registeredViews = Array.isArray(snapshot.views) ? snapshot.views.filter((view) => view && typeof view.id === 'string') : []
+  const views = registeredViews.length > 0 ? registeredViews : manifestViews
+  return views.map((view) => toView(extension, view, assetDir, platform))
 }
 
 export const getViewsFromExtensionWorkers = async (

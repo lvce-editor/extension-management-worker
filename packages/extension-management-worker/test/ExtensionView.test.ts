@@ -13,7 +13,9 @@ const state: {
   sharedProcess: undefined,
 }
 
-const createRpc = (options: { readonly createError?: Error } = {}): {
+const createRpc = (
+  options: { readonly createError?: Error } = {},
+): {
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
 } => {

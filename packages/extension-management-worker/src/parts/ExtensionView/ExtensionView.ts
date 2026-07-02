@@ -35,7 +35,7 @@ const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedEr
     return {
       message: error.message,
       name: error.name,
-      ...(error.stack ? { stack: error.stack } : {}),
+      ...(error.stack && { stack: error.stack }),
     }
   }
   return {

@@ -101,7 +101,7 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
   const manifestView = getManifestView(extension, id)
   const css = getCss(extension, manifestView, assetDir, platform)
   return {
-    ...(css ? { css } : {}),
+    ...(css && { css }),
     extensionId: getExtensionId(extension),
     icon: registeredView.icon || manifestView?.icon || '',
     id,

@@ -27,11 +27,7 @@ export const createIsolatedExtensionHostWorker = async (
   })
 }
 
-export const getOrCreateIsolatedExtensionHostWorker = async (
-  extensionId: string,
-  absolutePath: string,
-  workerName = '',
-): Promise<Rpc> => {
+export const getOrCreateIsolatedExtensionHostWorker = async (extensionId: string, absolutePath: string, workerName = ''): Promise<Rpc> => {
   const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
   if (existingRpc) {
     return existingRpc

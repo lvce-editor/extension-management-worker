@@ -12,6 +12,7 @@ export interface ExtensionManifest {
   readonly isWeb?: boolean
   readonly path?: string
   readonly uri?: string
+  readonly workerName?: string
 }
 
 export const getExtensionId = (extension: ExtensionManifest): string => {
@@ -38,5 +39,5 @@ export const getRpc = async (extension: ExtensionManifest, assetDir: string, pla
     return existingRpc
   }
   const absolutePath = getAbsolutePath(extension, assetDir, platform)
-  return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath)
+  return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath, extension.workerName || '')
 }

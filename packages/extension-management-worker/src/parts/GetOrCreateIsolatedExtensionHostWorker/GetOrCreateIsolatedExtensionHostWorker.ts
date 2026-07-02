@@ -14,6 +14,7 @@ type InvokeAndTransfer = typeof RendererWorker.invokeAndTransfer
 export const createIsolatedExtensionHostWorker = async (
   extensionId: string,
   absolutePath: string,
+  workerName: string,
   createRpc: CreateRpc,
   invokeAndTransfer: InvokeAndTransfer,
 ): Promise<Rpc> => {
@@ -21,12 +22,16 @@ export const createIsolatedExtensionHostWorker = async (
     commandMap: CommandMapRef.commandMapRef,
     isMessagePortOpen: true,
     send(port: MessagePort) {
-      return invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId, absolutePath)
+      return invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId, absolutePath, workerName)
     },
   })
 }
 
-export const getOrCreateIsolatedExtensionHostWorker = async (extensionId: string, absolutePath: string): Promise<Rpc> => {
+export const getOrCreateIsolatedExtensionHostWorker = async (
+  extensionId: string,
+  absolutePath: string,
+  workerName = '',
+): Promise<Rpc> => {
   const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
   if (existingRpc) {
     return existingRpc
@@ -34,6 +39,7 @@ export const getOrCreateIsolatedExtensionHostWorker = async (extensionId: string
   const rpc = await createIsolatedExtensionHostWorker(
     extensionId,
     absolutePath,
+    workerName,
     TransferMessagePortRpcParent.create,
     RendererWorker.invokeAndTransfer,
   )

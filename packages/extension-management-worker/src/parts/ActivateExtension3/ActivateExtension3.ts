@@ -9,7 +9,7 @@ export const activateExtension3 = async (extension: any, absolutePath: string, a
   HandleRpcInfos.handleRpcInfos(extension, platform)
   const extensionId = extension.id || interExtensionId(extension.uri)
   if (IsExtensionIsolated.isExtensionIsolated(extension)) {
-    await GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath)
+    await GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath, extension.workerName || '')
     return
   }
   await importExtension(extensionId, absolutePath, activationEvent)

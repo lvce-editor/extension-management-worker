@@ -18,6 +18,32 @@ interface ExtensionManifest extends RpcExtensionManifest {
   readonly views?: readonly ManifestView[]
 }
 
+interface CreateViewInstanceSuccess {
+  readonly ok: true
+  readonly result: unknown
+}
+
+interface CreateViewInstanceError {
+  readonly error: ExtensionViewInstanceState.SerializedError
+  readonly ok: false
+}
+
+type CreateViewInstanceResult = CreateViewInstanceSuccess | CreateViewInstanceError
+
+const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedError => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      ...(error.stack ? { stack: error.stack } : {}),
+    }
+  }
+  return {
+    message: String(error),
+    name: 'Error',
+  }
+}
+
 const hasView = (extension: ExtensionManifest, viewId: string): boolean => {
   return Array.isArray(extension.views) && extension.views.some((view) => view.id === viewId)
 }
@@ -37,40 +63,79 @@ const getRpcForView = async (viewId: string, assetDir: string, platform: number)
   if (existingRpc) {
     return existingRpc
   }
-  await ActivateByEvent.activateByEvent(`onView:${viewId}`, assetDir, platform)
+  const activationResult = await ActivateByEvent.activateByEvent(`onView:${viewId}`, assetDir, platform)
+  if (activationResult.error) {
+    throw activationResult.error
+  }
   return getRpc(extension, assetDir, platform)
 }
 
-const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<Rpc> => {
+const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<Rpc | undefined> => {
   const instance = ExtensionViewInstanceState.get(uid)
   if (instance) {
+    if (instance.status === 'error') {
+      return undefined
+    }
     return instance.rpc
   }
   return getRpcForView(viewId, assetDir, platform)
 }
 
-export const createViewInstance = async (viewId: string, uid: number, context: unknown, assetDir: string, platform: number): Promise<unknown> => {
-  const rpc = await getRpcForView(viewId, assetDir, platform)
-  const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
-  ExtensionViewInstanceState.set(uid, {
-    rpc,
-    viewId,
-  })
-  return result
+export const createViewInstance = async (
+  viewId: string,
+  uid: number,
+  context: unknown,
+  assetDir: string,
+  platform: number,
+): Promise<CreateViewInstanceResult> => {
+  try {
+    const rpc = await getRpcForView(viewId, assetDir, platform)
+    const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
+    ExtensionViewInstanceState.set(uid, {
+      rpc,
+      status: 'ready',
+      viewId,
+    })
+    return {
+      ok: true,
+      result,
+    }
+  } catch (error) {
+    const serializedError = serializeError(error)
+    ExtensionViewInstanceState.set(uid, {
+      error: serializedError,
+      status: 'error',
+      viewId,
+    })
+    return {
+      error: serializedError,
+      ok: false,
+    }
+  }
 }
 
 export const dispatchViewEvent = async (viewId: string, uid: number, event: unknown, assetDir: string, platform: number): Promise<unknown> => {
   const rpc = await getRpcForInstance(viewId, uid, assetDir, platform)
+  if (!rpc) {
+    return undefined
+  }
   return rpc.invoke('ExtensionApi.dispatchViewEvent', uid, event)
 }
 
 export const disposeViewInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<void> => {
   const rpc = await getRpcForInstance(viewId, uid, assetDir, platform)
+  if (!rpc) {
+    ExtensionViewInstanceState.remove(uid)
+    return
+  }
   await rpc.invoke('ExtensionApi.disposeViewInstance', uid)
   ExtensionViewInstanceState.remove(uid)
 }
 
 export const saveViewInstanceState = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<unknown> => {
   const rpc = await getRpcForInstance(viewId, uid, assetDir, platform)
+  if (!rpc) {
+    return undefined
+  }
   return rpc.invoke('ExtensionApi.saveViewInstanceState', uid)
 }

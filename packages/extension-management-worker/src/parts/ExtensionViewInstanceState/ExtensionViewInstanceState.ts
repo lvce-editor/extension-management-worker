@@ -1,9 +1,24 @@
 import type { Rpc } from '@lvce-editor/rpc'
 
-interface ExtensionViewInstance {
+export interface SerializedError {
+  readonly message: string
+  readonly name: string
+  readonly stack?: string
+}
+
+interface ReadyExtensionViewInstance {
   readonly rpc: Rpc
+  readonly status: 'ready'
   readonly viewId: string
 }
+
+interface ErrorExtensionViewInstance {
+  readonly error: SerializedError
+  readonly status: 'error'
+  readonly viewId: string
+}
+
+type ExtensionViewInstance = ReadyExtensionViewInstance | ErrorExtensionViewInstance
 
 const instances: Record<number, ExtensionViewInstance> = Object.create(null)
 

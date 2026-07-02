@@ -11,6 +11,7 @@ interface ManifestViewIframe {
 }
 
 interface ManifestView {
+  readonly css?: string
   readonly icon?: string
   readonly id?: string
   readonly iframe?: ManifestViewIframe
@@ -55,6 +56,21 @@ const getManifestView = (extension: ExtensionManifest, id: string): ManifestView
   return extension.views?.find((view) => view.id === id)
 }
 
+const getCss = (extension: ExtensionManifest, manifestView: ManifestView | undefined, assetDir: string, platform: number): string => {
+  const css = manifestView?.css
+  if (typeof css !== 'string' || css.length === 0) {
+    return ''
+  }
+  return getAbsolutePath(
+    {
+      ...extension,
+      browser: css,
+    },
+    assetDir,
+    platform,
+  )
+}
+
 const getIframe = (
   extension: ExtensionManifest,
   manifestView: ManifestView | undefined,
@@ -83,7 +99,9 @@ const getIframe = (
 const toView = (extension: ExtensionManifest, registeredView: RegisteredView, assetDir: string, platform: number): any => {
   const id = registeredView.id || ''
   const manifestView = getManifestView(extension, id)
+  const css = getCss(extension, manifestView, assetDir, platform)
   return {
+    ...(css ? { css } : {}),
     extensionId: getExtensionId(extension),
     icon: registeredView.icon || manifestView?.icon || '',
     id,

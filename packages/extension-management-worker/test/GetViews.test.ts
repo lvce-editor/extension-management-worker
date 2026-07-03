@@ -58,6 +58,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
           path: '/extensions/extension-one',
           views: [
             {
+              css: 'media/view.css',
               icon: 'symbol-beaker',
               id: 'sample.views.testing',
               iframe: {
@@ -94,6 +95,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
     ),
   ).resolves.toEqual([
     {
+      css: '/extensions/extension-one/media/view.css',
       extensionId: 'extension-one',
       icon: 'symbol-beaker',
       id: 'sample.views.testing',

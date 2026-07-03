@@ -96,6 +96,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
   ).resolves.toEqual([
     {
       css: '/extensions/extension-one/media/view.css',
+      displayName: 'Testing',
       extensionId: 'extension-one',
       icon: 'symbol-beaker',
       id: 'sample.views.testing',
@@ -109,6 +110,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
       title: 'Testing',
     },
     {
+      displayName: 'Output',
       extensionId: 'extension-two',
       icon: 'symbol-output',
       id: 'sample.views.output',
@@ -180,12 +182,126 @@ test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
     ),
   ).resolves.toEqual([
     {
+      displayName: 'sample.views.testing',
       extensionId: 'extension-one',
       icon: '',
       id: 'sample.views.testing',
       iframe: undefined,
       kind: 'virtualDom',
       title: 'sample.views.testing',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers prefers registered displayName', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        displayName: 'Registered Display',
+        id: 'sample.views.testing',
+        name: 'Registered Name',
+        title: 'Registered Title',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          views: [
+            {
+              displayName: 'Manifest Display',
+              id: 'sample.views.testing',
+              name: 'Manifest Name',
+              title: 'Manifest Title',
+            },
+          ],
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([
+    {
+      displayName: 'Registered Display',
+      extensionId: 'extension-one',
+      icon: '',
+      id: 'sample.views.testing',
+      iframe: undefined,
+      kind: '',
+      title: 'Registered Display',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers falls back to manifest displayName and name', async () => {
+  const displayNameRpc = createRpc({
+    views: [
+      {
+        id: 'sample.views.display',
+      },
+    ],
+  })
+  const nameRpc = createRpc({
+    views: [
+      {
+        id: 'sample.views.name',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-display', displayNameRpc.rpc)
+  IsolatedExtensionHostWorkerState.set('extension-name', nameRpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-display',
+          isolated: true,
+          views: [
+            {
+              displayName: 'Manifest Display',
+              id: 'sample.views.display',
+              title: 'Manifest Title',
+            },
+          ],
+        },
+        {
+          id: 'extension-name',
+          isolated: true,
+          views: [
+            {
+              id: 'sample.views.name',
+              name: 'Manifest Name',
+            },
+          ],
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([
+    {
+      displayName: 'Manifest Display',
+      extensionId: 'extension-display',
+      icon: '',
+      id: 'sample.views.display',
+      iframe: undefined,
+      kind: '',
+      title: 'Manifest Display',
+    },
+    {
+      displayName: 'Manifest Name',
+      extensionId: 'extension-name',
+      icon: '',
+      id: 'sample.views.name',
+      iframe: undefined,
+      kind: '',
+      title: 'Manifest Name',
     },
   ])
 })

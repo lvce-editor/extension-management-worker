@@ -12,10 +12,12 @@ interface ManifestViewIframe {
 
 interface ManifestView {
   readonly css?: string
+  readonly displayName?: string
   readonly icon?: string
   readonly id?: string
   readonly iframe?: ManifestViewIframe
   readonly kind?: string
+  readonly name?: string
   readonly title?: string
 }
 
@@ -31,9 +33,11 @@ interface ExtensionManifest {
 }
 
 interface RegisteredView {
+  readonly displayName?: string
   readonly icon?: string
   readonly id?: string
   readonly kind?: string
+  readonly name?: string
   readonly title?: string
 }
 
@@ -96,18 +100,32 @@ const getIframe = (
   }
 }
 
+const getDisplayName = (registeredView: RegisteredView, manifestView: ManifestView | undefined, id: string): string => {
+  return (
+    registeredView.displayName ||
+    registeredView.name ||
+    registeredView.title ||
+    manifestView?.displayName ||
+    manifestView?.name ||
+    manifestView?.title ||
+    id
+  )
+}
+
 const toView = (extension: ExtensionManifest, registeredView: RegisteredView, assetDir: string, platform: number): any => {
   const id = registeredView.id || ''
   const manifestView = getManifestView(extension, id)
   const css = getCss(extension, manifestView, assetDir, platform)
+  const displayName = getDisplayName(registeredView, manifestView, id)
   return {
     ...(css ? { css } : {}),
+    displayName,
     extensionId: getExtensionId(extension),
     icon: registeredView.icon || manifestView?.icon || '',
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
     kind: registeredView.kind || manifestView?.kind || '',
-    title: registeredView.title || manifestView?.title || id,
+    title: displayName,
   }
 }
 

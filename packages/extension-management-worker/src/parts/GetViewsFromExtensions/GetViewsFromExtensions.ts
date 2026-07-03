@@ -1,9 +1,11 @@
 const toView = (extension: any, view: any): any => {
+  const displayName = view.displayName || view.name || view.title || view.id
   return {
+    displayName,
     extensionId: extension.id,
     icon: view.icon || '',
     id: view.id,
-    title: view.title || view.id,
+    title: displayName,
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Rpc } from '@lvce-editor/rpc'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
 import * as ExtensionViewInstanceState from '../ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
@@ -120,6 +121,18 @@ export const dispatchViewEvent = async (viewId: string, uid: number, event: unkn
     return undefined
   }
   return rpc.invoke('ExtensionApi.dispatchViewEvent', uid, event)
+}
+
+export const requestViewRerender = async (uid: number): Promise<void> => {
+  await RendererWorker.invoke('Viewlet.executeViewletCommand', uid, 'rerender')
+}
+
+export const renderViewInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<unknown> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (!instance || instance.status === 'error') {
+    return undefined
+  }
+  return instance.rpc.invoke('ExtensionApi.renderViewInstance', uid)
 }
 
 export const disposeViewInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<void> => {

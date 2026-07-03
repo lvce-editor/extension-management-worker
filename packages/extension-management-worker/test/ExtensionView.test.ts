@@ -1,15 +1,24 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
-import { createViewInstance, dispatchViewEvent, disposeViewInstance, saveViewInstanceState } from '../src/parts/ExtensionView/ExtensionView.ts'
+import {
+  createViewInstance,
+  dispatchViewEvent,
+  disposeViewInstance,
+  renderViewInstance,
+  requestViewRerender,
+  saveViewInstanceState,
+} from '../src/parts/ExtensionView/ExtensionView.ts'
 import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const state: {
+  rendererWorker: DisposableMockRpc | undefined
   sharedProcess: DisposableMockRpc | undefined
 } = {
+  rendererWorker: undefined,
   sharedProcess: undefined,
 }
 
@@ -39,6 +48,12 @@ const createRpc = (
           type: 'setPatches',
         }
       }
+      if (method === 'ExtensionApi.renderViewInstance') {
+        return {
+          patches: [],
+          type: 'setPatches',
+        }
+      }
       return undefined
     },
     invokeAndTransfer: async (): Promise<void> => {},
@@ -54,7 +69,9 @@ afterEach(() => {
   ExtensionViewInstanceState.clear()
   ExtensionsState.reset()
   IsolatedExtensionHostWorkerState.clear()
+  state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
+  state.rendererWorker = undefined
   state.sharedProcess = undefined
 })
 
@@ -218,4 +235,44 @@ test('view lifecycle calls no-op after failed createViewInstance', async () => {
   await expect(dispatchViewEvent('sample.views.testing', 1, { type: 'click' }, '', 2)).resolves.toBeUndefined()
   await expect(saveViewInstanceState('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
   expect(mock.invocations).toEqual([['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
+})
+
+test('requestViewRerender asks renderer worker to rerender viewlet instance', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Viewlet.executeViewletCommand'() {},
+  })
+
+  await requestViewRerender(1)
+
+  expect(state.rendererWorker.invocations).toEqual([['Viewlet.executeViewletCommand', 1, 'rerender']])
+})
+
+test('renderViewInstance proxies to isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(renderViewInstance('sample.views.testing', 1, '', 2)).resolves.toEqual({
+    patches: [],
+    type: 'setPatches',
+  })
+
+  expect(mock.invocations).toEqual([['ExtensionApi.renderViewInstance', 1]])
+})
+
+test('renderViewInstance no-ops for disposed or failed instances', async () => {
+  await expect(renderViewInstance('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
+  ExtensionViewInstanceState.set(1, {
+    error: {
+      message: 'create failed',
+      name: 'Error',
+    },
+    status: 'error',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(renderViewInstance('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
 })

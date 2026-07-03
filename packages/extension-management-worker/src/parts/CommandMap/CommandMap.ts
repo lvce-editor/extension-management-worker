@@ -90,6 +90,8 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
+  'Extensions.renderViewInstance': ExtensionView.renderViewInstance,
+  'Extensions.requestViewRerender': ExtensionView.requestViewRerender,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
   'Extensions.setPreference': setPreference,

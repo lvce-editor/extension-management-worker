@@ -71,6 +71,38 @@ const getCss = (extension: ExtensionManifest, manifestView: ManifestView | undef
   )
 }
 
+const isAbsoluteIcon = (icon: string): boolean => {
+  return icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('file://') || icon.startsWith('/')
+}
+
+const isRelativeIconPath = (icon: string): boolean => {
+  return icon.startsWith('./') || icon.startsWith('../') || icon.includes('/') || /\.(?:bmp|gif|ico|jpe?g|png|svg|webp)$/i.test(icon)
+}
+
+const getIcon = (
+  extension: ExtensionManifest,
+  manifestView: ManifestView | undefined,
+  registeredView: RegisteredView,
+  assetDir: string,
+  platform: number,
+): string => {
+  const manifestIcon = manifestView?.icon
+  if (typeof manifestIcon === 'string' && manifestIcon.length > 0) {
+    if (isAbsoluteIcon(manifestIcon) || !isRelativeIconPath(manifestIcon)) {
+      return manifestIcon
+    }
+    return getAbsolutePath(
+      {
+        ...extension,
+        browser: manifestIcon,
+      },
+      assetDir,
+      platform,
+    )
+  }
+  return registeredView.icon || ''
+}
+
 const getIframe = (
   extension: ExtensionManifest,
   manifestView: ManifestView | undefined,
@@ -103,7 +135,7 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
   return {
     ...(css && { css }),
     extensionId: getExtensionId(extension),
-    icon: registeredView.icon || manifestView?.icon || '',
+    icon: getIcon(extension, manifestView, registeredView, assetDir, platform),
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
     kind: registeredView.kind || manifestView?.kind || '',

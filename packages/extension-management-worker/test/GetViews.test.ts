@@ -1,5 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { afterEach, expect, test } from '@jest/globals'
+import { PlatformType } from '@lvce-editor/constants'
 import { getViewsFromExtensionWorkers } from '../src/parts/GetViews/GetViews.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -186,6 +187,172 @@ test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
       iframe: undefined,
       kind: 'virtualDom',
       title: 'sample.views.testing',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers prefers manifest image icon over registered icon', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        icon: 'list-tree',
+        id: 'trello.views.boards',
+        title: 'Trello',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('builtin.trello', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'builtin.trello',
+          isolated: true,
+          path: '/extensions/trello',
+          views: [
+            {
+              icon: 'trello.svg',
+              id: 'trello.views.boards',
+              title: 'Trello',
+            },
+          ],
+        },
+      ],
+      '',
+      PlatformType.Remote,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'builtin.trello',
+      icon: 'http://localhost/remote/extensions/trello/trello.svg',
+      id: 'trello.views.boards',
+      iframe: undefined,
+      kind: '',
+      title: 'Trello',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers preserves symbolic manifest icons', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        icon: 'list-tree',
+        id: 'sample.views.output',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          path: '/extensions/extension-one',
+          views: [
+            {
+              icon: 'symbol-output',
+              id: 'sample.views.output',
+            },
+          ],
+        },
+      ],
+      '',
+      PlatformType.Remote,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'extension-one',
+      icon: 'symbol-output',
+      id: 'sample.views.output',
+      iframe: undefined,
+      kind: '',
+      title: 'sample.views.output',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers falls back to registered icon when manifest icon is missing', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        icon: 'list-tree',
+        id: 'sample.views.registeredIcon',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          path: '/extensions/extension-one',
+          views: [
+            {
+              id: 'sample.views.registeredIcon',
+            },
+          ],
+        },
+      ],
+      '',
+      PlatformType.Remote,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'extension-one',
+      icon: 'list-tree',
+      id: 'sample.views.registeredIcon',
+      iframe: undefined,
+      kind: '',
+      title: 'sample.views.registeredIcon',
+    },
+  ])
+})
+
+test('getViewsFromExtensionWorkers preserves absolute manifest icon urls', async () => {
+  const icon = 'https://example.com/icon.svg'
+  const rpc = createRpc({
+    views: [
+      {
+        icon: 'list-tree',
+        id: 'sample.views.absoluteIcon',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          path: '/extensions/extension-one',
+          views: [
+            {
+              icon,
+              id: 'sample.views.absoluteIcon',
+            },
+          ],
+        },
+      ],
+      '',
+      PlatformType.Remote,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'extension-one',
+      icon,
+      id: 'sample.views.absoluteIcon',
+      iframe: undefined,
+      kind: '',
+      title: 'sample.views.absoluteIcon',
     },
   ])
 })

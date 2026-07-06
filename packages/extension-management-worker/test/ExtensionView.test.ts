@@ -7,9 +7,11 @@ import {
   createViewInstance,
   dispatchViewEvent,
   disposeViewInstance,
+  getViewMenuEntries,
   renderViewInstance,
   requestViewRerender,
   saveViewInstanceState,
+  showViewContextMenu,
 } from '../src/parts/ExtensionView/ExtensionView.ts'
 import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -53,6 +55,16 @@ const createRpc = (
           patches: [],
           type: 'setPatches',
         }
+      }
+      if (method === 'ExtensionApi.getViewMenuEntries') {
+        return [
+          {
+            command: 'sample.open',
+            flags: 0,
+            id: 'open',
+            label: 'Open',
+          },
+        ]
       }
       return undefined
     },
@@ -247,6 +259,18 @@ test('requestViewRerender asks renderer worker to rerender viewlet instance', as
   expect(state.rendererWorker.invocations).toEqual([['Viewlet.executeViewletCommand', 1, 'rerender']])
 })
 
+test('showViewContextMenu asks renderer worker to show extension view menu', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'ExtensionManagement.showViewContextMenu'() {},
+  })
+
+  await showViewContextMenu(1, 'sample.views.testing', 'sample.card', 10, 20)
+
+  expect(state.rendererWorker.invocations).toEqual([
+    ['ExtensionManagement.showViewContextMenu', 1, 'sample.views.testing', 'sample.card', 10, 20],
+  ])
+})
+
 test('renderViewInstance proxies to isolated extension rpc', async () => {
   const mock = createRpc()
   ExtensionViewInstanceState.set(1, {
@@ -261,6 +285,40 @@ test('renderViewInstance proxies to isolated extension rpc', async () => {
   })
 
   expect(mock.invocations).toEqual([['ExtensionApi.renderViewInstance', 1]])
+})
+
+test('getViewMenuEntries proxies to isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([
+    {
+      command: 'sample.open',
+      flags: 0,
+      id: 'open',
+      label: 'Open',
+    },
+  ])
+
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewMenuEntries', 1, 'sample.card']])
+})
+
+test('getViewMenuEntries returns empty array for disposed or failed instances', async () => {
+  await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([])
+  ExtensionViewInstanceState.set(1, {
+    error: {
+      message: 'create failed',
+      name: 'Error',
+    },
+    status: 'error',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([])
 })
 
 test('renderViewInstance no-ops for disposed or failed instances', async () => {

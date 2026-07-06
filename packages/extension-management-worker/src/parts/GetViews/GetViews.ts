@@ -30,7 +30,17 @@ interface ExtensionManifest {
   readonly views?: readonly ManifestView[]
 }
 
+interface DomEventListener {
+  readonly capture?: boolean
+  readonly name: string | number
+  readonly params: readonly string[]
+  readonly passive?: boolean
+  readonly preventDefault?: boolean
+  readonly stopPropagation?: boolean
+}
+
 interface RegisteredView {
+  readonly eventListeners?: readonly DomEventListener[]
   readonly icon?: string
   readonly id?: string
   readonly kind?: string
@@ -134,6 +144,7 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
   const css = getCss(extension, manifestView, assetDir, platform)
   return {
     ...(css && { css }),
+    ...(registeredView.eventListeners && { eventListeners: registeredView.eventListeners }),
     extensionId: getExtensionId(extension),
     icon: getIcon(extension, manifestView, registeredView, assetDir, platform),
     id,

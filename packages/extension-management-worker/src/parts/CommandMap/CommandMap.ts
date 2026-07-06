@@ -26,12 +26,14 @@ import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
 import { getDynamicWebExtensions } from '../GetDynamicWebExtensions/GetDynamicWebExtensions.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import { getKeyBindings } from '../GetKeyBindings/GetKeyBindings.ts'
 import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlForWebView.ts'
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
+import { handleViewContextChange } from '../HandleViewContextChange/HandleViewContextChange.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
@@ -78,6 +80,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getDynamicWebExtensions': getDynamicWebExtensions,
   'Extensions.getExtension': getExtension,
+  'Extensions.getKeyBindings': getKeyBindings,
   'Extensions.getLanguages': getLanguages,
   'Extensions.getPreference': getPreference,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
@@ -86,6 +89,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getStatusBarItems': getStatusBarItems,
   'Extensions.getViews': getViews,
   'Extensions.handleMessagePort': handleMessagePort,
+  'Extensions.handleViewContextChange': handleViewContextChange,
   'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,

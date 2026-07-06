@@ -191,6 +191,53 @@ test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
   ])
 })
 
+test('getViewsFromExtensionWorkers includes event listeners', async () => {
+  const eventListeners = [
+    {
+      name: 'handleDragStart',
+      params: ['handleViewEvent', 'dragstart', 'event.target.name'],
+    },
+  ]
+  const rpc = createRpc({
+    views: [
+      {
+        eventListeners,
+        id: 'sample.views.testing',
+        kind: 'virtualDom',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-one',
+          isolated: true,
+          views: [
+            {
+              id: 'sample.views.testing',
+            },
+          ],
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([
+    {
+      eventListeners,
+      extensionId: 'extension-one',
+      icon: '',
+      id: 'sample.views.testing',
+      iframe: undefined,
+      kind: 'virtualDom',
+      title: 'sample.views.testing',
+    },
+  ])
+})
+
 test('getViewsFromExtensionWorkers prefers manifest image icon over registered icon', async () => {
   const rpc = createRpc({
     views: [

@@ -1,5 +1,5 @@
-import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
+import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
 
 interface ManifestKeyBinding {
   readonly args?: readonly unknown[]
@@ -27,10 +27,7 @@ const getExtensionId = (extension: ExtensionManifest): string => {
   return extension.id || interExtensionId(extension.uri || extension.path || '')
 }
 
-const toKeyBinding = (
-  extension: ExtensionManifest,
-  keybinding: ManifestKeyBinding,
-): ExtensionKeyBindingContribution | undefined => {
+const toKeyBinding = (extension: ExtensionManifest, keybinding: ManifestKeyBinding): ExtensionKeyBindingContribution | undefined => {
   if (typeof keybinding.key !== 'string' || typeof keybinding.command !== 'string') {
     return undefined
   }

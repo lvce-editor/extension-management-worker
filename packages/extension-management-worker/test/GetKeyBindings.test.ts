@@ -1,8 +1,8 @@
-import { afterEach, expect, test } from '@jest/globals'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
+import { afterEach, expect, test } from '@jest/globals'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
-import { getKeyBindings } from '../src/parts/GetKeyBindings/GetKeyBindings.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import { getKeyBindings } from '../src/parts/GetKeyBindings/GetKeyBindings.ts'
 
 const state: {
   sharedProcess: DisposableMockRpc | undefined

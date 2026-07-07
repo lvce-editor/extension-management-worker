@@ -87,6 +87,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItems': getStatusBarItems,
+  'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleViewContextChange': handleViewContextChange,
@@ -99,6 +100,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
   'Extensions.setPreference': setPreference,
+  'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
 }

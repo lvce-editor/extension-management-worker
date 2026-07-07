@@ -123,8 +123,26 @@ export const dispatchViewEvent = async (viewId: string, uid: number, event: unkn
   return rpc.invoke('ExtensionApi.dispatchViewEvent', uid, event)
 }
 
+export const getViewMenuEntries = async (
+  viewId: string,
+  uid: number,
+  menuId: string,
+  assetDir: string,
+  platform: number,
+): Promise<readonly unknown[]> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (!instance || instance.status === 'error') {
+    return []
+  }
+  return instance.rpc.invoke('ExtensionApi.getViewMenuEntries', uid, menuId) as Promise<readonly unknown[]>
+}
+
 export const requestViewRerender = async (uid: number): Promise<void> => {
   await RendererWorker.invoke('Viewlet.executeViewletCommand', uid, 'rerender')
+}
+
+export const showViewContextMenu = async (uid: number, viewId: string, menuId: string, x: number, y: number): Promise<void> => {
+  await RendererWorker.invoke('ExtensionManagement.showViewContextMenu', uid, viewId, menuId, x, y)
 }
 
 export const renderViewInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<unknown> => {

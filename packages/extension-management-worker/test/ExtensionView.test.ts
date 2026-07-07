@@ -23,7 +23,7 @@ const state: {
 }
 
 const createRpc = (
-  options: { readonly createError?: Error } = {},
+  options: { readonly createError?: Error; readonly focusSelector?: string } = {},
 ): {
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
@@ -39,17 +39,20 @@ const createRpc = (
         }
         return {
           dom: [],
+          ...(options.focusSelector && { focusSelector: options.focusSelector }),
           type: 'setDom',
         }
       }
       if (method === 'ExtensionApi.dispatchViewEvent') {
         return {
+          ...(options.focusSelector && { focusSelector: options.focusSelector }),
           patches: [],
           type: 'setPatches',
         }
       }
       if (method === 'ExtensionApi.renderViewInstance') {
         return {
+          ...(options.focusSelector && { focusSelector: options.focusSelector }),
           patches: [],
           type: 'setPatches',
         }
@@ -114,6 +117,49 @@ test('proxies virtual dom view lifecycle to isolated extension rpc', async () =>
     ['ExtensionApi.dispatchViewEvent', 1, { type: 'click' }],
     ['ExtensionApi.disposeViewInstance', 1],
   ])
+})
+
+test('proxies focus selector in virtual dom view lifecycle results', async () => {
+  const mock = createRpc({
+    focusSelector: '[name="newCardTitle:list-1"]',
+  })
+  const extensions = [
+    {
+      activation: ['onView:sample.views.testing'],
+      id: 'extension-one',
+      isolated: true,
+      views: [
+        {
+          id: 'sample.views.testing',
+        },
+      ],
+    },
+  ]
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return extensions
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
+
+  await expect(createViewInstance('sample.views.testing', 1, {}, '', 2)).resolves.toEqual({
+    ok: true,
+    result: {
+      dom: [],
+      focusSelector: '[name="newCardTitle:list-1"]',
+      type: 'setDom',
+    },
+  })
+  await expect(dispatchViewEvent('sample.views.testing', 1, { type: 'click' }, '', 2)).resolves.toEqual({
+    focusSelector: '[name="newCardTitle:list-1"]',
+    patches: [],
+    type: 'setPatches',
+  })
+  await expect(renderViewInstance('sample.views.testing', 1, '', 2)).resolves.toEqual({
+    focusSelector: '[name="newCardTitle:list-1"]',
+    patches: [],
+    type: 'setPatches',
+  })
 })
 
 test('createViewInstance returns error result when rpc creation fails', async () => {

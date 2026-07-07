@@ -14,7 +14,11 @@ import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithStat
 interface MockFileSystem {
   readonly directories: Set<string>
   readonly files: Map<string, string>
+  readonly uris: string[]
 }
+
+const DefaultWorkspaceUri = 'memfs:///workspace'
+const UriSchemeRegex = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//
 
 const state: {
   fileSystemWorker: DisposableMockRpc | undefined
@@ -38,28 +42,43 @@ const createExtensionsState = (): ExtensionsState => {
   }
 }
 
-const createMockFileSystem = (files: readonly [string, string][] = []): MockFileSystem => {
-  return {
-    directories: new Set(['memfs:///workspace']),
-    files: new Map(files),
+const assertUri = (uri: string): void => {
+  if (!UriSchemeRegex.test(uri)) {
+    throw new Error(`Expected file system uri, got ${uri}`)
   }
 }
 
-const registerMocks = (mockFileSystem = createMockFileSystem()): MockFileSystem => {
+const recordUri = (mockFileSystem: MockFileSystem, uri: string): void => {
+  assertUri(uri)
+  mockFileSystem.uris.push(uri)
+}
+
+const createMockFileSystem = (files: readonly [string, string][] = [], directories: readonly string[] = [DefaultWorkspaceUri]): MockFileSystem => {
+  return {
+    directories: new Set(directories),
+    files: new Map(files),
+    uris: [],
+  }
+}
+
+const registerMocks = (mockFileSystem = createMockFileSystem(), workspacePath = DefaultWorkspaceUri): MockFileSystem => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.invalidateExtensionsCache'() {},
     'Workspace.getPath'() {
-      return 'memfs:///workspace'
+      return workspacePath
     },
   })
   state.fileSystemWorker = FileSystemWorker.registerMockRpc({
     'FileSystem.exists'(uri: string) {
+      recordUri(mockFileSystem, uri)
       return mockFileSystem.directories.has(uri) || mockFileSystem.files.has(uri)
     },
     'FileSystem.mkdir'(uri: string) {
+      recordUri(mockFileSystem, uri)
       mockFileSystem.directories.add(uri)
     },
     'FileSystem.readFile'(uri: string) {
+      recordUri(mockFileSystem, uri)
       const content = mockFileSystem.files.get(uri)
       if (content === undefined) {
         throw new Error(`File not found: ${uri}`)
@@ -67,6 +86,7 @@ const registerMocks = (mockFileSystem = createMockFileSystem()): MockFileSystem 
       return content
     },
     'FileSystem.writeFile'(uri: string, content: string) {
+      recordUri(mockFileSystem, uri)
       mockFileSystem.files.set(uri, content)
     },
   })
@@ -91,6 +111,38 @@ test('disableWorkspaceExtension creates workspace disabled extensions file', asy
   expect(mockFileSystem.files.get('memfs:///workspace/.lvce/disabled-extensions.json')).toBe(
     '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
   )
+})
+
+test('disableWorkspaceExtension converts native workspace path to file uri', async () => {
+  const workspacePath = '/home/simon/Documents/project space#1?query'
+  const workspaceUri = 'file:///home/simon/Documents/project%20space%231%3Fquery'
+  const mockFileSystem = registerMocks(createMockFileSystem([], [workspaceUri]), workspacePath)
+
+  await disableWorkspaceExtension('sample.extension')
+
+  expect(mockFileSystem.directories.has(`${workspaceUri}/.lvce`)).toBe(true)
+  expect(mockFileSystem.files.get(`${workspaceUri}/.lvce/disabled-extensions.json`)).toBe(
+    '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
+  )
+  expect(mockFileSystem.uris).toEqual([
+    `${workspaceUri}/.lvce`,
+    `${workspaceUri}/.lvce`,
+    `${workspaceUri}/.lvce/disabled-extensions.json`,
+    `${workspaceUri}/.lvce/disabled-extensions.json`,
+  ])
+})
+
+test('disableWorkspaceExtension converts windows workspace path to file uri', async () => {
+  const workspacePath = 'C:\\Users\\simon\\project space'
+  const workspaceUri = 'file:///C:/Users/simon/project%20space'
+  const mockFileSystem = registerMocks(createMockFileSystem([], [workspaceUri]), workspacePath)
+
+  await disableWorkspaceExtension('sample.extension')
+
+  expect(mockFileSystem.files.get(`${workspaceUri}/.lvce/disabled-extensions.json`)).toBe(
+    '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
+  )
+  expect(mockFileSystem.uris.every((uri) => uri.startsWith('file:///'))).toBe(true)
 })
 
 test('disableWorkspaceExtension appends to existing disabled extensions', async () => {

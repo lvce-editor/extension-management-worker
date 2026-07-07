@@ -7,6 +7,33 @@ interface DisabledExtensionsJson {
 
 const WorkspaceConfigFolderName = '.lvce'
 const DisabledExtensionsFileName = 'disabled-extensions.json'
+const UriSchemeRegex = /^[a-zA-Z][a-zA-Z\d+.-]*:/
+const WindowsDrivePathRegex = /^[a-zA-Z]:[\\/]/
+const WindowsDriveSegmentRegex = /^[a-zA-Z]:$/
+
+const encodePathSegment = (segment: string, index: number): string => {
+  if (index === 0 && WindowsDriveSegmentRegex.test(segment)) {
+    return segment
+  }
+  return encodeURIComponent(segment)
+}
+
+const encodeFilePath = (path: string): string => {
+  return path.split('/').map(encodePathSegment).join('/')
+}
+
+const toWorkspaceUri = (workspacePath: string): string => {
+  if (WindowsDrivePathRegex.test(workspacePath)) {
+    return `file:///${encodeFilePath(workspacePath.replaceAll('\\', '/'))}`
+  }
+  if (UriSchemeRegex.test(workspacePath)) {
+    return workspacePath
+  }
+  if (workspacePath.startsWith('/')) {
+    return `file://${encodeFilePath(workspacePath)}`
+  }
+  return workspacePath
+}
 
 const joinUri = (base: string, ...parts: readonly string[]): string => {
   const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base
@@ -18,7 +45,8 @@ const stringifyJson = (data: unknown): string => {
 }
 
 const getWorkspaceUri = async (): Promise<string> => {
-  return RendererWorker.invoke('Workspace.getPath')
+  const workspacePath = await RendererWorker.invoke('Workspace.getPath')
+  return toWorkspaceUri(workspacePath)
 }
 
 const getWorkspaceConfigDirUri = async (): Promise<string> => {

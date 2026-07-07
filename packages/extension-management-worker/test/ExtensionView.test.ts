@@ -266,9 +266,7 @@ test('showViewContextMenu asks renderer worker to show extension view menu', asy
 
   await showViewContextMenu(1, 'sample.views.testing', 'sample.card', 10, 20)
 
-  expect(state.rendererWorker.invocations).toEqual([
-    ['ExtensionManagement.showViewContextMenu', 1, 'sample.views.testing', 'sample.card', 10, 20],
-  ])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.showViewContextMenu', 1, 'sample.views.testing', 'sample.card', 10, 20]])
 })
 
 test('renderViewInstance proxies to isolated extension rpc', async () => {

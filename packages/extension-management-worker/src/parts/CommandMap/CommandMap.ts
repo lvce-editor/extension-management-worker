@@ -99,8 +99,8 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.requestViewRerender': ExtensionView.requestViewRerender,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
-  'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.setPreference': setPreference,
+  'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
 }

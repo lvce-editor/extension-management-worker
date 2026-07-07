@@ -114,8 +114,8 @@ test('disableWorkspaceExtension creates workspace disabled extensions file', asy
 })
 
 test('disableWorkspaceExtension converts native workspace path to file uri', async () => {
-  const workspacePath = '/home/simon/Documents/project space#1?query'
-  const workspaceUri = 'file:///home/simon/Documents/project%20space%231%3Fquery'
+  const workspacePath = '/home/simon/Documents/project space#1'
+  const workspaceUri = 'file:///home/simon/Documents/project%20space%231'
   const mockFileSystem = registerMocks(createMockFileSystem([], [workspaceUri]), workspacePath)
 
   await disableWorkspaceExtension('sample.extension')

@@ -87,6 +87,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItems': getStatusBarItems,
+  'Extensions.getViewActions': ExtensionView.getViewActions,
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
   'Extensions.handleMessagePort': handleMessagePort,

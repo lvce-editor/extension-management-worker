@@ -29,6 +29,11 @@ afterEach(() => {
 })
 
 test('executeCommand executes the isolated worker that contributes the command', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.getAssetDir'() {
+      return '/assets'
+    },
+  })
   const extensionsState = createExtensionsState([
     {
       activation: ['onCommand:isolatedAbout.openAbout'],
@@ -62,9 +67,12 @@ test('executeCommand falls back to renderer worker for non-isolated commands', a
   const extensionsState = createExtensionsState([])
   state.rendererWorker = RendererWorker.registerMockRpc({
     'About.showAbout': async () => 'renderer-result',
+    'Layout.getAssetDir'() {
+      return '/assets'
+    },
   })
 
   await expect(ExecuteCommand.executeCommand(extensionsState, 'About.showAbout')).resolves.toBe('renderer-result')
 
-  expect(state.rendererWorker.invocations).toEqual([['About.showAbout']])
+  expect(state.rendererWorker.invocations).toEqual([['Layout.getAssetDir'], ['About.showAbout']])
 })

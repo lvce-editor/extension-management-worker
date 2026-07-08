@@ -8,6 +8,7 @@ import {
   getRpc,
   type ExtensionManifest as RpcExtensionManifest,
 } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
+import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -59,16 +60,17 @@ const getExtensionForView = async (viewId: string, assetDir: string, platform: n
 }
 
 const getRpcForView = async (viewId: string, assetDir: string, platform: number): Promise<Rpc> => {
-  const extension = await getExtensionForView(viewId, assetDir, platform)
+  const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
+  const extension = await getExtensionForView(viewId, resolvedAssetDir, resolvedPlatform)
   const existingRpc = IsolatedExtensionHostWorkerState.get(getExtensionId(extension))
   if (existingRpc) {
     return existingRpc
   }
-  const activationResult = await ActivateByEvent.activateByEvent(`onView:${viewId}`, assetDir, platform)
+  const activationResult = await ActivateByEvent.activateByEvent(`onView:${viewId}`, resolvedAssetDir, resolvedPlatform)
   if (activationResult.error) {
     throw activationResult.error
   }
-  return getRpc(extension, assetDir, platform)
+  return getRpc(extension, resolvedAssetDir, resolvedPlatform)
 }
 
 const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<Rpc | undefined> => {

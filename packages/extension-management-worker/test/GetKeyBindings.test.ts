@@ -38,7 +38,7 @@ test('returns valid extension keybinding contributions', async () => {
     },
   })
 
-  await expect(getKeyBindings('', 2)).resolves.toEqual([
+  await expect(getKeyBindings('/assets', 2)).resolves.toEqual([
     {
       command: 'sample.run',
       extensionId: 'sample.extension',

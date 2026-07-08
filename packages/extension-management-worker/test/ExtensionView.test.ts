@@ -8,6 +8,7 @@ import {
   createViewInstance,
   dispatchViewEvent,
   disposeViewInstance,
+  getViewActions,
   getViewMenuEntries,
   renderViewInstance,
   requestViewRerender,
@@ -70,6 +71,15 @@ const createRpc = (
             flags: 0,
             id: 'open',
             label: 'Open',
+          },
+        ]
+      }
+      if (method === 'ExtensionApi.getViewActions') {
+        return [
+          {
+            command: 'sample.refresh',
+            icon: 'Refresh',
+            title: 'Refresh',
           },
         ]
       }
@@ -415,6 +425,25 @@ test('getViewMenuEntries proxies to isolated extension rpc', async () => {
   expect(mock.invocations).toEqual([['ExtensionApi.getViewMenuEntries', 1, 'sample.card']])
 })
 
+test('getViewActions proxies to isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActions('sample.views.testing', 1, '', 2)).resolves.toEqual([
+    {
+      command: 'sample.refresh',
+      icon: 'Refresh',
+      title: 'Refresh',
+    },
+  ])
+
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewActions', 1]])
+})
+
 test('getViewMenuEntries returns empty array for disposed or failed instances', async () => {
   await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([])
   ExtensionViewInstanceState.set(1, {
@@ -427,6 +456,20 @@ test('getViewMenuEntries returns empty array for disposed or failed instances', 
   })
 
   await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([])
+})
+
+test('getViewActions returns empty array for disposed or failed instances', async () => {
+  await expect(getViewActions('sample.views.testing', 1, '', 2)).resolves.toEqual([])
+  ExtensionViewInstanceState.set(1, {
+    error: {
+      message: 'create failed',
+      name: 'Error',
+    },
+    status: 'error',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActions('sample.views.testing', 1, '', 2)).resolves.toEqual([])
 })
 
 test('renderViewInstance no-ops for disposed or failed instances', async () => {

@@ -1,6 +1,7 @@
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
+import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 export interface ActivateByEventResult {
@@ -68,10 +69,11 @@ export const activateByEvent = async (event: string, assetDir: string, platform:
         hasActivatedExtensions: Object.keys(activatingExtensions).length > 0,
       }
     }
-    const extensions = await getAllExtensions(assetDir, platform)
+    const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
+    const extensions = await getAllExtensions(resolvedAssetDir, resolvedPlatform)
     const matchingExtensions = extensions.filter((extension) => matchesEvent(extension, event))
     for (const extension of matchingExtensions) {
-      await activateExtension(extension, event, assetDir, platform)
+      await activateExtension(extension, event, resolvedAssetDir, resolvedPlatform)
     }
     return {
       error: undefined,

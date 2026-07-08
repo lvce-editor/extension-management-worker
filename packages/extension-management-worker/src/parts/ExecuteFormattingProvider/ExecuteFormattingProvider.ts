@@ -4,6 +4,7 @@ import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
+import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 interface FormattingProviderContribution {
@@ -49,8 +50,7 @@ export const executeFormattingProvider = async (
   textDocument: any,
   ...args: readonly unknown[]
 ): Promise<readonly unknown[]> => {
-  const { platform } = extensionsState
-  const assetDir = ''
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
   const results = await Promise.all(rpcs.map((rpc) => executeRpcFormattingProvider(rpc, textDocument, args)))

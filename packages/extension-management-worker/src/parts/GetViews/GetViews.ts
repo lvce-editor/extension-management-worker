@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 import { getAbsolutePath, getExtensionId, getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
+import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 interface ManifestViewIframe {
@@ -178,6 +179,7 @@ export const getViewsFromExtensionWorkers = async (
 }
 
 export const getViews = async (assetDir: string, platform: number): Promise<readonly any[]> => {
-  const extensions = await GetExtensions.getAllExtensions(assetDir, platform)
-  return getViewsFromExtensionWorkers(extensions, assetDir, platform)
+  const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
+  const extensions = await GetExtensions.getAllExtensions(resolvedAssetDir, resolvedPlatform)
+  return getViewsFromExtensionWorkers(extensions, resolvedAssetDir, resolvedPlatform)
 }

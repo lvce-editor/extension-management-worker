@@ -1,8 +1,16 @@
 import type { Rpc } from '@lvce-editor/rpc'
-import { afterEach, expect, test } from '@jest/globals'
+import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
+import { afterEach, beforeEach, expect, test } from '@jest/globals'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteFormattingProvider from '../src/parts/ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+
+const state: {
+  rendererWorker: DisposableMockRpc | undefined
+} = {
+  rendererWorker: undefined,
+}
 
 const createRpc = (
   result: readonly unknown[],
@@ -38,8 +46,18 @@ const createExtensionsState = (webExtensions: readonly any[]): ExtensionsState =
   }
 }
 
+beforeEach(() => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.getAssetDir'() {
+      return '/assets'
+    },
+  })
+})
+
 afterEach(() => {
   IsolatedExtensionHostWorkerState.clear()
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = undefined
 })
 
 test('executeFormattingProvider asks matching isolated formatting providers and returns the first result', async () => {

@@ -2,8 +2,9 @@
 
 import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
-import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
+import { SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
 import * as WorkspaceDisabledExtensionsStorage from '../WorkspaceDisabledExtensionsStorage/WorkspaceDisabledExtensionsStorage.ts'
 
@@ -32,17 +33,12 @@ const getExtensionsWithWorkspaceState = async (extensions: readonly any[]): Prom
 }
 
 export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number) => {
-  if (typeof assetDir !== 'string') {
-    assetDir = await RendererWorker.invoke('Layout.getAssetDir')
-  }
-  if (!platform) {
-    platform = await RendererWorker.invoke('Layout.getPlatform')
-  }
-  Assert.string(assetDir)
-  Assert.number(platform)
+  const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
+  Assert.string(resolvedAssetDir)
+  Assert.number(resolvedPlatform)
   const meta = extensionsState.webExtensions
-  if (platform === PlatformType.Web) {
-    const webExtensions = await getWebExtensions(assetDir)
+  if (resolvedPlatform === PlatformType.Web) {
+    const webExtensions = await getWebExtensions(resolvedAssetDir)
     return getExtensionsWithWorkspaceState([...webExtensions, ...meta])
   }
   const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')

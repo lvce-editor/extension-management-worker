@@ -235,7 +235,7 @@ test('getAllExtensionsWithState marks workspace disabled extensions', async () =
     },
   })
 
-  await expect(getAllExtensionsWithState(createExtensionsState(), '', PlatformType.Electron)).resolves.toEqual([
+  await expect(getAllExtensionsWithState(createExtensionsState(), '/assets', PlatformType.Electron)).resolves.toEqual([
     {
       id: 'sample.enabled',
     },
@@ -263,7 +263,7 @@ test('activateByEvent skips workspace disabled extensions', async () => {
     },
   })
 
-  await expect(activateByEvent('onCommand:test', '', PlatformType.Electron)).resolves.toEqual({
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
     error: undefined,
     hasActivatedExtensions: false,
   })

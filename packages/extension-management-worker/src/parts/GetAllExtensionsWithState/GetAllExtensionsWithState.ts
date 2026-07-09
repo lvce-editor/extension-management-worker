@@ -6,6 +6,7 @@ import { SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
+import { isExtensionCompatible } from '../IsExtensionCompatible/IsExtensionCompatible.ts'
 import * as WorkspaceDisabledExtensionsStorage from '../WorkspaceDisabledExtensionsStorage/WorkspaceDisabledExtensionsStorage.ts'
 
 const withWorkspaceDisabledState = (extensions: readonly any[], disabledIds: readonly string[]): readonly any[] => {
@@ -39,7 +40,8 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
   const meta = extensionsState.webExtensions
   if (resolvedPlatform === PlatformType.Web) {
     const webExtensions = await getWebExtensions(resolvedAssetDir)
-    return getExtensionsWithWorkspaceState([...webExtensions, ...meta])
+    const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
+    return getExtensionsWithWorkspaceState(compatibleExtensions)
   }
   const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
   return getExtensionsWithWorkspaceState([...local, ...meta])

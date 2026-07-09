@@ -53,6 +53,32 @@ test('activateByEvent returns hasActivatedExtensions false when no extensions ma
   })
 })
 
+test('activateByEvent skips extensions that are incompatible with web', async () => {
+  Object.defineProperty(globalThis, 'fetch', {
+    configurable: true,
+    value: async (): Promise<Response> => {
+      return {
+        json: async () => [
+          {
+            activation: ['onCommand:test'],
+            compatibility: {
+              web: false,
+            },
+            id: 'sample.incompatible-extension',
+            isolated: true,
+          },
+        ],
+        ok: true,
+      } as Response
+    },
+  })
+
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Web)).resolves.toEqual({
+    error: undefined,
+    hasActivatedExtensions: false,
+  })
+})
+
 test('activateByEvent returns error when getAllExtensions fails', async () => {
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {

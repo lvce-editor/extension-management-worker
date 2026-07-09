@@ -127,6 +127,14 @@ test('getAllExtensionsWithState reads static web extensions for http static buil
             isWeb: true,
             path: '/static/extensions/sample.extension',
           },
+          {
+            compatibility: {
+              web: false,
+            },
+            id: 'sample.incompatible-extension',
+            isWeb: true,
+            path: '/static/extensions/sample.incompatible-extension',
+          },
         ],
         ok: true,
       } as Response

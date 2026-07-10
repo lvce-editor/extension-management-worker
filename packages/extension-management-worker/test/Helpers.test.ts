@@ -1,5 +1,6 @@
 import { expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
+import { getExtensionHostSubWorkerUrl } from '../src/parts/ExtensionHostSubWorkerUrl/ExtensionHostSubWorkerUrl.ts'
 import { getExtensionAbsolutePath } from '../src/parts/GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import { getExtensionId } from '../src/parts/GetExtensionId/GetExtensionId.ts'
 import { getLanguagesFromExtension } from '../src/parts/GetLanguagesFromExtension/GetLanguagesFromExtension.ts'
@@ -33,6 +34,17 @@ test('getUrlPrefix returns remote-aware extension prefixes', () => {
   expect(getUrlPrefix(PlatformType.Web, 'extensions/sample')).toBe('extensions/sample')
   expect(getUrlPrefix(PlatformType.Electron, '/extensions/sample')).toBe('/remote/extensions/sample')
   expect(getUrlPrefix(PlatformType.Electron, 'extensions/sample')).toBe('/remote/extensions/sample')
+})
+
+test('getExtensionHostSubWorkerUrl resolves source and bundled worker layouts', () => {
+  expect(
+    getExtensionHostSubWorkerUrl(
+      'https://example.com/packages/extension-management-worker/src/parts/ExtensionHostSubWorkerUrl/ExtensionHostSubWorkerUrl.js',
+    ),
+  ).toBe('https://example.com/packages/extension-host-sub-worker/src/extensionHostSubWorkerMain.js')
+  expect(getExtensionHostSubWorkerUrl('https://example.com/app/packages/extension-management-worker/dist/extensionManagementWorkerMain.js')).toBe(
+    'https://example.com/app/packages/extension-host-sub-worker/dist/extensionHostSubWorkerMain.js',
+  )
 })
 
 test('getLanguagesFromExtension preserves remote web extension tokenizer urls', () => {

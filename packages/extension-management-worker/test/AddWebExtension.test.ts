@@ -1,8 +1,10 @@
+import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { addWebExtension } from '../src/parts/AddWebExtension/AddWebExtension.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import * as StatusBarWorker from '../src/parts/StatusBarWorker/StatusBarWorker.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
   rendererWorker: undefined,
@@ -61,4 +63,29 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
   ])
   expect(ExtensionsState.get().cachedExtensions).toBeUndefined()
   expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+})
+
+test('addWebExtension - refreshes status bar items using path as fallback id', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'ExtensionManagement.invalidateExtensionsCache'() {},
+  })
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+    },
+    invokeAndTransfer: async () => {},
+    send: () => {},
+  }
+  StatusBarWorker.set(rpc)
+  const uri = 'https://example.com/status-extension'
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+    json: async () => ({ statusBarItems: [{ text: 'Ready' }] }),
+    ok: true,
+  } as Response)
+
+  await addWebExtension(uri)
+
+  expect(invocations).toEqual([['StatusBar.handleChange', uri]])
 })

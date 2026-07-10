@@ -104,6 +104,15 @@ test('getRuntimeContext preserves remote platform outside http static builds', a
   })
 })
 
+test('getRuntimeContext treats absolute http asset urls as web platform', async () => {
+  setLocation('https:')
+
+  await expect(getRuntimeContext('https://cdn.example.com/assets', PlatformType.Remote)).resolves.toEqual({
+    assetDir: 'https://cdn.example.com/assets',
+    platform: PlatformType.Web,
+  })
+})
+
 test('getAllExtensionsWithState reads static web extensions for http static builds', async () => {
   setLocation('https:')
   state.rendererWorker = RendererWorker.registerMockRpc({

@@ -93,6 +93,19 @@ test('activateByEvent returns error when getAllExtensions fails', async () => {
   expect(result.error!.message).toBe('Failed to get extensions')
 })
 
+test('activateByEvent converts non-error failures to errors', async () => {
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      throw 'Failed with string'
+    },
+  })
+
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
+    error: new Error('Failed with string'),
+    hasActivatedExtensions: false,
+  })
+})
+
 test('activateByEvent returns hasActivatedExtensions false when event is none and no extensions are activating', async () => {
   const result = await activateByEvent('none', '', 1)
 

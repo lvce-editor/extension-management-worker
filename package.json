@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@lerna/legacy-package-management": "^8.2.4",
-    "@lvce-editor/eslint-config": "^15.0.0",
+    "@lvce-editor/eslint-config": "^16.2.0",
     "@lvce-editor/eslint-plugin-github-actions": "^15.0.0",
     "eslint": "^10.6.0",
     "knip": "^6.24.0",

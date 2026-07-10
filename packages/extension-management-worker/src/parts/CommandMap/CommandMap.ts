@@ -40,6 +40,7 @@ import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
+import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
@@ -99,6 +100,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.renderViewInstance': ExtensionView.renderViewInstance,
   'Extensions.requestViewRerender': ExtensionView.requestViewRerender,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,
+  'Extensions.sendMessagePortToElectron': sendMessagePortToElectron,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
   'Extensions.setPreference': setPreference,
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,

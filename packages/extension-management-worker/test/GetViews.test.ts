@@ -53,7 +53,7 @@ afterEach(() => {
   }
 })
 
-test('getViews resolves empty static context before creating contributed views', async () => {
+test('getViews resolves empty web context before creating contributed views', async () => {
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: {
@@ -103,7 +103,7 @@ test('getViews resolves empty static context before creating contributed views',
   })
   IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
 
-  await expect(getViews('', PlatformType.Remote)).resolves.toEqual([
+  await expect(getViews('', PlatformType.Web)).resolves.toEqual([
     {
       css: '/static/extensions/extension-one/media/view.css',
       extensionId: 'extension-one',

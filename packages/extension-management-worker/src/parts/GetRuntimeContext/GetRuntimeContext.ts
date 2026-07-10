@@ -23,9 +23,10 @@ const isHttpLocation = (): boolean => {
 }
 
 export const getRuntimeContext = async (assetDir: string, platform: number): Promise<RuntimeContext> => {
+  const shouldInferPlatform = isMissingPlatform(platform)
   const resolvedAssetDir = isMissingAssetDir(assetDir) ? await RendererWorker.invoke('Layout.getAssetDir') : assetDir
-  const resolvedPlatform = isMissingPlatform(platform) ? await RendererWorker.invoke('Layout.getPlatform') : platform
-  if (isHttpLocation() && isStaticHttpAssetDir(resolvedAssetDir)) {
+  const resolvedPlatform = shouldInferPlatform ? await RendererWorker.invoke('Layout.getPlatform') : platform
+  if (shouldInferPlatform && isHttpLocation() && isStaticHttpAssetDir(resolvedAssetDir)) {
     return {
       assetDir: resolvedAssetDir,
       platform: PlatformType.Web,

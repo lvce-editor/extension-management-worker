@@ -155,7 +155,7 @@ test('proxies virtual dom view lifecycle to isolated extension rpc', async () =>
   ])
 })
 
-test('createViewInstance resolves empty static context before loading a virtual dom view', async () => {
+test('createViewInstance resolves empty web context before loading a virtual dom view', async () => {
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: {
@@ -194,7 +194,7 @@ test('createViewInstance resolves empty static context before loading a virtual 
   const mock = createRpc()
   IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
 
-  await expect(createViewInstance('sample.views.testing', 1, {}, '', PlatformType.Remote)).resolves.toEqual({
+  await expect(createViewInstance('sample.views.testing', 1, {}, '', PlatformType.Web)).resolves.toEqual({
     ok: true,
     result: {
       dom: [],

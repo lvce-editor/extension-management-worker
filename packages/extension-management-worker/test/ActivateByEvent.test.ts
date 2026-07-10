@@ -134,7 +134,7 @@ test('activateByEvent catches error from activateExtension3 and returns it in re
   expect(result.error).toBeInstanceOf(Error)
 })
 
-test('activateByEvent resolves empty static context before reading extensions', async () => {
+test('activateByEvent resolves empty web context before reading extensions', async () => {
   Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: {
@@ -158,7 +158,7 @@ test('activateByEvent resolves empty static context before reading extensions', 
     },
   })
 
-  await expect(activateByEvent('onCommand:test', '', PlatformType.Remote)).resolves.toEqual({
+  await expect(activateByEvent('onCommand:test', '', PlatformType.Web)).resolves.toEqual({
     error: undefined,
     hasActivatedExtensions: false,
   })

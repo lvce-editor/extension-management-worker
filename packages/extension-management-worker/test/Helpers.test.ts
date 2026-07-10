@@ -56,6 +56,66 @@ test('getLanguagesFromExtension preserves remote web extension tokenizer urls', 
   ])
 })
 
+test('getLanguagesFromExtension handles missing and malformed language contributions', () => {
+  expect(getLanguagesFromExtension(undefined, PlatformType.Web)).toEqual([])
+  expect(getLanguagesFromExtension({}, PlatformType.Web)).toEqual([])
+  expect(
+    getLanguagesFromExtension(
+      {
+        languages: [{ id: 'plain' }],
+        path: '/extensions/sample',
+      },
+      PlatformType.Web,
+    ),
+  ).toEqual([{ id: 'plain' }])
+})
+
+test('getLanguagesFromExtension rejects non-string tokenizer paths', () => {
+  const { warn } = console
+  const warnings: string[] = []
+  console.warn = (message: string): void => {
+    warnings.push(message)
+  }
+  try {
+    expect(
+      getLanguagesFromExtension(
+        {
+          languages: [{ id: 'mock', tokenize: true }],
+          path: '/extensions/sample',
+        },
+        PlatformType.Web,
+      ),
+    ).toEqual([
+      {
+        extensionPath: '/extensions/sample',
+        id: 'mock',
+        tokenize: '',
+      },
+    ])
+    expect(warnings).toEqual(['[info] mock: language.tokenize must be of type string but was of type boolean'])
+  } finally {
+    console.warn = warn
+  }
+})
+
+test('getLanguagesFromExtension resolves web tokenizer paths without a remote prefix', () => {
+  expect(
+    getLanguagesFromExtension(
+      {
+        languages: [{ id: 'mock', tokenize: 'tokenize.js' }],
+        path: '/extensions/sample',
+      },
+      PlatformType.Web,
+    ),
+  ).toEqual([
+    {
+      extensionPath: '/extensions/sample',
+      id: 'mock',
+      tokenize: '/extensions/sample/tokenize.js',
+    },
+  ])
+})
+
 test('getExtensionId infers ids from extension metadata', () => {
   expect(getExtensionId({ id: 'sample.extension', path: '/extensions/other' })).toBe('sample.extension')
   expect(getExtensionId({ path: '/extensions/sample.extension' })).toBe('sample.extension')

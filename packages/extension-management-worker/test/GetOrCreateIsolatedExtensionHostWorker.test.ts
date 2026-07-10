@@ -1,6 +1,11 @@
 import type { Rpc } from '@lvce-editor/rpc'
-import { expect, test } from '@jest/globals'
+import { afterEach, expect, test } from '@jest/globals'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../src/parts/GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
+import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+
+afterEach(() => {
+  IsolatedExtensionHostWorkerState.clear()
+})
 
 test('createIsolatedExtensionHostWorker launches extension main entry', async () => {
   const launched: unknown[] = []
@@ -74,4 +79,18 @@ test('createIsolatedExtensionHostWorker launches extension main entry with fallb
     '/remote/sample/main.js',
     '',
   ])
+})
+
+test('getOrCreateIsolatedExtensionHostWorker returns an existing rpc with default worker name', async () => {
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => undefined,
+    invokeAndTransfer: async () => undefined,
+    send: () => {},
+  }
+  IsolatedExtensionHostWorkerState.set('sample.extension', rpc)
+
+  await expect(
+    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js'),
+  ).resolves.toBe(rpc)
 })

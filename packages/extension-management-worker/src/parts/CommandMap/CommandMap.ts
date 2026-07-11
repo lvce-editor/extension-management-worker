@@ -29,6 +29,7 @@ import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getKeyBindings } from '../GetKeyBindings/GetKeyBindings.ts'
 import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlForWebView.ts'
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
+import { getRunningExtensions } from '../GetRunningExtensions/GetRunningExtensions.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
@@ -87,6 +88,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getPreference': getPreference,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
   'Extensions.getRpcInfo': getRpcInfo,
+  'Extensions.getRunningExtensions': getRunningExtensions,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItems': getStatusBarItems,
   'Extensions.getViewActions': ExtensionView.getViewActions,

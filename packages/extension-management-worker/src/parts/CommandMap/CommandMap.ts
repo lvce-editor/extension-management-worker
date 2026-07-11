@@ -18,6 +18,7 @@ import { executeCompletionProvider, executeResolveCompletionItemProvider } from 
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
+import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
@@ -74,6 +75,8 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
+  'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),
+  'Extensions.executeOrganizeImportsProvider': wrapCommand(executeOrganizeImportsProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,

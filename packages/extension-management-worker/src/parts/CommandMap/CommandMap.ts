@@ -19,6 +19,7 @@ import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteD
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
+import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
@@ -55,6 +56,7 @@ const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonl
 }
 
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
+  'ExtensionApi.readFile': readExtensionApiFile,
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,

@@ -32,6 +32,7 @@ import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
+import { handleData } from '../HandleData/HandleData.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { handleViewContextChange } from '../HandleViewContextChange/HandleViewContextChange.ts'
 import { importExtension } from '../ImportExtension/ImportExtension.ts'
@@ -91,6 +92,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getViewActions': ExtensionView.getViewActions,
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
+  'Extensions.handleData': handleData,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleViewContextChange': handleViewContextChange,
   'Extensions.importExtension': importExtension,

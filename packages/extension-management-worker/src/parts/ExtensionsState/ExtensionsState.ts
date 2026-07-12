@@ -74,7 +74,7 @@ export const setWebExtensions = (webExtensions: readonly any[]): void => {
   update({ webExtensions })
 }
 
-export const addWebExtension = (extension: any): void => {
+export const addExtension = (extension: any): void => {
   update({
     webExtensions: [...state.extensionsState.webExtensions, extension],
   })

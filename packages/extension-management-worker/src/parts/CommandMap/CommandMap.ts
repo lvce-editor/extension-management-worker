@@ -4,6 +4,7 @@ import type { ExtensionsState as ExtensionState } from '../ExtensionsState/Exten
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
 import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
+import { addExtension } from '../AddExtension/AddExtension.ts'
 import { addWebExtension } from '../AddWebExtension/AddWebExtension.ts'
 import { createWebViewWorkerRpc2 } from '../CreateWebViewRpc2/CreateWebViewRpc2.ts'
 import { createWebViewWorkerRpc } from '../CreateWebViewRpc/CreateWebViewRpc.ts'
@@ -60,6 +61,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,
+  'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,
   'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,

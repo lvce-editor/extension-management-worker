@@ -1,10 +1,8 @@
-import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { addExtension } from '../src/parts/AddExtension/AddExtension.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
-import * as StatusBarWorker from '../src/parts/StatusBarWorker/StatusBarWorker.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
   rendererWorker: undefined,
@@ -41,22 +39,13 @@ test('addExtension - dynamically adds extension and clears cache', async () => {
 test('addExtension - refreshes status bar items', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.invalidateExtensionsCache'() {},
+    'StatusBar.handleItemsChanged'() {},
   })
-  const invocations: unknown[] = []
-  const rpc: Rpc = {
-    dispose: async () => {},
-    invoke: async (method: string, ...params: readonly unknown[]) => {
-      invocations.push([method, ...params])
-    },
-    invokeAndTransfer: async () => {},
-    send: () => {},
-  }
-  StatusBarWorker.set(rpc)
 
   await addExtension({
     id: 'sample.extension',
     statusBarItems: [{ text: 'Ready' }],
   })
 
-  expect(invocations).toEqual([['StatusBar.handleChange', 'sample.extension']])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache'], ['StatusBar.handleItemsChanged']])
 })

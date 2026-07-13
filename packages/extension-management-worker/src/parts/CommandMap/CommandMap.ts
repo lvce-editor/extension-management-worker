@@ -48,6 +48,7 @@ import { getLanguages } from '../Languages/Languages.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
+import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 
@@ -59,6 +60,7 @@ const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonl
 
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'ExtensionApi.readFile': readExtensionApiFile,
+  'ExtensionHostQuickPick.showQuickPick': showQuickPick,
   'Extensions.activate2': activateExtension2,
   'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,

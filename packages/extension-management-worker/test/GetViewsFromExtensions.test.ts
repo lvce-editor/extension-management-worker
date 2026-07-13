@@ -23,6 +23,7 @@ test('getViewsFromExtensions returns contributed views', () => {
       extensionId: 'sample.extension',
       icon: 'symbol-files',
       id: 'sample.views.files',
+      showSideBarHeader: true,
       title: 'Sample Files',
     },
   ])
@@ -59,6 +60,31 @@ test('getViewsFromExtensions falls back to empty icon and id title', () => {
       extensionId: 'sample.extension',
       icon: '',
       id: 'sample.views.files',
+      showSideBarHeader: true,
+      title: 'sample.views.files',
+    },
+  ])
+})
+
+test('getViewsFromExtensions preserves sidebar header opt out', () => {
+  expect(
+    getViewsFromExtensions([
+      {
+        id: 'sample.extension',
+        views: [
+          {
+            id: 'sample.views.files',
+            showSideBarHeader: false,
+          },
+        ],
+      },
+    ]),
+  ).toEqual([
+    {
+      extensionId: 'sample.extension',
+      icon: '',
+      id: 'sample.views.files',
+      showSideBarHeader: false,
       title: 'sample.views.files',
     },
   ])

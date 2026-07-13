@@ -17,6 +17,7 @@ interface ManifestView {
   readonly id?: string
   readonly iframe?: ManifestViewIframe
   readonly kind?: string
+  readonly showSideBarHeader?: boolean
   readonly title?: string
 }
 
@@ -151,6 +152,7 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
     kind: registeredView.kind || manifestView?.kind || '',
+    showSideBarHeader: manifestView?.showSideBarHeader !== false,
     title: registeredView.title || manifestView?.title || id,
   }
 }

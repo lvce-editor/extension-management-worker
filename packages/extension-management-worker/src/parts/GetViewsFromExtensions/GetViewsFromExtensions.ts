@@ -3,6 +3,7 @@ const toView = (extension: any, view: any): any => {
     extensionId: extension.id,
     icon: view.icon || '',
     id: view.id,
+    showSideBarHeader: view.showSideBarHeader !== false,
     title: view.title || view.id,
   }
 }

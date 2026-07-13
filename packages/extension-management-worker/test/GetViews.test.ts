@@ -85,6 +85,7 @@ test('getViews resolves empty web context before creating contributed views', as
                 iframe: {
                   path: 'view.html',
                 },
+                showSideBarHeader: false,
                 title: 'Testing',
               },
             ],
@@ -116,6 +117,7 @@ test('getViews resolves empty web context before creating contributed views', as
         src: '/static/extensions/extension-one/view.html',
       },
       kind: '',
+      showSideBarHeader: false,
       title: 'Testing',
     },
   ])
@@ -198,6 +200,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
         src: '/extensions/extension-one/view.html',
       },
       kind: '',
+      showSideBarHeader: true,
       title: 'Testing',
     },
     {
@@ -206,6 +209,7 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
       id: 'sample.views.output',
       iframe: undefined,
       kind: '',
+      showSideBarHeader: true,
       title: 'Output',
     },
   ])
@@ -277,6 +281,7 @@ test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
       id: 'sample.views.testing',
       iframe: undefined,
       kind: 'virtualDom',
+      showSideBarHeader: true,
       title: 'sample.views.testing',
     },
   ])
@@ -324,6 +329,7 @@ test('getViewsFromExtensionWorkers includes event listeners', async () => {
       id: 'sample.views.testing',
       iframe: undefined,
       kind: 'virtualDom',
+      showSideBarHeader: true,
       title: 'sample.views.testing',
     },
   ])
@@ -367,6 +373,7 @@ test('getViewsFromExtensionWorkers prefers manifest image icon over registered i
       id: 'trello.views.boards',
       iframe: undefined,
       kind: '',
+      showSideBarHeader: true,
       title: 'Trello',
     },
   ])
@@ -408,6 +415,7 @@ test('getViewsFromExtensionWorkers preserves symbolic manifest icons', async () 
       id: 'sample.views.output',
       iframe: undefined,
       kind: '',
+      showSideBarHeader: true,
       title: 'sample.views.output',
     },
   ])
@@ -448,6 +456,7 @@ test('getViewsFromExtensionWorkers falls back to registered icon when manifest i
       id: 'sample.views.registeredIcon',
       iframe: undefined,
       kind: '',
+      showSideBarHeader: true,
       title: 'sample.views.registeredIcon',
     },
   ])
@@ -490,6 +499,7 @@ test('getViewsFromExtensionWorkers preserves absolute manifest icon urls', async
       id: 'sample.views.absoluteIcon',
       iframe: undefined,
       kind: '',
+      showSideBarHeader: true,
       title: 'sample.views.absoluteIcon',
     },
   ])

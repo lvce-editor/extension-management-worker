@@ -54,5 +54,5 @@ export const executeDiagnosticProvider = async (
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
   const results = await Promise.all(rpcs.map((rpc) => executeRpcDiagnosticProvider(rpc, textDocument, args)))
-  return results[0] || []
+  return results.flat()
 }

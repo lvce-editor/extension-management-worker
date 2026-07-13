@@ -5,6 +5,7 @@ import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { activateExtension2 } from '../src/parts/ActivateExtension2/ActivateExtension2.ts'
 import { activateExtension3 } from '../src/parts/ActivateExtension3/ActivateExtension3.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import { getRunningExtensionsFromState } from '../src/parts/GetRunningExtensionsFromState/GetRunningExtensionsFromState.ts'
 import { importExtension } from '../src/parts/ImportExtension/ImportExtension.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -139,6 +140,27 @@ test('activateExtension3 reuses isolated workers with explicit and inferred ids'
 
   expect(IsolatedExtensionHostWorkerState.get('sample.explicit')).toBe(explicitRpc)
   expect(IsolatedExtensionHostWorkerState.get('sample.inferred')).toBe(inferredRpc)
+  expect(ExtensionsState.getRuntimeStatus('sample.explicit')).toEqual(
+    expect.objectContaining({
+      activationEvent: 'onStart',
+      id: 'sample.explicit',
+      status: 3,
+    }),
+  )
+  expect(ExtensionsState.getRuntimeStatus('sample.inferred')).toEqual(
+    expect.objectContaining({
+      activationEvent: 'onStart',
+      id: 'sample.inferred',
+      status: 3,
+    }),
+  )
+  expect(getRunningExtensionsFromState([{ id: 'sample.explicit', name: 'Sample Extension' }], ExtensionsState.get().runtimeStatuses)).toEqual([
+    expect.objectContaining({
+      activationEvent: 'onStart',
+      id: 'sample.explicit',
+      name: 'Sample Extension',
+    }),
+  ])
 })
 
 test('activateExtension3 imports and activates non-isolated extensions', async () => {

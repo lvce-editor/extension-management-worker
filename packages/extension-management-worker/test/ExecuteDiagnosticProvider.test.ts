@@ -64,7 +64,7 @@ afterEach(() => {
   state.rendererWorker = undefined
 })
 
-test('executeDiagnosticProvider asks matching isolated diagnostic providers and returns the first result', async () => {
+test('executeDiagnosticProvider asks matching isolated diagnostic providers and merges their results', async () => {
   const textDocument = {
     languageId: 'javascript',
     text: 'const value=1',
@@ -127,7 +127,7 @@ test('executeDiagnosticProvider asks matching isolated diagnostic providers and 
   IsolatedExtensionHostWorkerState.set('extension-one', firstRpc.rpc)
   IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
 
-  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).resolves.toEqual(firstResult)
+  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).resolves.toEqual([...firstResult, ...secondResult])
 
   expect(firstRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
   expect(secondRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])

@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteCompletionProvider from '../src/parts/ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -140,4 +140,50 @@ test('executeCompletionProvider returns empty completions when no matching isola
       languageId: 'javascript',
     }),
   ).resolves.toEqual([])
+})
+
+test('executeCompletionProvider routes language server contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'typescript',
+    text: 'con',
+    uri: 'file:///test.ts',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension-language-server',
+      isolated: true,
+      languageServers: [{ id: 'typescript-native', languageId: 'typescript' }],
+      uri: 'file:///test/extension',
+    },
+  ])
+  const invocations: unknown[] = []
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.complete'(options: unknown) {
+      invocations.push(options)
+      return [{ kind: 6, label: 'console' }]
+    },
+  })
+  const extensionRpc = createRpc({
+    languageServers: [
+      {
+        argv: ['--lsp', '--stdio'],
+        id: 'typescript-native',
+        languageId: 'typescript',
+        uri: 'server',
+      },
+    ],
+  } as never)
+  IsolatedExtensionHostWorkerState.set('extension-language-server', extensionRpc.rpc)
+
+  await expect(ExecuteCompletionProvider.executeCompletionProvider(extensionsState, textDocument, 3)).resolves.toEqual([
+    {
+      flags: 0,
+      kind: 6,
+      label: 'console',
+      matches: [],
+      snippet: 'console',
+    },
+  ])
+  expect(invocations).toHaveLength(1)
+  sharedProcess[Symbol.dispose]()
 })

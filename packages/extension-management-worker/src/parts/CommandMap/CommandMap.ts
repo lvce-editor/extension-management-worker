@@ -23,6 +23,7 @@ import { executeLanguageProvider, executeOrganizeImportsProvider } from '../Exec
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
+import { getAccessToken } from '../GetAccessToken/GetAccessToken.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -86,6 +87,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),
   'Extensions.executeOrganizeImportsProvider': wrapCommand(executeOrganizeImportsProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
+  'Extensions.getAccessToken': getAccessToken,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
   'Extensions.getColorThemeCssFromJson': getColorThemeCssFromJson,

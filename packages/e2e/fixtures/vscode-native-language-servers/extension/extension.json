@@ -1,0 +1,34 @@
+{
+  "id": "test.vscode-native-language-servers",
+  "name": "VS Code Native Language Servers",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "vscode-html",
+      "languageId": "html-native"
+    },
+    {
+      "id": "vscode-css",
+      "languageId": "css-native"
+    },
+    {
+      "id": "vscode-json",
+      "languageId": "json-native"
+    }
+  ],
+  "languages": [
+    {
+      "id": "html-native",
+      "extensions": [".html"]
+    },
+    {
+      "id": "css-native",
+      "extensions": [".css"]
+    },
+    {
+      "id": "json-native",
+      "extensions": [".json"]
+    }
+  ]
+}

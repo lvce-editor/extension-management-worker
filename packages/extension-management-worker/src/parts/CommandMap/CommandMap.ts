@@ -20,6 +20,7 @@ import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteD
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
+import { executeSourceControlProvider, getEnabledSourceControlProviderIds } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
@@ -87,6 +88,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),
   'Extensions.executeOrganizeImportsProvider': wrapCommand(executeOrganizeImportsProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
+  'Extensions.executeSourceControlProvider': wrapCommand(executeSourceControlProvider),
   'Extensions.getAccessToken': getAccessToken,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
@@ -94,6 +96,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getColorThemeJson': getColorThemeJson,
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getDynamicWebExtensions': getDynamicWebExtensions,
+  'Extensions.getEnabledSourceControlProviderIds': wrapCommand(getEnabledSourceControlProviderIds),
   'Extensions.getExtension': getExtension,
   'Extensions.getKeyBindings': getKeyBindings,
   'Extensions.getLanguages': getLanguages,

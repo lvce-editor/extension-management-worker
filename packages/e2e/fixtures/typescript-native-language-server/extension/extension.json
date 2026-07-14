@@ -1,0 +1,18 @@
+{
+  "id": "test.typescript-native-language-server",
+  "name": "TypeScript Native Language Server",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "typescript-native",
+      "languageId": "typescript-native"
+    }
+  ],
+  "languages": [
+    {
+      "id": "typescript-native",
+      "extensions": [".ts"]
+    }
+  ]
+}

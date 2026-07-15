@@ -246,6 +246,26 @@ test('getAllExtensionsWithState marks workspace disabled extensions', async () =
   ])
 })
 
+test('getAllExtensionsWithState does not read workspace disabled extensions in test mode', async () => {
+  const mockFileSystem = registerMocks()
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          id: 'sample.extension',
+        },
+      ]
+    },
+  })
+
+  await expect(getAllExtensionsWithState(createExtensionsState(), '/assets', PlatformType.Test)).resolves.toEqual([
+    {
+      id: 'sample.extension',
+    },
+  ])
+  expect(mockFileSystem.uris).toEqual([])
+})
+
 test('activateByEvent skips workspace disabled extensions', async () => {
   const mockFileSystem = registerMocks(
     createMockFileSystem([['memfs:///workspace/.lvce/disabled-extensions.json', '{\n  "disabledExtensions": [\n    "sample.disabled"\n  ]\n}\n']]),

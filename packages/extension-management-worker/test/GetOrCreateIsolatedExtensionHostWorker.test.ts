@@ -1,5 +1,5 @@
 import type { Rpc } from '@lvce-editor/rpc'
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, expect, jest, test } from '@jest/globals'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../src/parts/GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -93,4 +93,50 @@ test('getOrCreateIsolatedExtensionHostWorker returns an existing rpc with defaul
   await expect(
     GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js'),
   ).resolves.toBe(rpc)
+})
+
+test('getOrCreateIsolatedExtensionHostWorker shares an in-flight worker creation', async () => {
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => undefined,
+    invokeAndTransfer: async () => undefined,
+    send: () => {},
+  }
+  const { promise: creation, resolve: finishCreation } = Promise.withResolvers<Rpc>()
+  const create = jest.fn(() => creation)
+
+  const first = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(
+    'sample.extension',
+    '/remote/sample/main.js',
+    '',
+    create,
+  )
+  const second = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(
+    'sample.extension',
+    '/remote/sample/main.js',
+    '',
+    create,
+  )
+
+  expect(create).toHaveBeenCalledTimes(1)
+  finishCreation(rpc)
+  await expect(Promise.all([first, second])).resolves.toEqual([rpc, rpc])
+})
+
+test('getOrCreateIsolatedExtensionHostWorker retries after worker creation fails', async () => {
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => undefined,
+    invokeAndTransfer: async () => undefined,
+    send: () => {},
+  }
+  const create = jest.fn<() => Promise<Rpc>>().mockRejectedValueOnce(new Error('Failed to create worker')).mockResolvedValueOnce(rpc)
+
+  await expect(
+    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', create),
+  ).rejects.toThrow('Failed to create worker')
+  await expect(
+    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', create),
+  ).resolves.toBe(rpc)
+  expect(create).toHaveBeenCalledTimes(2)
 })

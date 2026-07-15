@@ -3,7 +3,8 @@ import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
-import { getViews, getViewsFromExtensionWorkers } from '../src/parts/GetViews/GetViews.ts'
+import { getViews } from '../src/parts/GetViews/GetViews.ts'
+import { getViewsFromExtensionWorkers } from '../src/parts/GetViewsFromExtensionWorkers/GetViewsFromExtensionWorkers.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')

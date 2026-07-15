@@ -1,10 +1,8 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { expect, test } from '@jest/globals'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
-import {
-  executeLanguageServerCompletion,
-  resolveLanguageServerUri,
-} from '../src/parts/ExecuteLanguageServerCompletion/ExecuteLanguageServerCompletion.ts'
+import { executeLanguageServerCompletion } from '../src/parts/ExecuteLanguageServerCompletion/ExecuteLanguageServerCompletion.ts'
+import { resolveLanguageServerUri } from '../src/parts/ResolveLanguageServer/ResolveLanguageServer.ts'
 
 test('resolveLanguageServerUri resolves relative executable URIs from an extension path', () => {
   expect(

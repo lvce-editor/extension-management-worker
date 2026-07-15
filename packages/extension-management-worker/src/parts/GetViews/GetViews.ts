@@ -17,8 +17,10 @@ interface ManifestView {
   readonly id?: string
   readonly iframe?: ManifestViewIframe
   readonly kind?: string
+  readonly selector?: readonly string[]
   readonly showSideBarHeader?: boolean
   readonly title?: string
+  readonly type?: string
 }
 
 interface ExtensionManifest {
@@ -144,9 +146,15 @@ const toView = (extension: ExtensionManifest, registeredView: RegisteredView, as
   const id = registeredView.id || ''
   const manifestView = getManifestView(extension, id)
   const css = getCss(extension, manifestView, assetDir, platform)
+  const selector = Array.isArray(manifestView?.selector)
+    ? manifestView.selector.filter((item): item is string => typeof item === 'string')
+    : undefined
+  const type = typeof manifestView?.type === 'string' ? manifestView.type : undefined
   return {
     ...(css && { css }),
     ...(registeredView.eventListeners && { eventListeners: registeredView.eventListeners }),
+    ...(selector && { selector }),
+    ...(type && { type }),
     extensionId: getExtensionId(extension),
     icon: getIcon(extension, manifestView, registeredView, assetDir, platform),
     id,

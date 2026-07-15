@@ -19,7 +19,7 @@ afterEach(() => {
 
 test('addExtension - dynamically adds extension and clears cache', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
   })
   const extension = {
     id: 'sample.extension',
@@ -33,12 +33,12 @@ test('addExtension - dynamically adds extension and clears cache', async () => {
   expect(result).toBe(extension)
   expect(ExtensionsState.get().webExtensions).toEqual([extension])
   expect(ExtensionsState.get().cachedExtensions).toBeUndefined()
-  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
 test('addExtension - refreshes status bar items', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'StatusBar.handleItemsChanged'() {},
   })
 
@@ -47,5 +47,5 @@ test('addExtension - refreshes status bar items', async () => {
     statusBarItems: [{ text: 'Ready' }],
   })
 
-  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache'], ['StatusBar.handleItemsChanged']])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated'], ['StatusBar.handleItemsChanged']])
 })

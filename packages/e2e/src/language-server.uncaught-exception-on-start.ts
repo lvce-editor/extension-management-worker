@@ -2,9 +2,7 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.uncaught-exception-on-start'
 
-export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
-  const extensionUri = import.meta.resolve('../fixtures/failing-native-language-servers/extension')
-  await Extension.addWebExtension(extensionUri)
+export const test: Test = async ({ Editor, expect, FileSystem, Locator, Main, Workspace }) => {
   const fixtureUri = import.meta.resolve('../fixtures/failing-native-language-servers/workspace')
   const workspaceUri = await FileSystem.loadFixture(fixtureUri)
   await Workspace.setPath(workspaceUri)
@@ -13,13 +11,12 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
 
   await Editor.openCompletion()
 
-  const completions = Locator('#Completions')
-  await expect(completions).not.toBeVisible()
+  const completionItems = Locator('#Completions .EditorCompletionItem')
+  await expect(completionItems).toHaveCount(0)
 
   await Main.openUri(`${workspaceUri}/healthy.healthy`)
   await Editor.setCursor(0, 4)
   await Editor.openCompletion()
-  await expect(completions).toBeVisible()
-  const completionItem = Locator('.EditorCompletionItem')
+  const completionItem = Locator('.EditorCompletionItem', { hasText: 'healthyLanguageServerCompletion' })
   await expect(completionItem).toHaveText('healthyLanguageServerCompletion')
 }

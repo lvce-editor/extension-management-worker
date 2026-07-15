@@ -1,3 +1,90 @@
 {
-  "name": "test"
+  "id": "test.language-server-e2e",
+  "name": "Language Server E2E",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "exit-zero",
+      "languageId": "language-server-exit-zero"
+    },
+    {
+      "id": "exit-one",
+      "languageId": "language-server-exit-one"
+    },
+    {
+      "id": "uncaught-exception",
+      "languageId": "language-server-uncaught-exception"
+    },
+    {
+      "id": "crash-on-completion",
+      "languageId": "language-server-crash-on-completion"
+    },
+    {
+      "id": "reject-completion",
+      "languageId": "language-server-reject-completion"
+    },
+    {
+      "id": "healthy",
+      "languageId": "language-server-healthy"
+    },
+    {
+      "id": "vscode-html",
+      "languageId": "html-native"
+    },
+    {
+      "id": "vscode-css",
+      "languageId": "css-native"
+    },
+    {
+      "id": "vscode-json",
+      "languageId": "json-native"
+    },
+    {
+      "id": "typescript-native",
+      "languageId": "typescript-native"
+    }
+  ],
+  "languages": [
+    {
+      "id": "language-server-exit-zero",
+      "extensions": [".exit-zero"]
+    },
+    {
+      "id": "language-server-exit-one",
+      "extensions": [".exit-one"]
+    },
+    {
+      "id": "language-server-uncaught-exception",
+      "extensions": [".uncaught-exception"]
+    },
+    {
+      "id": "language-server-crash-on-completion",
+      "extensions": [".crash-on-completion"]
+    },
+    {
+      "id": "language-server-reject-completion",
+      "extensions": [".reject-completion"]
+    },
+    {
+      "id": "language-server-healthy",
+      "extensions": [".healthy"]
+    },
+    {
+      "id": "html-native",
+      "extensions": [".html"]
+    },
+    {
+      "id": "css-native",
+      "extensions": [".css"]
+    },
+    {
+      "id": "json-native",
+      "extensions": [".json"]
+    },
+    {
+      "id": "typescript-native",
+      "extensions": [".ts"]
+    }
+  ]
 }

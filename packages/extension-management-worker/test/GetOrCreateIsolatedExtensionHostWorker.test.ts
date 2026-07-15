@@ -20,6 +20,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry', async ()
     readonly isMessagePortOpen: boolean
     readonly send: (port: MessagePort) => Promise<void>
   }): Promise<Rpc> => {
+    expect(options.commandMap['Extensions.getNodeRpcInfo']).toEqual(expect.any(Function))
     await options.send('port' as unknown as MessagePort)
     return rpc
   }

@@ -1,5 +1,5 @@
 import { TransferMessagePortRpcParent, type Rpc } from '@lvce-editor/rpc'
-import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
+import { createExtensionCommandMap } from '../CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 
@@ -23,7 +23,7 @@ export const createIsolatedExtensionHostWorker = async (
   invokeAndTransfer: InvokeAndTransfer,
 ): Promise<Rpc> => {
   return createRpc({
-    commandMap: CommandMapRef.commandMapRef,
+    commandMap: createExtensionCommandMap(extensionId),
     isMessagePortOpen: true,
     send(port: MessagePort) {
       return invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId, absolutePath, workerName)

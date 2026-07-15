@@ -12,7 +12,8 @@
     },
     "packages/e2e": {
       "entry": ["src/**/*.ts", "fixtures/**/main.js"],
-      "project": ["src/**/*.ts", "fixtures/**/*.js"]
+      "project": ["src/**/*.ts", "fixtures/**/*.js"],
+      "ignoreFiles": ["fixtures/failing-native-language-servers/extension/servers/*.js"]
     },
     "packages/extension-management-worker": {
       "entry": ["test/**/*.test.ts"],

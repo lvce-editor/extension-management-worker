@@ -1,5 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
+import * as Logger from '../Logger/Logger.ts'
 import { resolveLanguageServer } from '../ResolveLanguageServer/ResolveLanguageServer.ts'
 
 interface ExtensionManifest {
@@ -56,12 +57,19 @@ export const executeLanguageServerCompletion = async (
   if (!languageServer) {
     return []
   }
-  const result = (await SharedProcess.invoke('LanguageServer.complete', {
-    argv: languageServer.argv,
-    id: languageServer.id,
-    offset,
-    textDocument,
-    uri: languageServer.uri,
-  })) as readonly LanguageServerCompletionItem[]
+  let result: readonly LanguageServerCompletionItem[]
+  try {
+    result = (await SharedProcess.invoke('LanguageServer.complete', {
+      argv: languageServer.argv,
+      id: languageServer.id,
+      offset,
+      textDocument,
+      uri: languageServer.uri,
+    })) as readonly LanguageServerCompletionItem[]
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    Logger.warn(`[Language Server] Completion failed: ${message}`)
+    return []
+  }
   return result.map(sanitizeCompletionItem).filter((item): item is Readonly<Record<string, unknown>> => item !== undefined)
 }

@@ -116,6 +116,57 @@ test('executeLanguageServerCompletion invokes the shared-process proxy and sanit
   sharedProcess[Symbol.dispose]()
 })
 
+test('executeLanguageServerCompletion logs language server failures and returns empty completions', async () => {
+  const warningMessages: unknown[][] = []
+  const originalWarn = console.warn
+  console.warn = (...args: readonly unknown[]): void => {
+    warningMessages.push([...args])
+  }
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.complete'() {
+      throw new Error('Language server exited with code 1 and signal null: fixture stderr')
+    },
+  })
+  const rpc = {
+    dispose: async () => {},
+    invoke: async () => ({
+      languageServers: [
+        {
+          argv: [],
+          id: 'failing-server',
+          languageId: 'fixture',
+          uri: 'server.js',
+        },
+      ],
+    }),
+    invokeAndTransfer: async () => {},
+    send: () => {},
+  } as Rpc
+
+  try {
+    await expect(
+      executeLanguageServerCompletion(
+        rpc,
+        {
+          id: 'test.failing-server',
+          languageServers: [{ id: 'failing-server', languageId: 'fixture' }],
+          uri: 'file:///test/extension',
+        },
+        {
+          languageId: 'fixture',
+          text: 'test',
+          uri: 'file:///workspace/test.fixture',
+        },
+        4,
+      ),
+    ).resolves.toEqual([])
+    expect(warningMessages).toEqual([['[Language Server] Completion failed: Language server exited with code 1 and signal null: fixture stderr']])
+  } finally {
+    console.warn = originalWarn
+    sharedProcess[Symbol.dispose]()
+  }
+})
+
 test('executeLanguageServerCompletion rejects missing registrations', async () => {
   const rpc = {
     dispose: async () => {},

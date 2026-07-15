@@ -287,6 +287,50 @@ test('getViewsFromExtensionWorkers includes virtual dom kind', async () => {
   ])
 })
 
+test('getViewsFromExtensionWorkers includes preview routing metadata', async () => {
+  const rpc = createRpc({
+    views: [
+      {
+        id: 'builtin.media-preview',
+        kind: 'virtualDom',
+      },
+    ],
+  })
+  IsolatedExtensionHostWorkerState.set('builtin.media-preview', rpc.rpc)
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'builtin.media-preview',
+          isolated: true,
+          views: [
+            {
+              id: 'builtin.media-preview',
+              selector: ['.png', '.jpg', 1 as any],
+              type: 'preview',
+            },
+          ],
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([
+    {
+      extensionId: 'builtin.media-preview',
+      icon: '',
+      id: 'builtin.media-preview',
+      iframe: undefined,
+      kind: 'virtualDom',
+      selector: ['.png', '.jpg'],
+      showSideBarHeader: true,
+      title: 'builtin.media-preview',
+      type: 'preview',
+    },
+  ])
+})
+
 test('getViewsFromExtensionWorkers includes event listeners', async () => {
   const eventListeners = [
     {

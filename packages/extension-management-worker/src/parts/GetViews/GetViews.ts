@@ -3,6 +3,7 @@ import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 import { getAbsolutePath, getExtensionId, getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import * as Logger from '../Logger/Logger.ts'
 
 interface ManifestViewIframe {
   readonly credentialless?: boolean
@@ -64,6 +65,19 @@ interface ViewRegistrySnapshot {
 
 const contributesViews = (extension: ExtensionManifest): boolean => {
   return Array.isArray(extension.views) && extension.views.length > 0
+}
+
+const shouldLoadViews = (extension: ExtensionManifest): boolean => {
+  if (!contributesViews(extension)) {
+    return false
+  }
+  if (!IsExtensionIsolated.isExtensionIsolated(extension)) {
+    Logger.warn(
+      `Extension "${getExtensionId(extension)}" contributes activity bar views but is not isolated. The views will not be shown. Add "isolated": true to extension.json to enable them.`,
+    )
+    return false
+  }
+  return true
 }
 
 const getManifestView = (extension: ExtensionManifest, id: string): ManifestView | undefined => {
@@ -183,7 +197,7 @@ export const getViewsFromExtensionWorkers = async (
   assetDir: string,
   platform: number,
 ): Promise<readonly any[]> => {
-  const matchingExtensions = extensions.filter((extension) => IsExtensionIsolated.isExtensionIsolated(extension) && contributesViews(extension))
+  const matchingExtensions = extensions.filter(shouldLoadViews)
   const results = await Promise.all(matchingExtensions.map((extension) => getExtensionViews(extension, assetDir, platform)))
   return results.flat()
 }

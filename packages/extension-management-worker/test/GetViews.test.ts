@@ -1,6 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { getViews, getViewsFromExtensionWorkers } from '../src/parts/GetViews/GetViews.ts'
@@ -38,6 +38,7 @@ const createRpc = (
 }
 
 afterEach(() => {
+  jest.restoreAllMocks()
   IsolatedExtensionHostWorkerState.clear()
   state.rendererWorker?.[Symbol.dispose]()
   state.rendererWorker = undefined
@@ -174,15 +175,6 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
             },
           ],
         },
-        {
-          id: 'extension-three',
-          isolated: false,
-          views: [
-            {
-              id: 'sample.views.ignored',
-            },
-          ],
-        },
       ],
       '',
       1,
@@ -216,6 +208,37 @@ test('getViewsFromExtensionWorkers asks matching isolated extension workers for 
 
   expect(firstRpc.invocations).toEqual([['ExtensionApi.getViewRegistrySnapshot']])
   expect(secondRpc.invocations).toEqual([['ExtensionApi.getViewRegistrySnapshot']])
+})
+
+test('getViewsFromExtensionWorkers warns when a non-isolated extension contributes views', async () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+  await expect(
+    getViewsFromExtensionWorkers(
+      [
+        {
+          id: 'extension-three',
+          isolated: false,
+          views: [
+            {
+              id: 'sample.views.ignored',
+            },
+          ],
+        },
+        {
+          id: 'extension-without-views',
+          isolated: false,
+        },
+      ],
+      '',
+      1,
+    ),
+  ).resolves.toEqual([])
+
+  expect(warnSpy).toHaveBeenCalledTimes(1)
+  expect(warnSpy).toHaveBeenCalledWith(
+    'Extension "extension-three" contributes activity bar views but is not isolated. The views will not be shown. Add "isolated": true to extension.json to enable them.',
+  )
 })
 
 test('getViewsFromExtensionWorkers ignores invalid registry snapshots', async () => {

@@ -25,8 +25,8 @@ const withWorkspaceDisabledState = (extensions: readonly any[], disabledIds: rea
   })
 }
 
-const getExtensionsWithWorkspaceState = async (extensions: readonly any[]): Promise<readonly any[]> => {
-  if (extensions.length === 0) {
+const getExtensionsWithWorkspaceState = async (extensions: readonly any[], platform: number): Promise<readonly any[]> => {
+  if (extensions.length === 0 || platform === PlatformType.Test) {
     return extensions
   }
   const workspaceDisabledIds = await WorkspaceDisabledExtensionsStorage.readDisabledExtensionIdsSafe()
@@ -41,8 +41,8 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
   if (resolvedPlatform === PlatformType.Web) {
     const webExtensions = await getWebExtensions(resolvedAssetDir)
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
-    return getExtensionsWithWorkspaceState(compatibleExtensions)
+    return getExtensionsWithWorkspaceState(compatibleExtensions, resolvedPlatform)
   }
   const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
-  return getExtensionsWithWorkspaceState([...local, ...meta])
+  return getExtensionsWithWorkspaceState([...local, ...meta], resolvedPlatform)
 }

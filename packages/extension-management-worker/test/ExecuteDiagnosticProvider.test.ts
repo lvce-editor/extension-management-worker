@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteDiagnosticProvider from '../src/parts/ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -152,6 +152,59 @@ test('executeDiagnosticProvider returns empty diagnostics when no matching isola
       languageId: 'javascript',
     }),
   ).resolves.toEqual([])
+})
+
+test('executeDiagnosticProvider routes language server contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'markdown',
+    text: '[missing][reference]',
+    uri: 'file:///README.md',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension-language-server',
+      isolated: true,
+      languageServers: [{ id: 'vscode-markdown', languageId: 'markdown' }],
+      uri: 'file:///test/extension',
+    },
+  ])
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.diagnostic'() {
+      return [
+        {
+          message: "No link definition found: 'reference'",
+          range: {
+            end: { character: 20, line: 0 },
+            start: { character: 10, line: 0 },
+          },
+          severity: 2,
+        },
+      ]
+    },
+  })
+  const extensionRpc = createRpc({
+    languageServers: [
+      {
+        argv: ['--stdio'],
+        id: 'vscode-markdown',
+        languageId: 'markdown',
+        uri: 'server',
+      },
+    ],
+  } as never)
+  IsolatedExtensionHostWorkerState.set('extension-language-server', extensionRpc.rpc)
+
+  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).resolves.toEqual([
+    {
+      columnIndex: 10,
+      endColumnIndex: 20,
+      endRowIndex: 0,
+      message: "No link definition found: 'reference'",
+      rowIndex: 0,
+      type: 'warning',
+    },
+  ])
+  sharedProcess[Symbol.dispose]()
 })
 
 test('executeDiagnosticProvider ignores non-isolated diagnostic provider contributions', async () => {

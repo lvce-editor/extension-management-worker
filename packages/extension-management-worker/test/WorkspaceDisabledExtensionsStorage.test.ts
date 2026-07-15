@@ -63,7 +63,7 @@ const createMockFileSystem = (files: readonly [string, string][] = [], directori
 
 const registerMocks = (mockFileSystem = createMockFileSystem(), workspacePath = DefaultWorkspaceUri): MockFileSystem => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'Workspace.getPath'() {
       return workspacePath
     },

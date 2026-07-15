@@ -31,7 +31,7 @@ test('addWebExtension - skips duplicate uri', async () => {
 
 test('addWebExtension - adds new uri once and clears cache', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
   })
   const uri = 'https://example.com/extension'
   const manifest = {
@@ -60,12 +60,12 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     },
   ])
   expect(ExtensionsState.get().cachedExtensions).toBeUndefined()
-  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
 test('addWebExtension - refreshes status bar items using path as fallback id', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'StatusBar.handleItemsChanged'() {},
   })
   const uri = 'https://example.com/status-extension'
@@ -76,5 +76,5 @@ test('addWebExtension - refreshes status bar items using path as fallback id', a
 
   await addWebExtension(uri)
 
-  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache'], ['StatusBar.handleItemsChanged']])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated'], ['StatusBar.handleItemsChanged']])
 })

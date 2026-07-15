@@ -21,7 +21,7 @@ afterEach(() => {
 
 const registerRendererWorker = (): void => {
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'WebView.compatSharedProcessInvoke'() {
       return 'file:///config/disabled-extensions.json'
     },
@@ -69,7 +69,7 @@ test('enableExtension2 removes an id from the desktop disabled extensions file',
   ])
   expect(getRendererWorker().invocations).toEqual([
     ['WebView.compatSharedProcessInvoke', 'PlatformPaths.getDisabledExtensionsJsonUri'],
-    ['ExtensionManagement.invalidateExtensionsCache'],
+    ['ExtensionManagement.handleExtensionsCacheInvalidated'],
   ])
 })
 

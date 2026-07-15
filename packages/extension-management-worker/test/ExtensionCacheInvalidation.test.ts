@@ -22,7 +22,7 @@ const getRendererWorker = (): DisposableMockRpc => {
 beforeEach(() => {
   ExtensionsState.reset()
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'ExtensionManagement.invalidateExtensionsCache'() {},
+    'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
   })
 })
 
@@ -34,7 +34,7 @@ afterEach(() => {
 test('disableExtension2 invalidates extension cache', async () => {
   await disableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
 test('enableExtension2 invalidates extension cache', async () => {
@@ -42,17 +42,17 @@ test('enableExtension2 invalidates extension cache', async () => {
 
   await enableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
 test('uninstallExtension invalidates extension cache', async () => {
   await uninstallExtension()
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
 test('installExtension invalidates extension cache', async () => {
   await installExtension()
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.invalidateExtensionsCache']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })

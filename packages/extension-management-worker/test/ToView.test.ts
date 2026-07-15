@@ -2,7 +2,7 @@ import { expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { toView } from '../src/parts/ToView/ToView.ts'
 
-test('toView combines manifest and registered view metadata', () => {
+test('toView converts manifest view metadata', () => {
   const eventListeners = [
     {
       name: 'handleClick',
@@ -14,24 +14,18 @@ test('toView combines manifest and registered view metadata', () => {
       {
         id: 'sample.extension',
         path: '/extensions/sample',
-        views: [
-          {
-            css: 'media/view.css',
-            icon: 'symbol-files',
-            id: 'sample.views.files',
-            kind: 'tree',
-            selector: ['.txt', 1 as any],
-            showSideBarHeader: false,
-            title: 'Manifest title',
-            type: 'preview',
-          },
-        ],
+        views: [],
       },
       {
+        css: 'media/view.css',
         eventListeners,
+        icon: 'symbol-files',
         id: 'sample.views.files',
         kind: 'virtualDom',
-        title: 'Registered title',
+        selector: ['.txt', 1 as any],
+        showSideBarHeader: false,
+        title: 'Manifest title',
+        type: 'preview',
       },
       '',
       PlatformType.Remote,
@@ -46,7 +40,7 @@ test('toView combines manifest and registered view metadata', () => {
     kind: 'virtualDom',
     selector: ['.txt'],
     showSideBarHeader: false,
-    title: 'Registered title',
+    title: 'Manifest title',
     type: 'preview',
   })
 })

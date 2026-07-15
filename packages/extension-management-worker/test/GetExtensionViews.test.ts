@@ -1,25 +1,9 @@
-import type { Rpc } from '@lvce-editor/rpc'
-import { afterEach, expect, test } from '@jest/globals'
+import { expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { getExtensionViews } from '../src/parts/GetExtensionViews/GetExtensionViews.ts'
-import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
-afterEach(() => {
-  IsolatedExtensionHostWorkerState.clear()
-})
-
-test('getExtensionViews converts registered views', async () => {
-  const rpc: Rpc = {
-    dispose: async () => {},
-    invoke: async (): Promise<unknown> => ({
-      views: [{ id: 'sample.views.files', title: 'Registered title' }],
-    }),
-    invokeAndTransfer: async (): Promise<void> => {},
-    send: (): void => {},
-  }
-  IsolatedExtensionHostWorkerState.set('sample.extension', rpc)
-
-  await expect(
+test('getExtensionViews converts manifest views without starting an extension worker', () => {
+  expect(
     getExtensionViews(
       {
         id: 'sample.extension',
@@ -28,7 +12,7 @@ test('getExtensionViews converts registered views', async () => {
       '',
       PlatformType.Remote,
     ),
-  ).resolves.toEqual([
+  ).toEqual([
     {
       extensionId: 'sample.extension',
       icon: '',
@@ -36,19 +20,15 @@ test('getExtensionViews converts registered views', async () => {
       iframe: undefined,
       kind: '',
       showSideBarHeader: true,
-      title: 'Registered title',
+      title: 'Manifest title',
     },
   ])
 })
 
-test('getExtensionViews ignores snapshots without a views array', async () => {
-  const rpc: Rpc = {
-    dispose: async () => {},
-    invoke: async (): Promise<unknown> => ({}),
-    invokeAndTransfer: async (): Promise<void> => {},
-    send: (): void => {},
-  }
-  IsolatedExtensionHostWorkerState.set('sample.extension', rpc)
+test('getExtensionViews ignores extensions without manifest views', () => {
+  expect(getExtensionViews({ id: 'sample.extension' }, '', PlatformType.Remote)).toEqual([])
+})
 
-  await expect(getExtensionViews({ id: 'sample.extension' }, '', PlatformType.Remote)).resolves.toEqual([])
+test('getExtensionViews ignores invalid manifest view ids', () => {
+  expect(getExtensionViews({ id: 'sample.extension', views: [{ id: 1 as any }] }, '', PlatformType.Remote)).toEqual([])
 })

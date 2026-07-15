@@ -1,13 +1,11 @@
-import type { ExtensionManifest, RegisteredView } from '../GetViewsTypes/GetViewsTypes.ts'
+import type { ExtensionManifest, ManifestView } from '../GetViewsTypes/GetViewsTypes.ts'
 import { getCss } from '../GetCss/GetCss.ts'
 import { getIcon } from '../GetIcon/GetIcon.ts'
 import { getIframe } from '../GetIframe/GetIframe.ts'
 import { getExtensionId } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
-import { getManifestView } from '../GetManifestView/GetManifestView.ts'
 
-export const toView = (extension: ExtensionManifest, registeredView: RegisteredView, assetDir: string, platform: number): any => {
-  const id = registeredView.id || ''
-  const manifestView = getManifestView(extension, id)
+export const toView = (extension: ExtensionManifest, manifestView: ManifestView, assetDir: string, platform: number): any => {
+  const id = manifestView.id || ''
   const css = getCss(extension, manifestView, assetDir, platform)
   const selector = Array.isArray(manifestView?.selector)
     ? manifestView.selector.filter((item): item is string => typeof item === 'string')
@@ -15,15 +13,15 @@ export const toView = (extension: ExtensionManifest, registeredView: RegisteredV
   const type = typeof manifestView?.type === 'string' ? manifestView.type : undefined
   return {
     ...(css && { css }),
-    ...(registeredView.eventListeners && { eventListeners: registeredView.eventListeners }),
+    ...(Array.isArray(manifestView.eventListeners) && { eventListeners: manifestView.eventListeners }),
     ...(selector && { selector }),
     ...(type && { type }),
     extensionId: getExtensionId(extension),
-    icon: getIcon(extension, manifestView, registeredView, assetDir, platform),
+    icon: getIcon(extension, manifestView, assetDir, platform),
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
-    kind: registeredView.kind || manifestView?.kind || '',
-    showSideBarHeader: manifestView?.showSideBarHeader !== false,
-    title: registeredView.title || manifestView?.title || id,
+    kind: manifestView.kind || '',
+    showSideBarHeader: manifestView.showSideBarHeader !== false,
+    title: manifestView.title || id,
   }
 }

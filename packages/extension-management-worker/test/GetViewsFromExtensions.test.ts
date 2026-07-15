@@ -1,91 +1,53 @@
-import { expect, test } from '@jest/globals'
+import { expect, jest, test } from '@jest/globals'
 import { getViewsFromExtensions } from '../src/parts/GetViewsFromExtensions/GetViewsFromExtensions.ts'
 
-test('getViewsFromExtensions returns contributed views', () => {
-  const extensions = [
-    {
-      id: 'sample.extension',
-      views: [
+test('getViewsFromExtensions returns contributed views from isolated extension manifests', () => {
+  expect(
+    getViewsFromExtensions(
+      [
         {
-          icon: 'symbol-files',
-          id: 'sample.views.files',
-          title: 'Sample Files',
+          id: 'sample.extension',
+          isolated: true,
+          views: [{ icon: 'symbol-files', id: 'sample.views.files', title: 'Sample Files' }],
+        },
+        {
+          id: 'sample.empty',
+          isolated: true,
         },
       ],
-    },
-    {
-      id: 'sample.empty',
-    },
-  ]
-
-  expect(getViewsFromExtensions(extensions)).toEqual([
+      '',
+      0,
+    ),
+  ).toEqual([
     {
       extensionId: 'sample.extension',
       icon: 'symbol-files',
       id: 'sample.views.files',
+      iframe: undefined,
+      kind: '',
       showSideBarHeader: true,
       title: 'Sample Files',
     },
   ])
 })
 
-test('getViewsFromExtensions ignores invalid view ids', () => {
-  const extensions = [
-    undefined,
-    {
-      id: 'sample.extension',
-      views: [
-        undefined,
+test('getViewsFromExtensions warns and ignores non-isolated view contributions', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+  expect(
+    getViewsFromExtensions(
+      [
         {
-          id: 1,
-          title: 'Invalid',
+          id: 'sample.extension',
+          isolated: false,
+          views: [{ id: 'sample.views.files' }],
         },
       ],
-    },
-  ]
-
-  expect(getViewsFromExtensions(extensions)).toEqual([])
-})
-
-test('getViewsFromExtensions falls back to empty icon and id title', () => {
-  expect(
-    getViewsFromExtensions([
-      {
-        id: 'sample.extension',
-        views: [{ id: 'sample.views.files' }],
-      },
-    ]),
-  ).toEqual([
-    {
-      extensionId: 'sample.extension',
-      icon: '',
-      id: 'sample.views.files',
-      showSideBarHeader: true,
-      title: 'sample.views.files',
-    },
-  ])
-})
-
-test('getViewsFromExtensions preserves sidebar header opt out', () => {
-  expect(
-    getViewsFromExtensions([
-      {
-        id: 'sample.extension',
-        views: [
-          {
-            id: 'sample.views.files',
-            showSideBarHeader: false,
-          },
-        ],
-      },
-    ]),
-  ).toEqual([
-    {
-      extensionId: 'sample.extension',
-      icon: '',
-      id: 'sample.views.files',
-      showSideBarHeader: false,
-      title: 'sample.views.files',
-    },
-  ])
+      '',
+      0,
+    ),
+  ).toEqual([])
+  expect(warnSpy).toHaveBeenCalledWith(
+    'Extension "sample.extension" contributes activity bar views but is not isolated. The views will not be shown. Add "isolated": true to extension.json to enable them.',
+  )
 })

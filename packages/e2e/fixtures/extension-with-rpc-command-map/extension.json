@@ -1,0 +1,21 @@
+{
+  "id": "test.with-rpc-command-map",
+  "name": "With RPC Command Map",
+  "browser": "main.js",
+  "isolated": true,
+  "activation": ["onFormatting:isolated-rpc-with-declared-rpc"],
+  "formattingProviders": [
+    {
+      "id": "isolated-rpc-with-declared-rpc",
+      "languageId": "isolated-rpc-with-declared-rpc"
+    }
+  ],
+  "rpc": [
+    {
+      "id": "test-client",
+      "name": "Test Client",
+      "type": "node",
+      "url": "rpc-client.js"
+    }
+  ]
+}

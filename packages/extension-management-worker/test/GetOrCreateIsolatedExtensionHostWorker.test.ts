@@ -1,9 +1,13 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { afterEach, expect, jest, test } from '@jest/globals'
+import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../src/parts/GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
+const invokeAndTransferNoop = async (): Promise<void> => {}
+
 afterEach(() => {
+  DeclaredRpcState.clear()
   IsolatedExtensionHostWorkerState.clear()
 })
 
@@ -80,6 +84,60 @@ test('createIsolatedExtensionHostWorker launches extension main entry with fallb
     '/remote/sample/main.js',
     '',
   ])
+})
+
+test('createIsolatedExtensionHostWorker keeps command handling scoped to each extension', async () => {
+  DeclaredRpcState.set({
+    id: 'builtin.git',
+    path: '/extensions/builtin.git',
+    rpc: [{ id: 'git-client', name: 'Git', type: 'node', url: 'node/gitClient.js' }],
+  })
+  DeclaredRpcState.set({
+    id: 'builtin.prettier',
+    path: '/extensions/builtin.prettier',
+    rpc: [],
+  })
+  let globalCommandMap: Readonly<Record<string, (...args: readonly any[]) => any>> = {}
+  const createRpc = async (options: {
+    readonly commandMap: Readonly<Record<string, (...args: readonly any[]) => any>>
+    readonly isMessagePortOpen: boolean
+    readonly send: (port: MessagePort) => Promise<void>
+  }) => {
+    globalCommandMap = options.commandMap
+    await options.send('port' as unknown as MessagePort)
+    return {
+      dispose: async () => {},
+      invoke: async () => undefined,
+      invokeAndTransfer: async () => undefined,
+      ipc: {
+        execute(method: string, ...params: readonly any[]): any {
+          return globalCommandMap[method](...params)
+        },
+      },
+      send: () => {},
+    }
+  }
+
+  const gitRpc = await GetOrCreateIsolatedExtensionHostWorker.createIsolatedExtensionHostWorker(
+    'builtin.git',
+    '/extensions/builtin.git/gitMain.js',
+    'Git',
+    createRpc,
+    invokeAndTransferNoop,
+  )
+  await GetOrCreateIsolatedExtensionHostWorker.createIsolatedExtensionHostWorker(
+    'builtin.prettier',
+    '/extensions/builtin.prettier/prettierMain.js',
+    'Prettier',
+    createRpc,
+    invokeAndTransferNoop,
+  )
+  const { execute } = (gitRpc as Rpc & { ipc: { execute: (method: string, ...params: readonly any[]) => any } }).ipc
+
+  await expect(execute('Extensions.getNodeRpcInfo', 'git-client')).resolves.toEqual({
+    name: 'Git',
+    path: '/extensions/builtin.git/node/gitClient.js',
+  })
 })
 
 test('getOrCreateIsolatedExtensionHostWorker returns an existing rpc with default worker name', async () => {

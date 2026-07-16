@@ -1,19 +1,39 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
 import { TransferMessagePortRpcParent, type Rpc } from '@lvce-editor/rpc'
-import { createExtensionCommandMap } from '../CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
+import {
+  createExtensionCommandExecutor,
+  createExtensionCommandMap,
+  type ExtensionCommand,
+  type ExtensionCommandMap,
+} from '../CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 
+interface RpcWithIpc extends Rpc {
+  readonly ipc?: {
+    execute?: ExtensionCommand
+  }
+}
+
 type CreateRpc = (options: {
-  readonly commandMap: any
+  readonly commandMap: ExtensionCommandMap
   readonly isMessagePortOpen: boolean
   readonly send: (port: MessagePort) => Promise<void>
-}) => Promise<Rpc>
+}) => Promise<RpcWithIpc>
 
 type InvokeAndTransfer = typeof RendererWorker.invokeAndTransfer
 
 type CreateWorker = (extensionId: string, absolutePath: string, workerName: string) => Promise<Rpc>
 
 const pendingRpcs: Record<string, Promise<Rpc> | undefined> = Object.create(null)
+
+const bindCommandMap = (rpc: RpcWithIpc, commandMap: ExtensionCommandMap): Rpc => {
+  if (rpc.ipc) {
+    rpc.ipc.execute = createExtensionCommandExecutor(commandMap)
+  }
+  return rpc
+}
 
 export const createIsolatedExtensionHostWorker = async (
   extensionId: string,
@@ -22,13 +42,15 @@ export const createIsolatedExtensionHostWorker = async (
   createRpc: CreateRpc,
   invokeAndTransfer: InvokeAndTransfer,
 ): Promise<Rpc> => {
-  return createRpc({
-    commandMap: createExtensionCommandMap(extensionId),
+  const commandMap = createExtensionCommandMap(extensionId)
+  const rpc = await createRpc({
+    commandMap,
     isMessagePortOpen: true,
     send(port: MessagePort) {
       return invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId, absolutePath, workerName)
     },
   })
+  return bindCommandMap(rpc, commandMap)
 }
 
 const createWorker = (extensionId: string, absolutePath: string, workerName: string): Promise<Rpc> => {

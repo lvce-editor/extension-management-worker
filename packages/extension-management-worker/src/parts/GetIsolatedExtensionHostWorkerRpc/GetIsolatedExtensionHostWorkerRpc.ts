@@ -2,6 +2,7 @@ import type { Rpc } from '@lvce-editor/rpc'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 import { getOrigin } from '../GetOrigin/GetOrigin.ts'
+import * as HandleRpcInfos from '../HandleRpcInfos/HandleRpcInfos.ts'
 import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -11,6 +12,7 @@ export interface ExtensionManifest {
   readonly id?: string
   readonly isWeb?: boolean
   readonly path?: string
+  readonly rpc?: readonly unknown[]
   readonly uri?: string
   readonly workerName?: string
 }
@@ -38,6 +40,7 @@ export const getRpc = async (extension: ExtensionManifest, assetDir: string, pla
   if (existingRpc) {
     return existingRpc
   }
+  HandleRpcInfos.handleRpcInfos(extension, platform)
   const absolutePath = getAbsolutePath(extension, assetDir, platform)
   return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath, extension.workerName || '')
 }

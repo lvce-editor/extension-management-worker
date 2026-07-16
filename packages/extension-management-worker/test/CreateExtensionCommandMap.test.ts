@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from '@jest/globals'
-import { createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
+import { createExtensionCommandExecutor, createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
 
 afterEach(() => {
@@ -24,4 +24,10 @@ test('scopes declared rpc lookup to the calling extension', async () => {
 
   await expect(getFirstNodeRpcInfo('client')).resolves.toEqual({ name: 'One', path: '/extensions/one/client.js' })
   await expect(getSecondNodeRpcInfo('client')).resolves.toEqual({ name: 'Two', path: '/extensions/two/client.js' })
+})
+
+test('createExtensionCommandExecutor rejects unknown commands', () => {
+  const execute = createExtensionCommandExecutor({})
+
+  expect(() => execute('Extensions.missing')).toThrow('Command not found Extensions.missing')
 })

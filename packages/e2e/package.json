@@ -6,14 +6,16 @@
   "main": "index.js",
   "scripts": {
     "e2e": "npm run e2e:prepare && node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=.",
-    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme",
+    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc",
     "e2e:headless:color-theme": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=color-theme-quick-pick --headless",
+    "e2e:headless:isolated-rpc": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=isolated-rpc --headless",
     "e2e:headless:language-server": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=language-server --headless",
     "e2e:prepare": "node ./scripts/prepare-extension.js",
     "type-check": "tsc"
   },
   "devDependencies": {
     "@lvce-editor/api": "^8.49.0",
+    "@lvce-editor/rpc-registry": "^9.35.0",
     "@lvce-editor/test-with-playwright": "^22.1.0",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2",

@@ -9,7 +9,7 @@ const serverFixtures = join(packageRoot, 'fixtures', 'failing-native-language-se
 
 const toFileUri = (relativePath) => pathToFileURL(join(packageRoot, relativePath)).href
 
-await rm(outputDirectory, { force: true, recursive: true })
+await rm(join(packageRoot, '.tmp'), { force: true, recursive: true })
 await mkdir(outputDirectory, { recursive: true })
 await cp(join(packageRoot, 'extension', 'extension.json'), join(outputDirectory, 'extension.json'))
 await cp(serverFixtures, join(outputDirectory, 'servers'), { recursive: true })
@@ -31,3 +31,20 @@ await build({
   outfile: join(outputDirectory, 'main.js'),
   platform: 'browser',
 })
+
+const prepareFixtureExtension = async (name) => {
+  const sourceDirectory = join(packageRoot, 'fixtures', name)
+  const fixtureOutputDirectory = join(packageRoot, '.tmp', name)
+  await mkdir(fixtureOutputDirectory, { recursive: true })
+  await cp(join(sourceDirectory, 'extension.json'), join(fixtureOutputDirectory, 'extension.json'))
+  await build({
+    bundle: true,
+    entryPoints: [join(sourceDirectory, 'main.js')],
+    external: ['electron', 'node:*'],
+    format: 'esm',
+    outfile: join(fixtureOutputDirectory, 'main.js'),
+    platform: 'browser',
+  })
+}
+
+await Promise.all([prepareFixtureExtension('extension-with-rpc-command-map'), prepareFixtureExtension('extension-no-rpc-command-map')])

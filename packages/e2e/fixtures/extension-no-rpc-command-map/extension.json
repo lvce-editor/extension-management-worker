@@ -1,0 +1,13 @@
+{
+  "id": "test.no-rpc-command-map",
+  "name": "No RPC Command Map",
+  "browser": "main.js",
+  "isolated": true,
+  "activation": ["onFormatting:isolated-rpc-without-declared-rpc"],
+  "formattingProviders": [
+    {
+      "id": "isolated-rpc-without-declared-rpc",
+      "languageId": "isolated-rpc-without-declared-rpc"
+    }
+  ]
+}

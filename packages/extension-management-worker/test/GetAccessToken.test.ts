@@ -18,5 +18,13 @@ test('gets the access token from the auth worker', async () => {
   })
 
   await expect(getAccessToken()).resolves.toBe('token-1')
-  expect(state.authWorker.invocations).toEqual([['Auth.getAccessToken']])
+  await expect(
+    getAccessToken({
+      refresh: 'if-needed',
+    }),
+  ).resolves.toBe('token-1')
+  expect(state.authWorker.invocations).toEqual([
+    ['Auth.getAccessToken', {}],
+    ['Auth.getAccessToken', { refresh: 'if-needed' }],
+  ])
 })

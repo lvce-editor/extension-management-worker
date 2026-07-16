@@ -30,12 +30,12 @@ const state: {
   sharedProcess: undefined,
 }
 
-const createExtensionsState = (): ExtensionsState => {
+const createExtensionsState = (disabledIds: readonly string[] = []): ExtensionsState => {
   return {
     activatedExtensions: Object.create(null),
     cachedActivationEvents: Object.create(null),
     cachedExtensions: undefined,
-    disabledIds: [],
+    disabledIds,
     platform: PlatformType.Electron,
     runtimeStatuses: Object.create(null),
     webExtensions: [],
@@ -246,7 +246,7 @@ test('getAllExtensionsWithState marks workspace disabled extensions', async () =
   ])
 })
 
-test('getAllExtensionsWithState does not read workspace disabled extensions in test mode', async () => {
+test('getAllExtensionsWithState applies test disabled state without reading workspace disabled extensions', async () => {
   const mockFileSystem = registerMocks()
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {
@@ -258,8 +258,9 @@ test('getAllExtensionsWithState does not read workspace disabled extensions in t
     },
   })
 
-  await expect(getAllExtensionsWithState(createExtensionsState(), '/assets', PlatformType.Test)).resolves.toEqual([
+  await expect(getAllExtensionsWithState(createExtensionsState(['sample.extension']), '/assets', PlatformType.Test)).resolves.toEqual([
     {
+      disabled: true,
       id: 'sample.extension',
     },
   ])

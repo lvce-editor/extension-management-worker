@@ -112,12 +112,16 @@ test('getRemoteUrlForWebView requires a registered webview', async () => {
   await expect(getRemoteUrlForWebView('/extensions/file')).rejects.toThrow('webview undefined not found')
 })
 
-test('getColorThemeNamesFromExtensions handles missing and present contributions', async () => {
+test('getColorThemeNamesFromExtensions handles missing, enabled, and disabled contributions', async () => {
   await expect(
     getColorThemeNamesFromExtensions([
       {},
       {
         colorThemes: [{ id: 'dark' }, { id: 'light' }],
+      },
+      {
+        colorThemes: [{ id: 'disabled-theme' }],
+        disabled: true,
       },
     ]),
   ).resolves.toEqual(['dark', 'light'])

@@ -66,6 +66,9 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
 test('addWebExtension - refreshes status bar items using path as fallback id', async () => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
+    'Layout.getStatusBarVisible'() {
+      return true
+    },
     'StatusBar.handleItemsChanged'() {},
   })
   const uri = 'https://example.com/status-extension'
@@ -76,5 +79,9 @@ test('addWebExtension - refreshes status bar items using path as fallback id', a
 
   await addWebExtension(uri)
 
-  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated'], ['StatusBar.handleItemsChanged']])
+  expect(state.rendererWorker.invocations).toEqual([
+    ['ExtensionManagement.handleExtensionsCacheInvalidated'],
+    ['Layout.getStatusBarVisible'],
+    ['StatusBar.handleItemsChanged'],
+  ])
 })

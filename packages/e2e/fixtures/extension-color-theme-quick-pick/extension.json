@@ -1,0 +1,13 @@
+{
+  "id": "test.color-theme-quick-pick",
+  "name": "Color Theme Quick Pick Test",
+  "description": "Verifies disabled theme contributions",
+  "categories": ["Themes"],
+  "colorThemes": [
+    {
+      "id": "test-disabled-extension-theme",
+      "label": "Disabled Extension Theme",
+      "path": "color-theme.json"
+    }
+  ]
+}

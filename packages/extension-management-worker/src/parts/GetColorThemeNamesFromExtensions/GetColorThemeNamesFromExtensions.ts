@@ -1,4 +1,7 @@
 const getExtensionColorThemeNames = (extension: any) => {
+  if (extension.disabled) {
+    return []
+  }
   return extension.colorThemes || []
 }
 

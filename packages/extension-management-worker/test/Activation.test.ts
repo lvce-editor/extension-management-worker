@@ -154,7 +154,7 @@ test('activateExtension3 reuses isolated workers with explicit and inferred ids'
       status: 3,
     }),
   )
-  expect(getRunningExtensionsFromState([{ id: 'sample.explicit', name: 'Sample Extension' }], ExtensionsState.get().runtimeStatuses)).toEqual([
+  expect(getRunningExtensionsFromState([{ id: 'sample.explicit', name: 'Sample Extension' }], ExtensionsState.get().runtimeStatuses, '', 2)).toEqual([
     expect.objectContaining({
       activationEvent: 'onStart',
       id: 'sample.explicit',

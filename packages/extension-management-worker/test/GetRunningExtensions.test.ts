@@ -27,7 +27,7 @@ test('returns activated extensions ordered by activation time', () => {
     'sample.slow': createStatus('sample.slow', RuntimeStatusType.Activated, 25, 'onStartupFinished'),
   }
 
-  expect(getRunningExtensionsFromState(extensions, runtimeStatuses)).toEqual([
+  expect(getRunningExtensionsFromState(extensions, runtimeStatuses, '/assets', 0)).toEqual([
     {
       activationEvent: 'onStartupFinished',
       activationTime: 25,
@@ -46,5 +46,44 @@ test('returns activated extensions ordered by activation time', () => {
 })
 
 test('returns an empty array when no extensions are running', () => {
-  expect(getRunningExtensionsFromState([{ id: 'sample.extension' }], {})).toEqual([])
+  expect(getRunningExtensionsFromState([{ id: 'sample.extension' }], {}, '/assets', 0)).toEqual([])
+})
+
+test('resolves relative running extension icons', () => {
+  const extensions = [
+    {
+      builtin: true,
+      icon: './icon.png',
+      id: 'builtin.git',
+      name: 'Git',
+      path: '/extensions/builtin.git',
+      version: '1.0.0',
+    },
+  ]
+  const runtimeStatuses = {
+    'builtin.git': createStatus('builtin.git', RuntimeStatusType.Activated, 5),
+  }
+
+  expect(getRunningExtensionsFromState(extensions, runtimeStatuses, '/assets', 0)).toEqual([
+    {
+      activationEvent: '',
+      activationTime: 5,
+      builtin: true,
+      icon: '/assets/extensions/builtin.git/icon.png',
+      id: 'builtin.git',
+      name: 'Git',
+      path: '/extensions/builtin.git',
+      version: '1.0.0',
+    },
+  ])
+})
+
+test('preserves absolute running extension icons', () => {
+  const icon = 'https://example.com/icon.png'
+  const extensions = [{ icon, id: 'sample.extension' }]
+  const runtimeStatuses = {
+    'sample.extension': createStatus('sample.extension', RuntimeStatusType.Activated, 5),
+  }
+
+  expect(getRunningExtensionsFromState(extensions, runtimeStatuses, '/assets', 0)[0].icon).toBe(icon)
 })

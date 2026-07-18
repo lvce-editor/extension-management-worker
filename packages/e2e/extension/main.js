@@ -1,4 +1,5 @@
-import { activate, registerLanguageServer, registerReferenceProvider } from '@lvce-editor/api'
+import { activate, registerFormattingProvider, registerLanguageServer, registerReferenceProvider } from '@lvce-editor/api'
+import { ExtensionManagementWorker } from '@lvce-editor/rpc-registry'
 
 await activate()
 
@@ -14,6 +15,41 @@ registerReferenceProvider({
         startColumnIndex: position.columnIndex,
         startRowIndex: position.rowIndex,
         uri: textDocument.uri,
+      },
+    ]
+  },
+})
+
+registerFormattingProvider({
+  id: 'reference-e2e-driver',
+  languageId: 'reference-e2e-driver',
+  async format() {
+    const activationResult = await ExtensionManagementWorker.invoke('Extensions.activateByEvent', 'onReferences:reference-e2e', '', 2)
+    const textDocument = {
+      languageId: 'reference-e2e',
+      text: 'const value = 1',
+      uri: 'file:///workspace/reference.reference-e2e',
+    }
+    const position = {
+      columnIndex: 6,
+      rowIndex: 0,
+    }
+    const providerResult = await ExtensionManagementWorker.invoke(
+      'Extensions.executeLanguageProvider',
+      'reference',
+      'provideReferences',
+      textDocument,
+      6,
+      position,
+    )
+    return [
+      {
+        endOffset: 0,
+        inserted: JSON.stringify({
+          activationResult,
+          providerResult,
+        }),
+        startOffset: 0,
       },
     ]
   },

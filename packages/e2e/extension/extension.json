@@ -3,7 +3,13 @@
   "name": "Language Server E2E",
   "browser": "main.js",
   "isolated": true,
-  "activation": ["onReferences:reference-e2e"],
+  "activation": ["onFormatting:reference-e2e-driver", "onReferences:reference-e2e"],
+  "formattingProviders": [
+    {
+      "id": "reference-e2e-driver",
+      "languageId": "reference-e2e-driver"
+    }
+  ],
   "languageServers": [
     {
       "id": "exit-zero",

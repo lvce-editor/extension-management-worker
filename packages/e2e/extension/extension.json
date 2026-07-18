@@ -3,6 +3,7 @@
   "name": "Language Server E2E",
   "browser": "main.js",
   "isolated": true,
+  "activation": ["onReferences:reference-e2e"],
   "languageServers": [
     {
       "id": "exit-zero",

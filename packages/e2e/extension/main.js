@@ -1,6 +1,23 @@
-import { activate, registerLanguageServer } from '@lvce-editor/api'
+import { activate, registerLanguageServer, registerReferenceProvider } from '@lvce-editor/api'
 
 await activate()
+
+registerReferenceProvider({
+  id: 'reference-e2e',
+  languageId: 'reference-e2e',
+  provideReferences(textDocument, offset, position) {
+    return [
+      {
+        endColumnIndex: position.columnIndex + 4,
+        endRowIndex: position.rowIndex,
+        offset,
+        startColumnIndex: position.columnIndex,
+        startRowIndex: position.rowIndex,
+        uri: textDocument.uri,
+      },
+    ]
+  },
+})
 
 const failingLanguageServers = [
   ['exit-zero', 'language-server-exit-zero'],

@@ -15,9 +15,9 @@
     "type-check": "tsc"
   },
   "devDependencies": {
-    "@lvce-editor/api": "^8.49.0",
-    "@lvce-editor/rpc-registry": "^9.35.0",
-    "@lvce-editor/test-with-playwright": "^22.1.0",
+    "@lvce-editor/api": "^8.53.2",
+    "@lvce-editor/rpc-registry": "^9.36.0",
+    "@lvce-editor/test-with-playwright": "^22.8.1",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2",
     "vscode-langservers-extracted": "^4.10.0"

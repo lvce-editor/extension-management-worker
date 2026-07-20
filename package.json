@@ -27,12 +27,12 @@
   },
   "devDependencies": {
     "@lerna/legacy-package-management": "^8.2.4",
-    "@lvce-editor/eslint-config": "^16.4.0",
-    "@lvce-editor/eslint-plugin-github-actions": "^15.0.0",
+    "@lvce-editor/eslint-config": "^17.0.0",
+    "@lvce-editor/eslint-plugin-github-actions": "^17.0.0",
     "eslint": "^10.7.0",
-    "knip": "^6.24.0",
+    "knip": "^6.27.0",
     "lerna": "^8.2.4",
-    "prettier": "^3.9.4",
+    "prettier": "^3.9.5",
     "typescript": "^6.0.3"
   }
 }

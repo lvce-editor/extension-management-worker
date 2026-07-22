@@ -8,6 +8,7 @@ export const activateIsolatedExtension = async (
   extensionId: string,
   absolutePath: string,
   workerName: string,
+  contentSecurityPolicy: string,
   activationEvent: string,
   getOrCreate: GetOrCreate = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker,
 ): Promise<void> => {
@@ -18,7 +19,7 @@ export const activateIsolatedExtension = async (
     status: RuntimeStatusType.Activating,
   })
   try {
-    await getOrCreate(extensionId, absolutePath, workerName)
+    await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy)
     const endTime = performance.now()
     ExtensionsState.updateRuntimeStatus(extensionId, {
       activationEndTime: endTime,

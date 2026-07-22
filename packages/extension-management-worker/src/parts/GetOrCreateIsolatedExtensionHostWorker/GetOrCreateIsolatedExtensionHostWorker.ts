@@ -24,7 +24,7 @@ type CreateRpc = (options: {
 
 type InvokeAndTransfer = typeof RendererWorker.invokeAndTransfer
 
-type CreateWorker = (extensionId: string, absolutePath: string, workerName: string) => Promise<Rpc>
+type CreateWorker = (extensionId: string, absolutePath: string, workerName: string, contentSecurityPolicy: string) => Promise<Rpc>
 
 const pendingRpcs: Record<string, Promise<Rpc> | undefined> = Object.create(null)
 
@@ -39,6 +39,7 @@ export const createIsolatedExtensionHostWorker = async (
   extensionId: string,
   absolutePath: string,
   workerName: string,
+  contentSecurityPolicy: string,
   createRpc: CreateRpc,
   invokeAndTransfer: InvokeAndTransfer,
 ): Promise<Rpc> => {
@@ -47,24 +48,38 @@ export const createIsolatedExtensionHostWorker = async (
     commandMap,
     isMessagePortOpen: true,
     send(port: MessagePort) {
-      return invokeAndTransfer('LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker', port, extensionId, absolutePath, workerName)
+      return invokeAndTransfer(
+        'LaunchIsolatedExtensionHostWorker.launchIsolatedExtensionHostWorker',
+        port,
+        extensionId,
+        absolutePath,
+        workerName,
+        contentSecurityPolicy,
+      )
     },
   })
   return bindCommandMap(rpc, commandMap)
 }
 
-const createWorker = (extensionId: string, absolutePath: string, workerName: string): Promise<Rpc> => {
+const createWorker = (extensionId: string, absolutePath: string, workerName: string, contentSecurityPolicy: string): Promise<Rpc> => {
   return createIsolatedExtensionHostWorker(
     extensionId,
     absolutePath,
     workerName,
+    contentSecurityPolicy,
     TransferMessagePortRpcParent.create,
     RendererWorker.invokeAndTransfer,
   )
 }
 
-const createAndStoreRpc = async (extensionId: string, absolutePath: string, workerName: string, create: CreateWorker): Promise<Rpc> => {
-  const rpc = await create(extensionId, absolutePath, workerName)
+const createAndStoreRpc = async (
+  extensionId: string,
+  absolutePath: string,
+  workerName: string,
+  contentSecurityPolicy: string,
+  create: CreateWorker,
+): Promise<Rpc> => {
+  const rpc = await create(extensionId, absolutePath, workerName, contentSecurityPolicy)
   IsolatedExtensionHostWorkerState.set(extensionId, rpc)
   return rpc
 }
@@ -73,6 +88,7 @@ export const getOrCreateIsolatedExtensionHostWorker = async (
   extensionId: string,
   absolutePath: string,
   workerName = '',
+  contentSecurityPolicy = '',
   create: CreateWorker = createWorker,
 ): Promise<Rpc> => {
   const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
@@ -83,7 +99,7 @@ export const getOrCreateIsolatedExtensionHostWorker = async (
   if (pendingRpc !== undefined) {
     return pendingRpc
   }
-  const newRpc = createAndStoreRpc(extensionId, absolutePath, workerName, create)
+  const newRpc = createAndStoreRpc(extensionId, absolutePath, workerName, contentSecurityPolicy, create)
   pendingRpcs[extensionId] = newRpc
   try {
     return await newRpc

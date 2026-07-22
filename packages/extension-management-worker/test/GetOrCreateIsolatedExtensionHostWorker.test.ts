@@ -36,6 +36,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry', async ()
     'sample.extension',
     '/remote/sample/main.js',
     'Sample Worker',
+    `default-src 'none';`,
     createRpc,
     invokeAndTransfer,
   )
@@ -46,6 +47,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry', async ()
     'sample.extension',
     '/remote/sample/main.js',
     'Sample Worker',
+    `default-src 'none';`,
   ])
 })
 
@@ -73,6 +75,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry with fallb
     'sample.extension',
     '/remote/sample/main.js',
     '',
+    '',
     createRpc,
     invokeAndTransfer,
   )
@@ -82,6 +85,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry with fallb
     'port',
     'sample.extension',
     '/remote/sample/main.js',
+    '',
     '',
   ])
 })
@@ -122,6 +126,7 @@ test('createIsolatedExtensionHostWorker keeps command handling scoped to each ex
     'builtin.git',
     '/extensions/builtin.git/gitMain.js',
     'Git',
+    '',
     createRpc,
     invokeAndTransferNoop,
   )
@@ -129,6 +134,7 @@ test('createIsolatedExtensionHostWorker keeps command handling scoped to each ex
     'builtin.prettier',
     '/extensions/builtin.prettier/prettierMain.js',
     'Prettier',
+    '',
     createRpc,
     invokeAndTransferNoop,
   )
@@ -168,11 +174,13 @@ test('getOrCreateIsolatedExtensionHostWorker shares an in-flight worker creation
     'sample.extension',
     '/remote/sample/main.js',
     '',
+    '',
     create,
   )
   const second = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(
     'sample.extension',
     '/remote/sample/main.js',
+    '',
     '',
     create,
   )
@@ -192,10 +200,10 @@ test('getOrCreateIsolatedExtensionHostWorker retries after worker creation fails
   const create = jest.fn<() => Promise<Rpc>>().mockRejectedValueOnce(new Error('Failed to create worker')).mockResolvedValueOnce(rpc)
 
   await expect(
-    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', create),
+    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', '', create),
   ).rejects.toThrow('Failed to create worker')
   await expect(
-    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', create),
+    GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', '', create),
   ).resolves.toBe(rpc)
   expect(create).toHaveBeenCalledTimes(2)
 })

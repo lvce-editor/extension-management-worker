@@ -1,4 +1,5 @@
 import type { Rpc } from '@lvce-editor/rpc'
+import { getContentSecurityPolicy } from '../GetContentSecurityPolicy/GetContentSecurityPolicy.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 import { getOrigin } from '../GetOrigin/GetOrigin.ts'
@@ -9,6 +10,7 @@ import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorke
 export interface ExtensionManifest {
   readonly browser?: string
   readonly builtin?: boolean
+  readonly contentSecurityPolicy?: readonly string[]
   readonly id?: string
   readonly isWeb?: boolean
   readonly path?: string
@@ -42,5 +44,11 @@ export const getRpc = async (extension: ExtensionManifest, assetDir: string, pla
   }
   HandleRpcInfos.handleRpcInfos(extension, platform)
   const absolutePath = getAbsolutePath(extension, assetDir, platform)
-  return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(extensionId, absolutePath, extension.workerName || '')
+  const contentSecurityPolicy = getContentSecurityPolicy(extension.contentSecurityPolicy)
+  return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(
+    extensionId,
+    absolutePath,
+    extension.workerName || '',
+    contentSecurityPolicy,
+  )
 }

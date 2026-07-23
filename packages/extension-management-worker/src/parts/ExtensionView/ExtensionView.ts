@@ -147,6 +147,14 @@ export const getViewActions = async (viewId: string, uid: number, assetDir: stri
   return instance.rpc.invoke('ExtensionApi.getViewActions', uid) as Promise<readonly unknown[]>
 }
 
+export const getViewActionsDom = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<readonly unknown[] | undefined> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (!instance || instance.status === 'error') {
+    return undefined
+  }
+  return instance.rpc.invoke('ExtensionApi.getViewActionsDom', uid) as Promise<readonly unknown[] | undefined>
+}
+
 export const requestViewRerender = async (uid: number): Promise<void> => {
   await RendererWorker.invoke('Viewlet.executeViewletCommand', uid, 'rerender')
 }

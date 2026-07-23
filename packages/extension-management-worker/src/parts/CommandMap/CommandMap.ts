@@ -17,6 +17,7 @@ import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWork
 import { executeCommand, executeExtensionCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
+import { executeFileSystemProviderReadFile } from '../ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
@@ -83,6 +84,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
+  'Extensions.executeFileSystemProviderReadFile': wrapCommand(executeFileSystemProviderReadFile),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
   'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),

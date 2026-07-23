@@ -9,6 +9,7 @@ import {
   dispatchViewEvent,
   disposeViewInstance,
   getViewActions,
+  getViewActionsDom,
   getViewMenuEntries,
   renderViewInstance,
   requestViewRerender,
@@ -80,6 +81,15 @@ const createRpc = (
             command: 'sample.refresh',
             icon: 'Refresh',
             title: 'Refresh',
+          },
+        ]
+      }
+      if (method === 'ExtensionApi.getViewActionsDom') {
+        return [
+          {
+            childCount: 0,
+            className: 'CustomAction',
+            type: 1,
           },
         ]
       }
@@ -444,6 +454,25 @@ test('getViewActions proxies to isolated extension rpc', async () => {
   expect(mock.invocations).toEqual([['ExtensionApi.getViewActions', 1]])
 })
 
+test('getViewActionsDom proxies to isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).resolves.toEqual([
+    {
+      childCount: 0,
+      className: 'CustomAction',
+      type: 1,
+    },
+  ])
+
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewActionsDom', 1]])
+})
+
 test('getViewMenuEntries returns empty array for disposed or failed instances', async () => {
   await expect(getViewMenuEntries('sample.views.testing', 1, 'sample.card', '', 2)).resolves.toEqual([])
   ExtensionViewInstanceState.set(1, {
@@ -470,6 +499,20 @@ test('getViewActions returns empty array for disposed or failed instances', asyn
   })
 
   await expect(getViewActions('sample.views.testing', 1, '', 2)).resolves.toEqual([])
+})
+
+test('getViewActionsDom returns undefined for disposed or failed instances', async () => {
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
+  ExtensionViewInstanceState.set(1, {
+    error: {
+      message: 'create failed',
+      name: 'Error',
+    },
+    status: 'error',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
 })
 
 test('renderViewInstance no-ops for disposed or failed instances', async () => {

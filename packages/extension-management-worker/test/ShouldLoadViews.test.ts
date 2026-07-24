@@ -21,6 +21,19 @@ test('shouldLoadViews returns false without warning when no views are contribute
   expect(warnSpy).not.toHaveBeenCalled()
 })
 
+test('shouldLoadViews returns false without warning for disabled extensions', () => {
+  const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+  expect(
+    shouldLoadViews({
+      disabled: true,
+      isolated: true,
+      views: [{ id: 'sample.views.files' }],
+    }),
+  ).toBe(false)
+  expect(warnSpy).not.toHaveBeenCalled()
+})
+
 test('shouldLoadViews warns and returns false for non-isolated view contributions', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 

@@ -31,6 +31,7 @@ export interface ManifestView {
 }
 
 export interface ExtensionManifest extends RpcExtensionManifest {
+  readonly disabled?: boolean
   readonly isolated?: boolean
   readonly views?: readonly ManifestView[]
 }

@@ -10,6 +10,7 @@ import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
 import { disableWorkspaceExtension } from '../src/parts/DisableWorkspaceExtension/DisableWorkspaceExtension.ts'
 import { enableWorkspaceExtension } from '../src/parts/EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
+import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 interface MockFileSystem {
   readonly directories: Set<string>
@@ -94,6 +95,7 @@ const registerMocks = (mockFileSystem = createMockFileSystem(), workspacePath = 
 }
 
 afterEach(() => {
+  IsolatedExtensionHostWorkerState.clear()
   state.fileSystemWorker?.[Symbol.dispose]()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
@@ -104,6 +106,7 @@ afterEach(() => {
 
 test('disableWorkspaceExtension creates workspace disabled extensions file', async () => {
   const mockFileSystem = registerMocks()
+  IsolatedExtensionHostWorkerState.set('sample.extension', { dispose: async () => {} } as any)
 
   await disableWorkspaceExtension('sample.extension')
 
@@ -111,6 +114,7 @@ test('disableWorkspaceExtension creates workspace disabled extensions file', asy
   expect(mockFileSystem.files.get('memfs:///workspace/.lvce/disabled-extensions.json')).toBe(
     '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
   )
+  expect(state.rendererWorker?.invocations).toContainEqual(['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension'])
 })
 
 test('disableWorkspaceExtension converts native workspace path to file uri', async () => {

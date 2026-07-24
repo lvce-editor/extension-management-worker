@@ -8,8 +8,8 @@ export const disableExtension2 = async (id: string, platform: number): Promise<u
   Assert.number(platform)
   try {
     await ExtensionStorage.disableExtension2(id, platform)
-    const didDisposeIsolatedWorker = await disposeIsolatedExtensionHostWorker(id)
-    await invalidateExtensionsCache(didDisposeIsolatedWorker ? id : undefined)
+    await disposeIsolatedExtensionHostWorker(id)
+    await invalidateExtensionsCache(id, true)
     return undefined
   } catch (error) {
     return error

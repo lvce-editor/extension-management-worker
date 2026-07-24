@@ -114,7 +114,7 @@ test('disableWorkspaceExtension creates workspace disabled extensions file', asy
   expect(mockFileSystem.files.get('memfs:///workspace/.lvce/disabled-extensions.json')).toBe(
     '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
   )
-  expect(state.rendererWorker?.invocations).toContainEqual(['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension'])
+  expect(state.rendererWorker?.invocations).toContainEqual(['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true])
 })
 
 test('disableWorkspaceExtension converts native workspace path to file uri', async () => {
@@ -188,6 +188,11 @@ test('enableWorkspaceExtension removes one id and preserves others', async () =>
   expect(mockFileSystem.files.get('memfs:///workspace/.lvce/disabled-extensions.json')).toBe(
     '{\n  "disabledExtensions": [\n    "sample.two"\n  ]\n}\n',
   )
+  expect(state.rendererWorker?.invocations).toContainEqual([
+    'ExtensionManagement.handleExtensionsCacheInvalidated',
+    'sample.one',
+    false,
+  ])
 })
 
 test('enableWorkspaceExtension keeps an empty file when removing the last id', async () => {

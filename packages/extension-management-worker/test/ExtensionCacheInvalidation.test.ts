@@ -39,7 +39,7 @@ test('disableExtension2 invalidates extension cache', async () => {
 
   await disableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true]])
 })
 
 test('enableExtension2 invalidates extension cache', async () => {
@@ -47,7 +47,7 @@ test('enableExtension2 invalidates extension cache', async () => {
 
   await enableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', false]])
 })
 
 test('uninstallExtension invalidates extension cache', async () => {
@@ -73,8 +73,8 @@ test('cache invalidation is compatible with older renderer workers', async () =>
   await expect(invalidateExtensionsCache()).resolves.toBeUndefined()
 })
 
-test('cache invalidation includes the disabled extension id', async () => {
-  await invalidateExtensionsCache('sample.extension')
+test('cache invalidation includes the changed extension state', async () => {
+  await invalidateExtensionsCache('sample.extension', true)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true]])
 })

@@ -24,5 +24,5 @@ export const enableExtension2 = async (id: string, platform: number): Promise<vo
     await FileSystemWorker.writeFile(disabledExtensionsJsonPath, newContent)
   }
   await ExtensionStorage.enableExtension2(id, platform)
-  await invalidateExtensionsCache()
+  await invalidateExtensionsCache(id, false)
 }

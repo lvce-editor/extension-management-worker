@@ -1,9 +1,9 @@
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 
-export const invalidateExtensionsCache = async (disabledExtensionId?: string) => {
+export const invalidateExtensionsCache = async (extensionId?: string, disabled?: boolean) => {
   try {
-    if (disabledExtensionId) {
-      await RendererWorker.invoke('ExtensionManagement.handleExtensionsCacheInvalidated', disabledExtensionId)
+    if (extensionId) {
+      await RendererWorker.invoke('ExtensionManagement.handleExtensionsCacheInvalidated', extensionId, disabled)
       return
     }
     await RendererWorker.invoke('ExtensionManagement.handleExtensionsCacheInvalidated')

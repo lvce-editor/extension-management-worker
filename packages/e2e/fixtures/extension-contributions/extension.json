@@ -1,0 +1,77 @@
+{
+  "id": "test.extension-contributions",
+  "name": "Extension Contributions",
+  "description": "Exercises extension manifest contributions in end-to-end tests",
+  "version": "1.2.3",
+  "publisher": "Test Publisher",
+  "browser": "main.js",
+  "isolated": true,
+  "categories": ["Programming Languages", "Themes"],
+  "activation": ["onCommand:test.simple", "onLanguage:test-language"],
+  "commands": [
+    {
+      "id": "test.simple",
+      "label": "Run Simple Command"
+    }
+  ],
+  "languages": [
+    {
+      "id": "test-language",
+      "aliases": ["Test Language", "test"],
+      "extensions": [".test"],
+      "mimetypes": ["text/x-test"]
+    },
+    {
+      "id": "second-test-language",
+      "aliases": ["Second Test Language"],
+      "extensions": [".test2"]
+    }
+  ],
+  "colorThemes": [
+    {
+      "id": "test-light-theme",
+      "label": "Test Light",
+      "path": "light-theme.json"
+    },
+    {
+      "id": "test-dark-theme",
+      "label": "Test Dark",
+      "path": "dark-theme.json"
+    }
+  ],
+  "keybindings": [
+    {
+      "command": "test.simple",
+      "key": "Ctrl+1"
+    },
+    {
+      "command": "test.when",
+      "key": "Ctrl+2",
+      "when": "editorFocus"
+    },
+    {
+      "command": "test.args",
+      "key": "Ctrl+3",
+      "args": ["first", 2]
+    },
+    {
+      "key": "Ctrl+4"
+    },
+    {
+      "command": "test.missing-key"
+    }
+  ],
+  "views": [
+    {
+      "id": "test.primary-view",
+      "title": "Primary View",
+      "kind": "tree",
+      "selector": [".item", 7, ".label"],
+      "type": "custom",
+      "showSideBarHeader": false
+    },
+    {
+      "id": "test.secondary-view"
+    }
+  ]
+}

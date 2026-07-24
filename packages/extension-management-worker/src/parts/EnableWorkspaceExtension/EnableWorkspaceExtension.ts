@@ -5,5 +5,5 @@ import * as WorkspaceDisabledExtensionsStorage from '../WorkspaceDisabledExtensi
 export const enableWorkspaceExtension = async (id: string): Promise<void> => {
   Assert.string(id)
   await WorkspaceDisabledExtensionsStorage.enableExtension(id)
-  await invalidateExtensionsCache()
+  await invalidateExtensionsCache(id, false)
 }

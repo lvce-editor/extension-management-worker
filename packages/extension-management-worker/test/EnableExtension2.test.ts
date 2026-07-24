@@ -69,7 +69,7 @@ test('enableExtension2 removes an id from the desktop disabled extensions file',
   ])
   expect(getRendererWorker().invocations).toEqual([
     ['WebView.compatSharedProcessInvoke', 'PlatformPaths.getDisabledExtensionsJsonUri'],
-    ['ExtensionManagement.handleExtensionsCacheInvalidated'],
+    ['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', false],
   ])
 })
 

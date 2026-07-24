@@ -9,6 +9,10 @@ export const disposeIsolatedExtensionHostWorker = async (extensionId: string): P
   }
   ActivateByEvent.resetExtensionActivation(extensionId)
   ExtensionsState.resetExtensionRuntimeState(extensionId)
-  await rpc.dispose().catch(() => {})
+  try {
+    await rpc.dispose()
+  } catch {
+    // The extension is already disabled and removed from state.
+  }
   return true
 }

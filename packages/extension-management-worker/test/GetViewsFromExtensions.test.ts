@@ -51,3 +51,20 @@ test('getViewsFromExtensions warns and ignores non-isolated view contributions',
     'Extension "sample.extension" contributes activity bar views but is not isolated. The views will not be shown. Add "isolated": true to extension.json to enable them.',
   )
 })
+
+test('getViewsFromExtensions ignores disabled extension contributions', () => {
+  expect(
+    getViewsFromExtensions(
+      [
+        {
+          disabled: true,
+          id: 'sample.extension',
+          isolated: true,
+          views: [{ id: 'sample.views.files', title: 'Sample Files' }],
+        },
+      ],
+      '',
+      0,
+    ),
+  ).toEqual([])
+})

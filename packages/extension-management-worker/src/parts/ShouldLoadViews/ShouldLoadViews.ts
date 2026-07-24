@@ -5,6 +5,9 @@ import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated
 import * as Logger from '../Logger/Logger.ts'
 
 export const shouldLoadViews = (extension: ExtensionManifest): boolean => {
+  if (extension.disabled) {
+    return false
+  }
   if (!contributesViews(extension)) {
     return false
   }

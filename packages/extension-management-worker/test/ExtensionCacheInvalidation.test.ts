@@ -39,7 +39,10 @@ test('disableExtension2 invalidates extension cache', async () => {
 
   await disableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true]])
+  expect(getRendererWorker().invocations).toEqual([
+    ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension'],
+    ['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true],
+  ])
 })
 
 test('enableExtension2 invalidates extension cache', async () => {

@@ -19,10 +19,10 @@ await build({
   define: {
     'globalThis.__TYPESCRIPT_LANGUAGE_SERVER_URI__': JSON.stringify(toFileUri('node_modules/typescript/lib/tsc.js')),
     'globalThis.__VSCODE_CSS_LANGUAGE_SERVER_URI__': JSON.stringify(
-      toFileUri('node_modules/vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js'),
+      toFileUri('../../node_modules/vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js'),
     ),
     'globalThis.__VSCODE_HTML_LANGUAGE_SERVER_URI__': JSON.stringify(
-      toFileUri('node_modules/vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js'),
+      toFileUri('../../node_modules/vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js'),
     ),
   },
   entryPoints: [join(packageRoot, 'extension', 'main.js')],

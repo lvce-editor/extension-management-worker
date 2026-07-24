@@ -2,6 +2,7 @@
   "id": "test.language-server-e2e",
   "name": "Language Server E2E",
   "browser": "main.js",
+  "contentSecurityPolicy": ["default-src 'none'"],
   "isolated": true,
   "activation": ["onFormatting:reference-e2e-driver", "onReferences:reference-e2e"],
   "formattingProviders": [

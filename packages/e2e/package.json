@@ -5,12 +5,12 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "e2e": "npm run e2e:prepare && node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=.",
+    "e2e": "npm run e2e:prepare && test-with-playwright --only-extension=./.tmp/extension --test-path=.",
     "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc && npm run e2e:headless:reference-provider",
-    "e2e:headless:color-theme": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=color-theme-quick-pick --headless",
-    "e2e:headless:isolated-rpc": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=isolated-rpc --headless",
-    "e2e:headless:language-server": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=language-server --headless",
-    "e2e:headless:reference-provider": "node ./node_modules/@lvce-editor/test-with-playwright/bin/test-with-playwright.js --only-extension=./.tmp/extension --test-path=. --filter=reference-provider --headless",
+    "e2e:headless:color-theme": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=color-theme-quick-pick --headless",
+    "e2e:headless:isolated-rpc": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=isolated-rpc --headless",
+    "e2e:headless:language-server": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=language-server --headless",
+    "e2e:headless:reference-provider": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=reference-provider --headless",
     "e2e:prepare": "node ./scripts/prepare-extension.js",
     "type-check": "tsc"
   },

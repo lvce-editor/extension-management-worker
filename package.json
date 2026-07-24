@@ -5,19 +5,21 @@
   "author": "Lvce Editor",
   "type": "module",
   "main": "src/extensionManagementWorkerMain.ts",
+  "workspaces": [
+    "packages/*"
+  ],
   "directories": {
     "test": "test"
   },
   "scripts": {
     "build": "node packages/build/src/build.js",
     "build:static": "node packages/build/src/build-static.ts",
-    "build:watch": "./packages/build/node_modules/.bin/esbuild --external:node:buffer --external:electron --external:ws --external:node:worker_threads --format=esm --bundle --watch packages/extension-management-worker/src/extensionManagementWorkerMain.ts --outfile=.tmp/dist/dist/extensionManagementWorkerMain.js",
+    "build:watch": "npm exec --workspace=packages/build -- esbuild --external:node:buffer --external:electron --external:ws --external:node:worker_threads --format=esm --bundle --watch packages/extension-management-worker/src/extensionManagementWorkerMain.ts --outfile=.tmp/dist/dist/extensionManagementWorkerMain.js",
     "dev": "node packages/build/src/dev.js",
     "format": "prettier --write .",
-    "postinstall": "lerna bootstrap --ci",
     "lint": "eslint . && prettier --check . && knip --no-config-hints",
-    "measure": "cd packages/memory && npm run measure",
-    "test": "lerna run test",
+    "measure": "npm run measure --workspace=packages/memory",
+    "test": "npm test --workspaces --if-present",
     "type-check": "tsc -b"
   },
   "prettier": {
@@ -26,12 +28,10 @@
     "printWidth": 150
   },
   "devDependencies": {
-    "@lerna/legacy-package-management": "^8.2.4",
     "@lvce-editor/eslint-config": "^17.0.3",
     "@lvce-editor/eslint-plugin-github-actions": "^17.0.0",
     "eslint": "^10.7.0",
     "knip": "^6.27.0",
-    "lerna": "^8.2.4",
     "prettier": "^3.9.5",
     "typescript": "^6.0.3"
   }

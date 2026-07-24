@@ -10,10 +10,12 @@ beforeEach(() => {
 
 test('disposeIsolatedExtensionHostWorker disposes and removes the worker', async () => {
   const dispose = jest.fn(async () => {})
+  const invoke = jest.fn<(...args: readonly any[]) => Promise<any>>(async () => {})
   IsolatedExtensionHostWorkerState.set('sample.extension', { dispose } as any)
 
-  await expect(disposeIsolatedExtensionHostWorker('sample.extension')).resolves.toBe(true)
+  await expect(disposeIsolatedExtensionHostWorker('sample.extension', invoke)).resolves.toBe(true)
 
+  expect(invoke).toHaveBeenCalledWith('LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension')
   expect(dispose).toHaveBeenCalledTimes(1)
   expect(IsolatedExtensionHostWorkerState.get('sample.extension')).toBeUndefined()
 })
@@ -74,4 +76,16 @@ test('disposeIsolatedExtensionHostWorker removes state when disposal rejects', a
 
   await expect(disposeIsolatedExtensionHostWorker('sample.extension')).resolves.toBe(true)
   expect(IsolatedExtensionHostWorkerState.get('sample.extension')).toBeUndefined()
+})
+
+test('disposeIsolatedExtensionHostWorker still closes the rpc when renderer disposal rejects', async () => {
+  const dispose = jest.fn(async () => {})
+  const invoke = jest.fn<(...args: readonly any[]) => Promise<any>>(async () => {
+    throw new Error('Renderer does not support worker disposal')
+  })
+  IsolatedExtensionHostWorkerState.set('sample.extension', { dispose } as any)
+
+  await expect(disposeIsolatedExtensionHostWorker('sample.extension', invoke)).resolves.toBe(true)
+
+  expect(dispose).toHaveBeenCalledTimes(1)
 })

@@ -105,3 +105,17 @@ export const updateRuntimeStatus = (id: string, statusUpdate: Partial<RuntimeSta
 export const getRuntimeStatus = (extensionId: string): RuntimeStatus | undefined => {
   return state.extensionsState.runtimeStatuses[extensionId]
 }
+
+const omit = <T>(record: Readonly<Record<string, T>>, id: string): Readonly<Record<string, T>> => {
+  const result = { ...record }
+  delete result[id]
+  return result
+}
+
+export const resetExtensionRuntimeState = (extensionId: string): void => {
+  update({
+    activatedExtensions: omit(state.extensionsState.activatedExtensions, extensionId),
+    cachedActivationEvents: omit(state.extensionsState.cachedActivationEvents, extensionId),
+    runtimeStatuses: omit(state.extensionsState.runtimeStatuses, extensionId),
+  })
+}

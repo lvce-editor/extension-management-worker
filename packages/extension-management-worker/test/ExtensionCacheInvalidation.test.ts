@@ -7,6 +7,7 @@ import { enableExtension2 } from '../src/parts/EnableExtension2/EnableExtension2
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { installExtension } from '../src/parts/InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../src/parts/InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
+import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import { uninstallExtension } from '../src/parts/UninstallExtension/UninstallExtension.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
@@ -22,6 +23,7 @@ const getRendererWorker = (): DisposableMockRpc => {
 
 beforeEach(() => {
   ExtensionsState.reset()
+  IsolatedExtensionHostWorkerState.clear()
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
   })
@@ -33,9 +35,11 @@ afterEach(() => {
 })
 
 test('disableExtension2 invalidates extension cache', async () => {
+  IsolatedExtensionHostWorkerState.set('sample.extension', { dispose: async () => {} } as any)
+
   await disableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension']])
 })
 
 test('enableExtension2 invalidates extension cache', async () => {
@@ -67,4 +71,10 @@ test('cache invalidation is compatible with older renderer workers', async () =>
   })
 
   await expect(invalidateExtensionsCache()).resolves.toBeUndefined()
+})
+
+test('cache invalidation includes the disabled extension id', async () => {
+  await invalidateExtensionsCache('sample.extension')
+
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension']])
 })

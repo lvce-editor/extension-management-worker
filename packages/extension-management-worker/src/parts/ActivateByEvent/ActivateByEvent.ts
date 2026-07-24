@@ -12,6 +12,11 @@ export interface ActivateByEventResult {
 const activatingExtensions: Record<string, Promise<void>> = Object.create(null)
 const runningExtensions: Record<string, boolean> = Object.create(null)
 
+export const resetExtensionActivation = (extensionId: string): void => {
+  delete activatingExtensions[extensionId]
+  delete runningExtensions[extensionId]
+}
+
 const matchesEvent = (extension: any, event: string): boolean => {
   return (
     !extension.disabled &&

@@ -3,7 +3,12 @@ import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
-import { executeFileSystemProviderReadFile } from '../src/parts/ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
+import {
+  executeFileSystemProviderGetPathSeparator,
+  executeFileSystemProviderIsReadonly,
+  executeFileSystemProviderReadDirWithFileTypes,
+  executeFileSystemProviderReadFile,
+} from '../src/parts/ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
@@ -59,6 +64,45 @@ test('reads from a matching isolated file system provider', async () => {
     result: 'before content',
   })
   expect(invocations).toEqual([['ExtensionApi.executeFileSystemProviderReadFile', 'git-file-before', 'file:///workspace/file.txt']])
+})
+
+test('executes isolated file system provider metadata and directory operations', async () => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return method
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('fetch-extension', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      fileSystemProviders: [{ id: 'fetch' }],
+      id: 'fetch-extension',
+      isolated: true,
+    },
+  ])
+
+  await expect(executeFileSystemProviderReadDirWithFileTypes(extensionsState, 'fetch', 'fetch:///workspace')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderReadDirWithFileTypes',
+  })
+  await expect(executeFileSystemProviderGetPathSeparator(extensionsState, 'fetch')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderGetPathSeparator',
+  })
+  await expect(executeFileSystemProviderIsReadonly(extensionsState, 'fetch')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderIsReadonly',
+  })
+  expect(invocations).toEqual([
+    ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
+    ['ExtensionApi.executeFileSystemProviderGetPathSeparator', 'fetch'],
+    ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
+  ])
 })
 
 test('reports no provider when no isolated contribution matches', async () => {

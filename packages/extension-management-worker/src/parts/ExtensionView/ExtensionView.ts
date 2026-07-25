@@ -21,6 +21,7 @@ interface ExtensionManifest extends RpcExtensionManifest {
 }
 
 interface CreateViewInstanceSuccess {
+  readonly eventListeners?: readonly unknown[]
   readonly ok: true
   readonly result: unknown
 }
@@ -31,6 +32,15 @@ interface CreateViewInstanceError {
 }
 
 type CreateViewInstanceResult = CreateViewInstanceSuccess | CreateViewInstanceError
+
+interface RegisteredView {
+  readonly eventListeners?: readonly unknown[]
+  readonly id?: unknown
+}
+
+interface ViewRegistrySnapshot {
+  readonly views?: readonly RegisteredView[]
+}
 
 const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedError => {
   if (error instanceof Error) {
@@ -88,6 +98,15 @@ const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, 
   return getRpcForView(viewId, assetDir, platform)
 }
 
+const getViewEventListeners = async (rpc: Rpc, viewId: string): Promise<readonly unknown[] | undefined> => {
+  const snapshot = (await rpc.invoke('ExtensionApi.getViewRegistrySnapshot')) as ViewRegistrySnapshot | undefined
+  if (!Array.isArray(snapshot?.views)) {
+    return undefined
+  }
+  const view = snapshot.views.find((view) => view?.id === viewId)
+  return Array.isArray(view?.eventListeners) ? view.eventListeners : undefined
+}
+
 export const createViewInstance = async (
   viewId: string,
   uid: number,
@@ -97,6 +116,7 @@ export const createViewInstance = async (
 ): Promise<CreateViewInstanceResult> => {
   try {
     const rpc = await getRpcForView(viewId, assetDir, platform)
+    const eventListeners = await getViewEventListeners(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {
       rpc,
@@ -104,6 +124,7 @@ export const createViewInstance = async (
       viewId,
     })
     return {
+      ...(eventListeners && { eventListeners }),
       ok: true,
       result,
     }

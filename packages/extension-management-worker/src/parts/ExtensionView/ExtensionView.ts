@@ -46,6 +46,10 @@ const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedEr
   }
 }
 
+const isViewActionsDomCommandNotFoundError = (error: unknown): boolean => {
+  return error instanceof Error && error.name === 'CommandNotFoundError' && error.message.includes('ExtensionApi.getViewActionsDom')
+}
+
 const hasView = (extension: ExtensionManifest, viewId: string): boolean => {
   return Array.isArray(extension.views) && extension.views.some((view) => view.id === viewId)
 }
@@ -152,7 +156,14 @@ export const getViewActionsDom = async (viewId: string, uid: number, assetDir: s
   if (!instance || instance.status === 'error') {
     return undefined
   }
-  return instance.rpc.invoke('ExtensionApi.getViewActionsDom', uid) as Promise<readonly unknown[] | undefined>
+  try {
+    return (await instance.rpc.invoke('ExtensionApi.getViewActionsDom', uid)) as readonly unknown[] | undefined
+  } catch (error) {
+    if (isViewActionsDomCommandNotFoundError(error)) {
+      return undefined
+    }
+    throw error
+  }
 }
 
 export const requestViewRerender = async (uid: number): Promise<void> => {

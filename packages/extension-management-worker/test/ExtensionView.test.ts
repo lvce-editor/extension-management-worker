@@ -31,7 +31,7 @@ const state: {
 }
 
 const createRpc = (
-  options: { readonly createError?: Error; readonly focusSelector?: string } = {},
+  options: { readonly createError?: Error; readonly focusSelector?: string; readonly viewActionsDomError?: Error } = {},
 ): {
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
@@ -85,6 +85,9 @@ const createRpc = (
         ]
       }
       if (method === 'ExtensionApi.getViewActionsDom') {
+        if (options.viewActionsDomError) {
+          throw options.viewActionsDomError
+        }
         return [
           {
             childCount: 0,
@@ -471,6 +474,38 @@ test('getViewActionsDom proxies to isolated extension rpc', async () => {
   ])
 
   expect(mock.invocations).toEqual([['ExtensionApi.getViewActionsDom', 1]])
+})
+
+test('getViewActionsDom returns undefined when the optional extension api command is unavailable', async () => {
+  const error = new Error('Command not found ExtensionApi.getViewActionsDom')
+  Object.defineProperty(error, 'name', {
+    value: 'CommandNotFoundError',
+  })
+  const mock = createRpc({
+    viewActionsDomError: error,
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewActionsDom', 1]])
+})
+
+test('getViewActionsDom rethrows extension errors', async () => {
+  const error = new Error('Failed to render view actions')
+  const mock = createRpc({
+    viewActionsDomError: error,
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).rejects.toBe(error)
 })
 
 test('getViewMenuEntries returns empty array for disposed or failed instances', async () => {

@@ -31,15 +31,19 @@ test('returns activated extensions ordered by activation time', () => {
     {
       activationEvent: 'onStartupFinished',
       activationTime: 25,
+      error: '',
       id: 'sample.slow',
       name: 'Slow extension',
+      status: 'running',
       version: '2.0.0',
     },
     {
       activationEvent: '',
       activationTime: 5,
+      error: '',
       id: 'sample.fast',
       name: 'Fast extension',
+      status: 'running',
       version: '1.0.0',
     },
   ])
@@ -69,10 +73,12 @@ test('resolves relative running extension icons', () => {
       activationEvent: '',
       activationTime: 5,
       builtin: true,
+      error: '',
       icon: '/assets/extensions/builtin.git/icon.png',
       id: 'builtin.git',
       name: 'Git',
       path: '/extensions/builtin.git',
+      status: 'running',
       version: '1.0.0',
     },
   ])
@@ -86,4 +92,28 @@ test('preserves absolute running extension icons', () => {
   }
 
   expect(getRunningExtensionsFromState(extensions, runtimeStatuses, '/assets', 0)[0].icon).toBe(icon)
+})
+
+test('returns failed and terminated extensions with their status details', () => {
+  const extensions = [{ id: 'sample.error' }, { id: 'sample.terminated' }]
+  const runtimeStatuses = {
+    'sample.error': { ...createStatus('sample.error', RuntimeStatusType.Error, 0), error: 'Activation failed' },
+    'sample.terminated': {
+      ...createStatus('sample.terminated', RuntimeStatusType.Terminated, 4),
+      error: 'Extension worker stopped responding',
+    },
+  }
+
+  expect(getRunningExtensionsFromState(extensions, runtimeStatuses, '/assets', 0)).toEqual([
+    expect.objectContaining({
+      error: 'Extension worker stopped responding',
+      id: 'sample.terminated',
+      status: 'terminated',
+    }),
+    expect.objectContaining({
+      error: 'Activation failed',
+      id: 'sample.error',
+      status: 'error',
+    }),
+  ])
 })

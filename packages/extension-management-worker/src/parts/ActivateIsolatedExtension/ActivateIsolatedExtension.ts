@@ -1,4 +1,5 @@
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import { getErrorMessage } from '../GetErrorMessage/GetErrorMessage.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
 
@@ -28,6 +29,7 @@ export const activateIsolatedExtension = async (
     })
   } catch (error) {
     ExtensionsState.updateRuntimeStatus(extensionId, {
+      error: getErrorMessage(error),
       status: RuntimeStatusType.Error,
     })
     throw error

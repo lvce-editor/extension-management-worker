@@ -2,6 +2,12 @@ import type { RuntimeStatus } from '../RuntimeStatus/RuntimeStatus.ts'
 import { getIcon } from '../GetIcon/GetIcon.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
 
+const statusNames: Readonly<Record<number, string>> = {
+  [RuntimeStatusType.Activated]: 'running',
+  [RuntimeStatusType.Error]: 'error',
+  [RuntimeStatusType.Terminated]: 'terminated',
+}
+
 export const getRunningExtensionsFromState = (
   extensions: readonly any[],
   runtimeStatuses: Readonly<Record<string, RuntimeStatus>>,
@@ -11,7 +17,8 @@ export const getRunningExtensionsFromState = (
   return extensions
     .flatMap((extension) => {
       const runtimeStatus = runtimeStatuses[extension.id]
-      if (!runtimeStatus || runtimeStatus.status !== RuntimeStatusType.Activated) {
+      const status = runtimeStatus && statusNames[runtimeStatus.status]
+      if (!runtimeStatus || !status) {
         return []
       }
       const manifestIcon = typeof extension.icon === 'string' ? extension.icon.replace(/^\.\//, '') : undefined
@@ -21,7 +28,9 @@ export const getRunningExtensionsFromState = (
           ...extension,
           activationEvent: runtimeStatus.activationEvent,
           activationTime: runtimeStatus.activationTime,
+          error: runtimeStatus.error || '',
           ...(icon && { icon }),
+          status,
         },
       ]
     })

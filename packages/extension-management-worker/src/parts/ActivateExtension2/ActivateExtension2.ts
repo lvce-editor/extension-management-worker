@@ -3,6 +3,7 @@ import { ExtensionHost } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
 import * as CancelToken from '../CancelToken/CancelToken.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import { getErrorMessage } from '../GetErrorMessage/GetErrorMessage.ts'
 import * as GetExtensionId from '../GetExtensionId/GetExtensionId.ts'
 import * as IsImportError from '../IsImportError/IsImportError.ts'
 import * as RuntimeStatusType from '../RuntimeStatusType/RuntimeStatusType.ts'
@@ -46,15 +47,19 @@ export const activateExtension2 = async (extensionId: string, extension: any, ab
     })
   } catch (error) {
     const id = GetExtensionId.getExtensionId(extension)
+    let activationError = error
     if (IsImportError.isImportError(error)) {
       const actualErrorMessage = await TryToGetActualImportErrorMessage.tryToGetActualImportErrorMessage(absolutePath, error)
-      throw new Error(`Failed to activate extension ${id}: ${actualErrorMessage}`, { cause: error })
+      activationError = new Error(`Failed to activate extension ${id}: ${actualErrorMessage}`, { cause: error })
     }
     ExtensionsState.updateRuntimeStatus(extensionId, {
-      status: RuntimeStatusType.Error, // TODO maybe store error also in runtime status state
+      error: getErrorMessage(activationError),
+      status: RuntimeStatusType.Error,
     })
-
-    throw new VError(error, `Failed to activate extension ${id}`)
+    if (activationError !== error) {
+      throw activationError
+    }
+    throw new VError(activationError, `Failed to activate extension ${id}`)
   } finally {
     CancelToken.cancel(token)
   }

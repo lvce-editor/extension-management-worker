@@ -67,7 +67,9 @@ test('activateExtension2 reports activation timeouts', async () => {
 
   expect(error).toBeInstanceOf(Error)
   expect(error.message).toContain('Activation timeout of 10000ms exceeded')
-  expect(ExtensionsState.getRuntimeStatus('sample.extension')).toEqual(expect.objectContaining({ status: 4 }))
+  expect(ExtensionsState.getRuntimeStatus('sample.extension')).toEqual(
+    expect.objectContaining({ error: 'Activation timeout of 10000ms exceeded', status: 4 }),
+  )
 })
 
 test('activateExtension2 provides the actual message for import errors', async () => {
@@ -85,6 +87,13 @@ test('activateExtension2 provides the actual message for import errors', async (
 
   await expect(activateExtension2('sample.extension', { id: 'sample.extension' }, 'https://example.com/main.js', extensionHost)).rejects.toThrow(
     'Failed to activate extension sample.extension: Failed to import https://example.com/main.js',
+  )
+  expect(ExtensionsState.getRuntimeStatus('sample.extension')).toEqual(
+    expect.objectContaining({
+      error:
+        'Failed to activate extension sample.extension: Failed to import https://example.com/main.js: Error: Failed to fetch dynamically imported module: https://example.com/main.js',
+      status: 4,
+    }),
   )
   await jest.runAllTimersAsync()
 })
@@ -110,7 +119,7 @@ test('importExtension records success and wraps generic failures', async () => {
   await expect(importExtension('sample.failure', '/extensions/failure/main.js', 'onCommand:failure', failingHost)).rejects.toThrow(
     'Failed to import extension sample.failure: generic import failure',
   )
-  expect(ExtensionsState.getRuntimeStatus('sample.failure')).toEqual(expect.objectContaining({ status: 4 }))
+  expect(ExtensionsState.getRuntimeStatus('sample.failure')).toEqual(expect.objectContaining({ error: 'generic import failure', status: 4 }))
 })
 
 test('importExtension resolves browser import error details', async () => {

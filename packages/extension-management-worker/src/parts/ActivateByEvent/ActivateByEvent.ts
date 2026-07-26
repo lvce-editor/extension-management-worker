@@ -44,12 +44,18 @@ const getAbsolutePath = (extension: any, assetDir: string, platform: number): st
   )
 }
 
+const notifyRunningExtensionsChanged = (): void => {
+  setTimeout(() => {
+    void RendererWorker.invoke('Layout.handleExtensionsChanged')
+  }, 0)
+}
+
 const doActivateExtension = async (extension: any, absolutePath: string, event: string, platform: number): Promise<void> => {
   const extensionId = getExtensionId(extension)
   try {
     await activateExtension3(extension, absolutePath, event, platform)
     runningExtensions[extensionId] = true
-    await RendererWorker.invoke('Layout.handleExtensionsChanged')
+    notifyRunningExtensionsChanged()
   } finally {
     delete activatingExtensions[extensionId]
   }

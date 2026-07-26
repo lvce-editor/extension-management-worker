@@ -59,8 +59,8 @@ const registerExtension = (extensionId: string, activationEvent = 'onCommand:tes
           activation: [activationEvent],
           browser: 'main.js',
           id: extensionId,
-          isWeb: true,
           isolated: true,
+          isWeb: true,
           path: `/extensions/${extensionId}`,
         },
       ]
@@ -143,9 +143,11 @@ test('activateByEvent waits for the renderer update before resolving', async () 
     },
   })
 
-  const activation = activateByEvent('onCommand:test', '/assets', PlatformType.Electron).then(() => {
+  const trackActivation = async (): Promise<void> => {
+    await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
     activationResolved = true
-  })
+  }
+  const activation = trackActivation()
   await Promise.resolve()
 
   expect(activationResolved).toBe(false)

@@ -1,6 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { activateByEvent } from '../src/parts/ActivateByEvent/ActivateByEvent.ts'
@@ -17,7 +17,13 @@ const state: {
   sharedProcess: undefined,
 }
 
+beforeEach(() => {
+  jest.useFakeTimers()
+})
+
 afterEach(() => {
+  jest.clearAllTimers()
+  jest.useRealTimers()
   IsolatedExtensionHostWorkerState.clear()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
@@ -83,6 +89,7 @@ test('activateByEvent notifies the renderer after an extension starts running', 
     error: undefined,
     hasActivatedExtensions: true,
   })
+  await jest.runAllTimersAsync()
 
   expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
 })
@@ -103,6 +110,7 @@ test('activateByEvent records the extension as running before notifying the rend
     error: undefined,
     hasActivatedExtensions: true,
   })
+  await jest.runAllTimersAsync()
 
   expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
 })
@@ -115,6 +123,7 @@ test('activateByEvent does not notify the renderer again when an extension is al
 
   await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
   await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
+  await jest.runAllTimersAsync()
 
   expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
 })
@@ -129,32 +138,28 @@ test('concurrent activateByEvent calls notify the renderer once', async () => {
     activateByEvent('onCommand:test', '/assets', PlatformType.Electron),
     activateByEvent('onCommand:test', '/assets', PlatformType.Electron),
   ])
+  await jest.runAllTimersAsync()
 
   expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
 })
 
-test('activateByEvent waits for the renderer update before resolving', async () => {
-  registerExtension('sample.notify-await')
-  const { promise, resolve } = Promise.withResolvers<void>()
-  let activationResolved = false
+test('activateByEvent resolves before notifying the renderer', async () => {
+  registerExtension('sample.notify-after-activation')
+  let notified = false
   state.rendererWorker = RendererWorker.registerMockRpc({
     'Layout.handleExtensionsChanged'() {
-      return promise
+      notified = true
     },
   })
 
-  const trackActivation = async (): Promise<void> => {
-    await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
-    activationResolved = true
-  }
-  const activation = trackActivation()
-  await Promise.resolve()
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
+    error: undefined,
+    hasActivatedExtensions: true,
+  })
+  expect(notified).toBe(false)
 
-  expect(activationResolved).toBe(false)
-
-  resolve()
-  await activation
-  expect(activationResolved).toBe(true)
+  await jest.runAllTimersAsync()
+  expect(notified).toBe(true)
 })
 
 test('activateByEvent returns hasActivatedExtensions false when no extensions match', async () => {

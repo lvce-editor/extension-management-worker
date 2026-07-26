@@ -98,6 +98,32 @@ test('activateExtension2 provides the actual message for import errors', async (
   await jest.runAllTimersAsync()
 })
 
+test('activateExtension2 records nested dynamic import errors when the main module exists', async () => {
+  jest.useFakeTimers()
+  Object.defineProperty(globalThis, 'fetch', {
+    configurable: true,
+    value: async (): Promise<Response> => ({ ok: true, status: 200 }) as Response,
+  })
+  const importError = new Error('Failed to fetch dynamically imported module: https://example.com/add.js')
+  const extensionHost = {
+    invoke: async (): Promise<void> => {
+      throw importError
+    },
+  }
+
+  await expect(activateExtension2('sample.extension', { id: 'sample.extension' }, 'https://example.com/main.js', extensionHost)).rejects.toThrow(
+    'Failed to activate extension sample.extension: Failed to import https://example.com/main.js',
+  )
+  expect(ExtensionsState.getRuntimeStatus('sample.extension')).toEqual(
+    expect.objectContaining({
+      error:
+        'Failed to activate extension sample.extension: Failed to import https://example.com/main.js: Error: Failed to fetch dynamically imported module: https://example.com/add.js',
+      status: 4,
+    }),
+  )
+  await jest.runAllTimersAsync()
+})
+
 test('importExtension records success and wraps generic failures', async () => {
   const successfulHost = {
     invoke: async (): Promise<void> => {},

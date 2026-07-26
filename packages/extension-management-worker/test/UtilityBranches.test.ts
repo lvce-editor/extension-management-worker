@@ -216,10 +216,10 @@ test('tryToGetActualImportErrorMessage handles successful, missing, and failed r
   })
   const error = new Error('import failed')
 
-  await expect(tryToGetActualImportErrorMessage('https://example.com/ok.js', error)).rejects.toThrow(
-    'Failed to import https://example.com/ok.js: Unknown Error',
+  await expect(tryToGetActualImportErrorMessage('https://example.com/ok.js', error)).resolves.toBe(
+    'Failed to import https://example.com/ok.js: Error: import failed',
   )
-  await expect(tryToGetActualImportErrorMessage('https://example.com/missing.js', error)).rejects.toThrow(
+  await expect(tryToGetActualImportErrorMessage('https://example.com/missing.js', error)).resolves.toBe(
     'Failed to import https://example.com/missing.js: Not found (404)',
   )
   await expect(tryToGetActualImportErrorMessage('https://example.com/error.js', error)).resolves.toBe(

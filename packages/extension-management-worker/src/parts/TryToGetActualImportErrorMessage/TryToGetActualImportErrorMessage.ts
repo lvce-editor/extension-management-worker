@@ -8,11 +8,11 @@ export const tryToGetActualImportErrorMessage = async (url: string, error: unkno
     return `Failed to import ${url}: ${error}`
   }
   if (response.ok) {
-    throw new Error(`Failed to import ${url}: Unknown Error`)
+    return `Failed to import ${url}: ${error}`
   }
   switch (response.status) {
     case HttpStatusCode.NotFound:
-      throw new Error(`Failed to import ${url}: Not found (404)`)
+      return `Failed to import ${url}: Not found (404)`
     default:
       return `Failed to import ${url}: ${error}`
   }

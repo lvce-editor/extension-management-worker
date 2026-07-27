@@ -31,3 +31,15 @@ test('createExtensionCommandExecutor rejects unknown commands', () => {
 
   expect(() => execute('Extensions.missing')).toThrow('Command not found Extensions.missing')
 })
+
+test('secret storage commands are bound to the calling extension', () => {
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap).toEqual(
+    expect.objectContaining({
+      'Extensions.deleteSecret': expect.any(Function),
+      'Extensions.getSecret': expect.any(Function),
+      'Extensions.storeSecret': expect.any(Function),
+    }),
+  )
+})

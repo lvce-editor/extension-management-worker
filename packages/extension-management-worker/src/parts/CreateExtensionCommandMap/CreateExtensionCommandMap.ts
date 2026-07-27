@@ -1,5 +1,6 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { getNodeRpcInfo } from '../GetNodeRpcPath/GetNodeRpcPath.ts'
+import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
 
 export type ExtensionCommand = (...args: readonly any[]) => any
 export type ExtensionCommandMap = Readonly<Record<string, ExtensionCommand>>
@@ -16,8 +17,17 @@ class CommandNotFoundError extends Error {
 export const createExtensionCommandMap = (extensionId: string): ExtensionCommandMap => {
   return {
     ...CommandMapRef.commandMapRef,
+    'Extensions.deleteSecret'(key: string) {
+      return deleteSecret(extensionId, key)
+    },
     'Extensions.getNodeRpcInfo'(rpcId: string) {
       return getNodeRpcInfo(extensionId, rpcId)
+    },
+    'Extensions.getSecret'(key: string) {
+      return getSecret(extensionId, key)
+    },
+    'Extensions.storeSecret'(key: string, value: string) {
+      return storeSecret(extensionId, key, value)
     },
   }
 }

@@ -21,6 +21,7 @@ export const toView = (extension: ExtensionManifest, manifestView: ManifestView,
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
     kind: manifestView.kind || '',
+    preferredLocation: manifestView.preferredLocation === 'preview' ? 'preview' : 'sideBar',
     showSideBarHeader: manifestView.showSideBarHeader !== false,
     title: manifestView.title || id,
   }

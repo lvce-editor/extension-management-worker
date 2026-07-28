@@ -25,6 +25,7 @@ test('getViewsFromExtensions returns contributed views from isolated extension m
       id: 'sample.views.files',
       iframe: undefined,
       kind: '',
+      preferredLocation: 'sideBar',
       showSideBarHeader: true,
       title: 'Sample Files',
     },

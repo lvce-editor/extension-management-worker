@@ -19,6 +19,7 @@ test('getExtensionViews converts manifest views without starting an extension wo
       id: 'sample.views.files',
       iframe: undefined,
       kind: '',
+      preferredLocation: 'sideBar',
       showSideBarHeader: true,
       title: 'Manifest title',
     },

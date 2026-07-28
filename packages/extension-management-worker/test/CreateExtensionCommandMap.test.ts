@@ -1,9 +1,11 @@
 import { afterEach, expect, test } from '@jest/globals'
 import { createExtensionCommandExecutor, createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
+import * as FileChangeHandlerRegistry from '../src/parts/FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 
 afterEach(() => {
   DeclaredRpcState.clear()
+  FileChangeHandlerRegistry.reset()
 })
 
 test('scopes declared rpc lookup to the calling extension', async () => {
@@ -42,4 +44,16 @@ test('secret storage commands are bound to the calling extension', () => {
       'Extensions.storeSecret': expect.any(Function),
     }),
   )
+})
+
+test('file change registrations are bound to the calling extension', () => {
+  const firstCommandMap = createExtensionCommandMap('extension-one')
+  const secondCommandMap = createExtensionCommandMap('extension-two')
+
+  firstCommandMap['Extensions.registerFileChangeHandler']()
+  secondCommandMap['Extensions.registerFileChangeHandler']()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual(['extension-one', 'extension-two'])
+
+  firstCommandMap['Extensions.unregisterFileChangeHandler']()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual(['extension-two'])
 })

@@ -45,6 +45,7 @@ import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
 import { handleData } from '../HandleData/HandleData.ts'
+import { handleFileChanges } from '../HandleFileChanges/HandleFileChanges.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import { handleViewContextChange } from '../HandleViewContextChange/HandleViewContextChange.ts'
@@ -121,6 +122,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
   'Extensions.handleData': handleData,
+  'Extensions.handleFileChanges': handleFileChanges,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleUncaughtExtensionError': handleUncaughtExtensionError,
   'Extensions.handleViewContextChange': handleViewContextChange,

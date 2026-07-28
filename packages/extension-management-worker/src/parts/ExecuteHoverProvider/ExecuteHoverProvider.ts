@@ -14,6 +14,7 @@ interface HoverProviderContribution {
 interface ExtensionManifest {
   readonly browser?: string
   readonly builtin?: boolean
+  readonly disabled?: boolean
   readonly hoverProviders?: readonly HoverProviderContribution[]
   readonly id?: string
   readonly isWeb?: boolean
@@ -37,7 +38,8 @@ const getMatchingExtensions = async (
 ): Promise<readonly ExtensionManifest[]> => {
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   return extensions.filter(
-    (extension): boolean => IsExtensionIsolated.isExtensionIsolated(extension) && contributesHoverProvider(extension, textDocument.languageId),
+    (extension): boolean =>
+      !extension.disabled && IsExtensionIsolated.isExtensionIsolated(extension) && contributesHoverProvider(extension, textDocument.languageId),
   )
 }
 

@@ -154,6 +154,28 @@ test('executeDiagnosticProvider returns empty diagnostics when no matching isola
   ).resolves.toEqual([])
 })
 
+test('executeDiagnosticProvider ignores disabled language server contributions', async () => {
+  const textDocument = {
+    languageId: 'typescript',
+    text: 'const value: string = 1',
+    uri: 'file:///test.ts',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      disabled: true,
+      id: 'extension-typescript',
+      isolated: true,
+      languageServers: [{ id: 'typescript-native', languageId: 'typescript' }],
+    },
+  ])
+  const rpc = createRpc([])
+  IsolatedExtensionHostWorkerState.set('extension-typescript', rpc.rpc)
+
+  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).resolves.toEqual([])
+
+  expect(rpc.invocations).toEqual([])
+})
+
 test('executeDiagnosticProvider routes language server contributions through the shared process', async () => {
   const textDocument = {
     languageId: 'markdown',

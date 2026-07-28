@@ -65,3 +65,31 @@ test('reports no provider when no activation event matches', async () => {
     ExecuteLanguageProvider.executeLanguageProvider(createExtensionsState([]), 'definition', 'provideDefinition', { languageId: 'typescript' }, 2),
   ).resolves.toEqual({ found: false })
 })
+
+test('reports no provider when the matching extension is disabled', async () => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return { uri: '/definition.ts' }
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('typescript', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onDefinition:typescript'],
+      disabled: true,
+      id: 'typescript',
+      isolated: true,
+    },
+  ])
+
+  await expect(
+    ExecuteLanguageProvider.executeLanguageProvider(extensionsState, 'definition', 'provideDefinition', { languageId: 'typescript' }, 2),
+  ).resolves.toEqual({ found: false })
+
+  expect(invocations).toEqual([])
+})

@@ -143,3 +143,28 @@ test('executeFormattingProvider returns empty edits when no matching isolated fo
     }),
   ).resolves.toEqual([])
 })
+
+test('executeFormattingProvider ignores disabled formatting provider contributions', async () => {
+  const textDocument = {
+    languageId: 'javascript',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      disabled: true,
+      formattingProviders: [
+        {
+          id: 'format.javascript',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-javascript',
+      isolated: true,
+    },
+  ])
+  const rpc = createRpc([{ inserted: 'ignored' }])
+  IsolatedExtensionHostWorkerState.set('extension-javascript', rpc.rpc)
+
+  await expect(ExecuteFormattingProvider.executeFormattingProvider(extensionsState, textDocument)).resolves.toEqual([])
+
+  expect(rpc.invocations).toEqual([])
+})

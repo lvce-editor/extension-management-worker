@@ -1,4 +1,5 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
+import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getNodeRpcInfo } from '../GetNodeRpcPath/GetNodeRpcPath.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
 
@@ -26,8 +27,14 @@ export const createExtensionCommandMap = (extensionId: string): ExtensionCommand
     'Extensions.getSecret'(key: string) {
       return getSecret(extensionId, key)
     },
+    'Extensions.registerFileChangeHandler'() {
+      FileChangeHandlerRegistry.register(extensionId)
+    },
     'Extensions.storeSecret'(key: string, value: string) {
       return storeSecret(extensionId, key, value)
+    },
+    'Extensions.unregisterFileChangeHandler'() {
+      FileChangeHandlerRegistry.unregister(extensionId)
     },
   }
 }

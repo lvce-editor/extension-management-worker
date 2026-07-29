@@ -1,5 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { getLanguageServerRootUri } from '../GetLanguageServerRootUri/GetLanguageServerRootUri.ts'
 import { resolveLanguageServer } from '../ResolveLanguageServer/ResolveLanguageServer.ts'
 
 interface ExtensionManifest {
@@ -79,9 +80,11 @@ export const executeLanguageServerDiagnostic = async (
   if (!languageServer) {
     return []
   }
+  const rootUri = await getLanguageServerRootUri()
   const result = (await SharedProcess.invoke('LanguageServer.diagnostic', {
     argv: languageServer.argv,
     id: languageServer.id,
+    ...(rootUri && { rootUri }),
     textDocument,
     uri: languageServer.uri,
   })) as readonly LanguageServerDiagnostic[]

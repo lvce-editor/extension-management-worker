@@ -1,6 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { expect, test } from '@jest/globals'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { executeLanguageServerDiagnostic } from '../src/parts/ExecuteLanguageServerDiagnostic/ExecuteLanguageServerDiagnostic.ts'
 
 const extension = {
@@ -40,6 +40,11 @@ const createRpc = (): Rpc => {
 
 test('executeLanguageServerDiagnostic invokes the shared process and sanitizes diagnostics', async () => {
   const invocations: unknown[] = []
+  const rendererWorker = RendererWorker.registerMockRpc({
+    'Workspace.getPath'() {
+      return 'file:///workspace'
+    },
+  })
   const sharedProcess = SharedProcess.registerMockRpc({
     'LanguageServer.diagnostic'(options: unknown) {
       invocations.push(options)
@@ -89,10 +94,12 @@ test('executeLanguageServerDiagnostic invokes the shared process and sanitizes d
     {
       argv: ['--stdio'],
       id: 'test.markdown-language-server.vscode-markdown',
+      rootUri: 'file:///workspace',
       textDocument,
       uri: 'file:///test/extension/dist/language-server.js',
     },
   ])
+  rendererWorker[Symbol.dispose]()
   sharedProcess[Symbol.dispose]()
 })
 

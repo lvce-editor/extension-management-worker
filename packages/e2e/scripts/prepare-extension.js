@@ -8,6 +8,7 @@ const outputDirectory = join(packageRoot, '.tmp', 'extension')
 const serverFixtures = join(packageRoot, 'fixtures', 'failing-native-language-servers', 'extension', 'servers')
 
 const toFileUri = (relativePath) => pathToFileURL(join(packageRoot, relativePath)).href
+const elmLanguageServerUri = toFileUri('../../node_modules/@elm-tooling/elm-language-server/out/node/index.js')
 
 await rm(join(packageRoot, '.tmp'), { force: true, recursive: true })
 await mkdir(outputDirectory, { recursive: true })
@@ -32,13 +33,14 @@ await build({
   platform: 'browser',
 })
 
-const prepareFixtureExtension = async (name) => {
+const prepareFixtureExtension = async (name, define = {}) => {
   const sourceDirectory = join(packageRoot, 'fixtures', name)
   const fixtureOutputDirectory = join(packageRoot, '.tmp', name)
   await mkdir(fixtureOutputDirectory, { recursive: true })
   await cp(join(sourceDirectory, 'extension.json'), join(fixtureOutputDirectory, 'extension.json'))
   await build({
     bundle: true,
+    define,
     entryPoints: [join(sourceDirectory, 'main.js')],
     external: ['electron', 'node:*'],
     format: 'esm',
@@ -47,4 +49,10 @@ const prepareFixtureExtension = async (name) => {
   })
 }
 
-await Promise.all([prepareFixtureExtension('extension-with-rpc-command-map'), prepareFixtureExtension('extension-no-rpc-command-map')])
+await Promise.all([
+  prepareFixtureExtension('elm-native-language-server', {
+    'globalThis.__ELM_LANGUAGE_SERVER_URI__': JSON.stringify(elmLanguageServerUri),
+  }),
+  prepareFixtureExtension('extension-with-rpc-command-map'),
+  prepareFixtureExtension('extension-no-rpc-command-map'),
+])

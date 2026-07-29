@@ -1,6 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { expect, test } from '@jest/globals'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { executeLanguageServerCompletion } from '../src/parts/ExecuteLanguageServerCompletion/ExecuteLanguageServerCompletion.ts'
 import { resolveLanguageServerUri } from '../src/parts/ResolveLanguageServer/ResolveLanguageServer.ts'
 
@@ -24,6 +24,11 @@ test('resolveLanguageServerUri resolves relative executable URIs from an extensi
 
 test('executeLanguageServerCompletion invokes the shared-process proxy and sanitizes completion items', async () => {
   const invocations: unknown[] = []
+  const rendererWorker = RendererWorker.registerMockRpc({
+    'Workspace.getPath'() {
+      return 'file:///workspace'
+    },
+  })
   const sharedProcess = SharedProcess.registerMockRpc({
     'LanguageServer.complete'(options: unknown) {
       invocations.push(options)
@@ -109,10 +114,12 @@ test('executeLanguageServerCompletion invokes the shared-process proxy and sanit
       argv: ['--lsp', '--stdio'],
       id: 'test.typescript-native.typescript-native',
       offset: 3,
+      rootUri: 'file:///workspace',
       textDocument,
       uri: 'file:///test/packages/e2e/node_modules/typescript/bin/tsc',
     },
   ])
+  rendererWorker[Symbol.dispose]()
   sharedProcess[Symbol.dispose]()
 })
 

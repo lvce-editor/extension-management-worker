@@ -55,6 +55,24 @@ registerFormattingProvider({
   },
 })
 
+registerFormattingProvider({
+  id: 'typescript-native-diagnostic-driver',
+  languageId: 'typescript-native-diagnostic-driver',
+  async format(textDocument) {
+    const diagnostics = await ExtensionManagementWorker.invoke('Extensions.executeDiagnosticProvider', {
+      ...textDocument,
+      languageId: 'typescript-native',
+    })
+    return [
+      {
+        endOffset: 0,
+        inserted: JSON.stringify(diagnostics),
+        startOffset: 0,
+      },
+    ]
+  },
+})
+
 const failingLanguageServers = [
   ['exit-zero', 'language-server-exit-zero'],
   ['exit-one', 'language-server-exit-one'],

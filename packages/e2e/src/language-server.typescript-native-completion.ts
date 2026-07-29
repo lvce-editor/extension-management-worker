@@ -2,7 +2,7 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.typescript-native-completion'
 
-export const test: Test = async ({ Editor, expect, FileSystem, Locator, Main, Workspace }) => {
+export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
   const fixtureUri = import.meta.resolve('../fixtures/typescript-native-language-server/workspace')
   const workspaceUri = await FileSystem.loadFixture(fixtureUri)
   await Workspace.setPath(workspaceUri)
@@ -17,4 +17,22 @@ export const test: Test = async ({ Editor, expect, FileSystem, Locator, Main, Wo
   await expect(completionItems).toHaveCount(1)
   const firstCompletionItem = completionItems.nth(0)
   await expect(firstCompletionItem).toHaveText('nativeLanguageServerCompletion')
+
+  const updatedText = `const updatedLanguageServerCompletion = 2
+
+updatedLanguageServer`
+  const updatedCompletionItems = await Extension.executeCompletionProvider(
+    {
+      languageId: 'typescript-native',
+      text: updatedText,
+      uri: `${workspaceUri}/src/test.ts`,
+    },
+    updatedText.length,
+  )
+  if (updatedCompletionItems.every((item) => item.label !== 'updatedLanguageServerCompletion')) {
+    throw new Error('Expected updated TypeScript language server completion')
+  }
+  if (updatedCompletionItems.some((item) => item.label === 'nativeLanguageServerCompletion')) {
+    throw new Error('Expected stale TypeScript language server completion to be removed')
+  }
 }

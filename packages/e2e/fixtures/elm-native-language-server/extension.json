@@ -1,0 +1,25 @@
+{
+  "id": "test.elm-native-language-server",
+  "name": "Elm Native Language Server",
+  "browser": "main.js",
+  "isolated": true,
+  "activation": ["onFormatting:elm-native-diagnostic-driver"],
+  "formattingProviders": [
+    {
+      "id": "elm-native-diagnostic-driver",
+      "languageId": "elm-native-diagnostic-driver"
+    }
+  ],
+  "languageServers": [
+    {
+      "id": "elm-language-server",
+      "languageId": "elm"
+    }
+  ],
+  "languages": [
+    {
+      "id": "elm",
+      "extensions": [".elm"]
+    }
+  ]
+}

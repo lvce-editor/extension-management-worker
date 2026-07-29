@@ -27,8 +27,10 @@ ${updatedPrefix}`)
 
   await Editor.openCompletion()
 
-  await expect(completions).toBeVisible()
-  await expect(completionItems).toHaveCount(1)
-  const updatedCompletionItem = completionItems.nth(0)
+  const updatedCompletions = Locator('#Completions').nth(1)
+  await expect(updatedCompletions).toBeVisible()
+  const updatedCompletionItems = updatedCompletions.locator('.EditorCompletionItem')
+  await expect(updatedCompletionItems).toHaveCount(1)
+  const updatedCompletionItem = updatedCompletionItems.nth(0)
   await expect(updatedCompletionItem).toHaveText('updatedLanguageServerCompletion')
 }

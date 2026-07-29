@@ -12,7 +12,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@lvce-editor/server": "^0.95.2"
+    "@lvce-editor/server": "^0.95.3"
   },
   "devDependencies": {
     "@types/node": "^25.9.3"

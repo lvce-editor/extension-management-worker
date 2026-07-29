@@ -26,6 +26,7 @@ import {
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
 import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
+import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
 import { executeSourceControlProvider, getEnabledSourceControlProviderIds } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
@@ -99,6 +100,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),
   'Extensions.executeOrganizeImportsProvider': wrapCommand(executeOrganizeImportsProvider),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
+  'Extensions.executeSignatureHelpProvider': wrapCommand(executeSignatureHelpProvider),
   'Extensions.executeSourceControlProvider': wrapCommand(executeSourceControlProvider),
   'Extensions.getAccessToken': getAccessToken,
   'Extensions.getAllExtensions': getAllExtensions,

@@ -1,10 +1,10 @@
+import { defineConfig } from 'eslint/config'
 import * as config from '@lvce-editor/eslint-config'
-import * as actions from '@lvce-editor/eslint-plugin-github-actions'
 
-export default [
+export default defineConfig([
   ...config.default,
   ...config.recommendedTsconfig,
-  ...actions.default,
+  ...config.recommendedActions,
   {
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
@@ -13,4 +13,4 @@ export default [
       'unicorn/consistent-json-file-read': 'off',
     },
   },
-]
+])

@@ -26,7 +26,11 @@ import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvid
 import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
 import { executeProvidersByEvent } from '../ExecuteProvidersByEvent/ExecuteProvidersByEvent.ts'
 import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
-import { executeSourceControlProvider, getEnabledSourceControlProviderIds } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
+import {
+  executeRequiredSourceControlProvider,
+  executeSourceControlProvider,
+  getEnabledSourceControlProviderIds,
+} from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import { clearOutputChannel, getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
@@ -67,9 +71,28 @@ const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonl
   }
 }
 
+const wrapSourceControlProviderCommand = (methodName: string): ((providerId: string, ...args: readonly unknown[]) => Promise<unknown>) => {
+  return wrapCommand((extensionsState, providerId: string, ...args: readonly unknown[]) => {
+    return executeRequiredSourceControlProvider(extensionsState, providerId, methodName, ...args)
+  })
+}
+
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'ExtensionApi.readFile': readExtensionApiFile,
+  'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
   'ExtensionHostQuickPick.showQuickPick': showQuickPick,
+  'ExtensionHostSourceControl.acceptInput': wrapSourceControlProviderCommand('executeSourceControlAcceptInput'),
+  'ExtensionHostSourceControl.add': wrapSourceControlProviderCommand('executeSourceControlAdd'),
+  'ExtensionHostSourceControl.discard': wrapSourceControlProviderCommand('executeSourceControlDiscard'),
+  'ExtensionHostSourceControl.generateCommitMessage': wrapSourceControlProviderCommand('executeSourceControlGenerateCommitMessage'),
+  'ExtensionHostSourceControl.getBadgeCount': wrapSourceControlProviderCommand('executeSourceControlGetBadgeCount'),
+  'ExtensionHostSourceControl.getChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
+  'ExtensionHostSourceControl.getEnabledProviderIds': wrapCommand(getEnabledSourceControlProviderIds),
+  'ExtensionHostSourceControl.getFeatures': wrapSourceControlProviderCommand('executeSourceControlGetFeatures'),
+  'ExtensionHostSourceControl.getFileBefore': wrapSourceControlProviderCommand('executeSourceControlGetFileBefore'),
+  'ExtensionHostSourceControl.getFileDecorations': wrapSourceControlProviderCommand('executeSourceControlGetFileDecorations'),
+  'ExtensionHostSourceControl.getGroups': wrapSourceControlProviderCommand('executeSourceControlGetGroups'),
+  'ExtensionHostSourceControl.getIconDefinitions': async (): Promise<readonly string[]> => [],
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,

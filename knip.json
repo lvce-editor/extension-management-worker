@@ -13,6 +13,7 @@
       "entry": ["src/**/*.ts", "fixtures/**/main.js"],
       "project": ["src/**/*.ts", "fixtures/**/*.js"],
       "ignoreFiles": ["fixtures/failing-native-language-servers/extension/servers/*.js"],
+      "ignoreBinaries": ["rustup"],
       "ignoreDependencies": ["@elm-tooling/elm-language-server", "elm"]
     },
     "packages/extension-management-worker": {

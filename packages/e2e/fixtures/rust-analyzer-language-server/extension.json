@@ -1,0 +1,18 @@
+{
+  "id": "test.rust-analyzer-language-server",
+  "name": "Rust Analyzer Language Server",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "rust-analyzer",
+      "languageId": "rust"
+    }
+  ],
+  "languages": [
+    {
+      "id": "rust",
+      "extensions": [".rs"]
+    }
+  ]
+}

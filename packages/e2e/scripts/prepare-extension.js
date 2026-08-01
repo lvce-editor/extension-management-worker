@@ -1,4 +1,5 @@
 import { cp, mkdir, rm } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { build } from 'esbuild'
@@ -9,6 +10,8 @@ const serverFixtures = join(packageRoot, 'fixtures', 'failing-native-language-se
 
 const toFileUri = (relativePath) => pathToFileURL(join(packageRoot, relativePath)).href
 const elmLanguageServerUri = toFileUri('../../node_modules/@elm-tooling/elm-language-server/out/node/index.js')
+const rustAnalyzerPath = execFileSync('rustup', ['which', 'rust-analyzer'], { encoding: 'utf8' }).trim()
+const rustAnalyzerUri = pathToFileURL(rustAnalyzerPath).href
 
 await rm(join(packageRoot, '.tmp'), { force: true, recursive: true })
 await mkdir(outputDirectory, { recursive: true })
@@ -55,4 +58,7 @@ await Promise.all([
   }),
   prepareFixtureExtension('extension-with-rpc-command-map'),
   prepareFixtureExtension('extension-no-rpc-command-map'),
+  prepareFixtureExtension('rust-analyzer-language-server', {
+    'globalThis.__RUST_ANALYZER_URI__': JSON.stringify(rustAnalyzerUri),
+  }),
 ])

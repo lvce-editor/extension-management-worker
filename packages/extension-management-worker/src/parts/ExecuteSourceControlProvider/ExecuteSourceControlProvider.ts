@@ -79,3 +79,16 @@ export const executeSourceControlProvider = async (
   const result = await rpc.invoke(`ExtensionApi.${methodName}`, providerId, ...args)
   return { found: true, result }
 }
+
+export const executeRequiredSourceControlProvider = async (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  methodName: string,
+  ...args: readonly unknown[]
+): Promise<unknown> => {
+  const { found, result } = await executeSourceControlProvider(extensionsState, providerId, methodName, ...args)
+  if (!found) {
+    throw new Error('No source control provider found')
+  }
+  return result
+}

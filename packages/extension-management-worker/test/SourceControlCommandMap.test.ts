@@ -63,7 +63,7 @@ test.each([
   ['ExtensionHostSourceControl.getFileBefore', 'executeSourceControlGetFileBefore', ['/workspace/file.txt']],
   ['ExtensionHostSourceControl.getFileDecorations', 'executeSourceControlGetFileDecorations', [['/workspace/file.txt']]],
   ['ExtensionHostSourceControl.getGroups', 'executeSourceControlGetGroups', ['/workspace']],
-])('routes %s to the isolated source control provider', async (command, methodName, args) => {
+])('routes %s to the isolated source control provider', async (command: string, methodName: string, args: readonly unknown[]) => {
   await expect(commandMap[command]('git', ...args)).resolves.toBe(`ExtensionApi.${methodName}`)
   expect(invocations).toEqual([[`ExtensionApi.${methodName}`, 'git', ...args]])
 })

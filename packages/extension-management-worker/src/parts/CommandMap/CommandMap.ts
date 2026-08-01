@@ -79,8 +79,8 @@ const wrapSourceControlProviderCommand = (methodName: string): ((providerId: str
 
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'ExtensionApi.readFile': readExtensionApiFile,
-  'ExtensionHostQuickPick.showQuickPick': showQuickPick,
   'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
+  'ExtensionHostQuickPick.showQuickPick': showQuickPick,
   'ExtensionHostSourceControl.acceptInput': wrapSourceControlProviderCommand('executeSourceControlAcceptInput'),
   'ExtensionHostSourceControl.add': wrapSourceControlProviderCommand('executeSourceControlAdd'),
   'ExtensionHostSourceControl.discard': wrapSourceControlProviderCommand('executeSourceControlDiscard'),

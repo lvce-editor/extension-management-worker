@@ -7,11 +7,22 @@ registerFormattingProvider({
   id: 'isolated-rpc-with-declared-rpc',
   languageId: 'isolated-rpc-with-declared-rpc',
   async format() {
-    const info = await ExtensionManagementWorker.invoke('Extensions.getNodeRpcInfo', 'test-client')
+    let getInfoError = ''
+    try {
+      await ExtensionManagementWorker.invoke('Extensions.getNodeRpcInfo', 'test-client')
+    } catch (error) {
+      getInfoError = `${error}`
+    }
+    let createError = ''
+    try {
+      await ExtensionManagementWorker.invoke('Extensions.createNodeRpcConnection', 'test-client')
+    } catch (error) {
+      createError = `${error}`
+    }
     return [
       {
         endOffset: 0,
-        inserted: JSON.stringify(info),
+        inserted: JSON.stringify({ createError, getInfoError }),
         startOffset: 0,
       },
     ]

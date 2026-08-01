@@ -2,8 +2,6 @@
 
 import type { ExtensionsState as ExtensionState } from '../ExtensionsState/ExtensionsState.ts'
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
-import { activateExtension2 } from '../ActivateExtension2/ActivateExtension2.ts'
-import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { addExtension } from '../AddExtension/AddExtension.ts'
 import { addWebExtension } from '../AddWebExtension/AddWebExtension.ts'
 import { createWebViewWorkerRpc2 } from '../CreateWebViewRpc2/CreateWebViewRpc2.ts'
@@ -51,7 +49,6 @@ import { handleFileChanges } from '../HandleFileChanges/HandleFileChanges.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import { handleViewContextChange } from '../HandleViewContextChange/HandleViewContextChange.ts'
-import { importExtension } from '../ImportExtension/ImportExtension.ts'
 import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
@@ -72,8 +69,6 @@ const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonl
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'ExtensionApi.readFile': readExtensionApiFile,
   'ExtensionHostQuickPick.showQuickPick': showQuickPick,
-  'Extensions.activate2': activateExtension2,
-  'Extensions.activate3': activateExtension3,
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,
@@ -130,7 +125,6 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleUncaughtExtensionError': handleUncaughtExtensionError,
   'Extensions.handleViewContextChange': handleViewContextChange,
-  'Extensions.importExtension': importExtension,
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,

@@ -24,7 +24,8 @@ test('createIsolatedExtensionHostWorker launches extension main entry', async ()
     readonly isMessagePortOpen: boolean
     readonly send: (port: MessagePort) => Promise<void>
   }): Promise<Rpc> => {
-    expect(options.commandMap['Extensions.getNodeRpcInfo']).toEqual(expect.any(Function))
+    expect(options.commandMap['Extensions.createNodeRpcConnection']).toEqual(expect.any(Function))
+    expect(options.commandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
     await options.send('port' as unknown as MessagePort)
     return rpc
   }
@@ -90,7 +91,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry with fallb
   ])
 })
 
-test('createIsolatedExtensionHostWorker keeps command handling scoped to each extension', async () => {
+test('createIsolatedExtensionHostWorker exposes only the restricted node rpc factory', async () => {
   DeclaredRpcState.set({
     id: 'builtin.git',
     path: '/extensions/builtin.git',
@@ -122,7 +123,7 @@ test('createIsolatedExtensionHostWorker keeps command handling scoped to each ex
     }
   }
 
-  const gitRpc = await GetOrCreateIsolatedExtensionHostWorker.createIsolatedExtensionHostWorker(
+  await GetOrCreateIsolatedExtensionHostWorker.createIsolatedExtensionHostWorker(
     'builtin.git',
     '/extensions/builtin.git/gitMain.js',
     'Git',
@@ -138,12 +139,9 @@ test('createIsolatedExtensionHostWorker keeps command handling scoped to each ex
     createRpc,
     invokeAndTransferNoop,
   )
-  const { execute } = (gitRpc as Rpc & { ipc: { execute: (method: string, ...params: readonly any[]) => any } }).ipc
-
-  await expect(execute('Extensions.getNodeRpcInfo', 'git-client')).resolves.toEqual({
-    name: 'Git',
-    path: '/extensions/builtin.git/node/gitClient.js',
-  })
+  expect(globalCommandMap['Extensions.createNodeRpcConnection']).toEqual(expect.any(Function))
+  expect(globalCommandMap['Extensions.createNodeRpcMessagePort']).toEqual(expect.any(Function))
+  expect(globalCommandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
 })
 
 test('getOrCreateIsolatedExtensionHostWorker returns an existing rpc with default worker name', async () => {

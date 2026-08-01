@@ -59,6 +59,9 @@ export const getNodeRpcInfo = async (extensionId: string, rpcId: string): Promis
   if (!extension) {
     throw new Error(`Extension ${extensionId} has no declared rpcs`)
   }
+  if (!extension.builtin) {
+    throw new Error(`Node rpc ${rpcId} is only available to built-in extensions`)
+  }
   const rpc = getDeclaredNodeRpc(extension, rpcId)
   const extensionRoot = await getExtensionRoot(extension)
   return {

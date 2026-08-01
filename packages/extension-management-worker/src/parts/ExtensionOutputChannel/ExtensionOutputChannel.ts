@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
+import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getExtensionId, getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
@@ -101,7 +102,13 @@ const parseOutputChannelUri = (uri: string): readonly [extensionId: string, outp
   return [extensionId, outputChannelId]
 }
 
-export const readOutputChannel = async (extensionsState: ExtensionsState, uri: string): Promise<string> => {
+interface ResolvedOutputChannel {
+  readonly extensionId: string
+  readonly outputChannelId: string
+  readonly rpc: Rpc
+}
+
+const resolveOutputChannel = async (extensionsState: ExtensionsState, uri: string): Promise<ResolvedOutputChannel> => {
   const [extensionId, outputChannelId] = parseOutputChannelUri(uri)
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
@@ -111,6 +118,19 @@ export const readOutputChannel = async (extensionsState: ExtensionsState, uri: s
     throw new Error(`Output channel ${outputChannelId} is not contributed by extension ${extensionId}`)
   }
   const rpc = await getRpc(extension, assetDir, platform)
+  return { extensionId, outputChannelId, rpc }
+}
+
+export const clearOutputChannel = async (extensionsState: ExtensionsState, uri: string): Promise<void> => {
+  const { extensionId, outputChannelId, rpc } = await resolveOutputChannel(extensionsState, uri)
+  const didClear = await rpc.invoke('ExtensionApi.clearOutputChannel', outputChannelId)
+  if (didClear !== true) {
+    throw new TypeError(`Output channel ${outputChannelId} is not registered by extension ${extensionId}`)
+  }
+}
+
+export const readOutputChannel = async (extensionsState: ExtensionsState, uri: string): Promise<string> => {
+  const { extensionId, outputChannelId, rpc } = await resolveOutputChannel(extensionsState, uri)
   const logs = await rpc.invoke('ExtensionApi.getOutputChannelLogs', outputChannelId)
   if (typeof logs !== 'string') {
     throw new TypeError(`Output channel ${outputChannelId} is not registered by extension ${extensionId}`)

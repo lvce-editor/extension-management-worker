@@ -28,6 +28,7 @@ import { executeProvidersByEvent } from '../ExecuteProvidersByEvent/ExecuteProvi
 import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
 import { executeSourceControlProvider, getEnabledSourceControlProviderIds } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
+import { getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getAccessToken } from '../GetAccessToken/GetAccessToken.ts'
@@ -110,6 +111,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getExtension': getExtension,
   'Extensions.getKeyBindings': getKeyBindings,
   'Extensions.getLanguages': getLanguages,
+  'Extensions.getOutputChannelProviders': wrapCommand(getOutputChannelProviders),
   'Extensions.getPreference': getPreference,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
   'Extensions.getRpcInfo': getRpcInfo,
@@ -128,6 +130,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
+  'Extensions.readOutputChannel': wrapCommand(readOutputChannel),
   'Extensions.renderViewInstance': ExtensionView.renderViewInstance,
   'Extensions.requestViewRerender': ExtensionView.requestViewRerender,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,

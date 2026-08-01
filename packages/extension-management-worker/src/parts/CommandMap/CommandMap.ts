@@ -28,7 +28,7 @@ import { executeProvidersByEvent } from '../ExecuteProvidersByEvent/ExecuteProvi
 import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
 import { executeSourceControlProvider, getEnabledSourceControlProviderIds } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
-import { getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
+import { clearOutputChannel, getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getAccessToken } from '../GetAccessToken/GetAccessToken.ts'
@@ -73,6 +73,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,
+  'Extensions.clearOutputChannel': wrapCommand(clearOutputChannel),
   'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
   'Extensions.createWebViewWorkerRpc2': createWebViewWorkerRpc2,

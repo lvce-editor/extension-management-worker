@@ -184,3 +184,38 @@ test('readOutputChannel rejects an output channel that is not registered', async
     'Output channel first-output is not registered by extension extension.one',
   )
 })
+
+test('clearOutputChannel clears the matching isolated extension output channel', async () => {
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension.one',
+      isolated: true,
+      outputChannels: [{ id: 'first-output', label: 'First Output' }],
+    },
+  ])
+  const rpc = createRpc({
+    'ExtensionApi.clearOutputChannel': () => true,
+  })
+  IsolatedExtensionHostWorkerState.set('extension.one', rpc.rpc)
+
+  await expect(ExtensionOutputChannel.clearOutputChannel(extensionsState, 'extension-output://extension.one/first-output')).resolves.toBeUndefined()
+  expect(rpc.invocations).toEqual([['ExtensionApi.clearOutputChannel', 'first-output']])
+})
+
+test('clearOutputChannel rejects an output channel that is not registered', async () => {
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension.one',
+      isolated: true,
+      outputChannels: [{ id: 'first-output', label: 'First Output' }],
+    },
+  ])
+  const rpc = createRpc({
+    'ExtensionApi.clearOutputChannel': () => false,
+  })
+  IsolatedExtensionHostWorkerState.set('extension.one', rpc.rpc)
+
+  await expect(ExtensionOutputChannel.clearOutputChannel(extensionsState, 'extension-output://extension.one/first-output')).rejects.toThrow(
+    'Output channel first-output is not registered by extension extension.one',
+  )
+})

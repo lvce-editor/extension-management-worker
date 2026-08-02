@@ -23,7 +23,11 @@ import {
 } from '../ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
-import { executeLanguageProvider, executeOrganizeImportsProvider } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
+import {
+  executeCodeActionProviders,
+  executeLanguageProvider,
+  executeOrganizeImportsProvider,
+} from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
 import { executeProvidersByEvent } from '../ExecuteProvidersByEvent/ExecuteProvidersByEvent.ts'
 import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
 import {
@@ -108,6 +112,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
   'Extensions.enableWorkspace': enableWorkspaceExtension,
+  'Extensions.executeCodeActionProviders': wrapCommand(executeCodeActionProviders),
   'Extensions.executeCommand': wrapCommand(executeCommand),
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),

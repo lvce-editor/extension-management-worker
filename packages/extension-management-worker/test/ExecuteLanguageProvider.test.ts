@@ -93,3 +93,79 @@ test('reports no provider when the matching extension is disabled', async () => 
 
   expect(invocations).toEqual([])
 })
+
+test('merges matching code action provider results', async () => {
+  const firstInvocations: unknown[] = []
+  const secondInvocations: unknown[] = []
+  const firstRpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      firstInvocations.push([method, ...params])
+      return [{ name: 'Organize Imports' }]
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  const secondRpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      secondInvocations.push([method, ...params])
+      return [{ name: "Fix 'quotes' problem" }]
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('typescript', firstRpc)
+  IsolatedExtensionHostWorkerState.set('eslint', secondRpc)
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onLanguage:javascript'],
+      codeActions: [{ name: 'Organize Imports' }],
+      id: 'typescript',
+      isolated: true,
+    },
+    {
+      activation: ['onCodeAction:javascript'],
+      id: 'eslint',
+      isolated: true,
+    },
+    {
+      activation: ['onLanguage:javascript'],
+      id: 'formatting-only',
+      isolated: true,
+    },
+  ])
+  const textDocument = { languageId: 'javascript', text: 'const value = "test"', uri: '/test.js' }
+
+  await expect(ExecuteLanguageProvider.executeCodeActionProviders(extensionsState, textDocument, 15)).resolves.toEqual([
+    { name: 'Organize Imports' },
+    { name: "Fix 'quotes' problem" },
+  ])
+  expect(firstInvocations).toEqual([['ExtensionApi.executeLanguageProvider', 'code action', 'provideCodeActions', textDocument, 15]])
+  expect(secondInvocations).toEqual([['ExtensionApi.executeLanguageProvider', 'code action', 'provideCodeActions', textDocument, 15]])
+})
+
+test('returns no code actions when no provider matches', async () => {
+  await expect(ExecuteLanguageProvider.executeCodeActionProviders(createExtensionsState([]), { languageId: 'javascript' }, 0)).resolves.toEqual([])
+})
+
+test('rejects an invalid code action provider result', async () => {
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => 'invalid',
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('eslint', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onCodeAction:javascript'],
+      id: 'eslint',
+      isolated: true,
+    },
+  ])
+
+  await expect(ExecuteLanguageProvider.executeCodeActionProviders(extensionsState, { languageId: 'javascript' }, 0)).rejects.toThrow(
+    'Code action provider result must be an array',
+  )
+})

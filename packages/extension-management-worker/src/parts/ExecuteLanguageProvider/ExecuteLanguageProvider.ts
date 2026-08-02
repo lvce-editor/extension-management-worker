@@ -11,6 +11,7 @@ interface ExtensionManifest {
   readonly activation?: readonly string[]
   readonly browser?: string
   readonly builtin?: boolean
+  readonly codeActions?: readonly unknown[]
   readonly disabled?: boolean
   readonly id?: string
   readonly isWeb?: boolean
@@ -39,6 +40,11 @@ const activationEventByKind: Readonly<Record<string, string>> = {
 }
 
 const contributesLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
+  if (kind === 'code action') {
+    const hasCodeActionActivation = extension.activation?.includes(`onCodeAction:${languageId}`)
+    const hasLegacyCodeActions = Array.isArray(extension.codeActions) && extension.activation?.includes(`onLanguage:${languageId}`)
+    return Boolean(hasCodeActionActivation || hasLegacyCodeActions)
+  }
   const activationEvent = activationEventByKind[kind] || 'onLanguage'
   return Array.isArray(extension.activation) && extension.activation.includes(`${activationEvent}:${languageId}`)
 }
@@ -84,6 +90,25 @@ export const executeLanguageProvider = async (
   const rpc = await getRpc(extensions[0], assetDir, platform)
   const result = await executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
   return { found: true, result }
+}
+
+export const executeCodeActionProviders = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  offset: number,
+): Promise<readonly unknown[]> => {
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
+  const extensions = await getMatchingExtensions(extensionsState, 'code action', textDocument, assetDir, platform)
+  const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
+  const results = await Promise.all(rpcs.map((rpc) => executeRpcLanguageProvider(rpc, 'code action', 'provideCodeActions', textDocument, [offset])))
+  const actions: unknown[] = []
+  for (const result of results) {
+    if (!Array.isArray(result)) {
+      throw new TypeError('Code action provider result must be an array')
+    }
+    actions.push(...result)
+  }
+  return actions
 }
 
 export const executeOrganizeImportsProvider = async (

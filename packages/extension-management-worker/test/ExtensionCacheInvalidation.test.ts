@@ -41,9 +41,7 @@ test('disableExtension2 disposes the worker before deferring the cache invalidat
 
   await disableExtension2('sample.extension', PlatformType.Test)
 
-  expect(getRendererWorker().invocations).toEqual([
-    ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension'],
-  ])
+  expect(getRendererWorker().invocations).toEqual([['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension']])
 
   await jest.runAllTimersAsync()
 

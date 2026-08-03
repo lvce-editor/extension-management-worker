@@ -18,8 +18,12 @@ import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteD
 import {
   executeFileSystemProviderGetPathSeparator,
   executeFileSystemProviderIsReadonly,
+  executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
   executeFileSystemProviderReadFile,
+  executeFileSystemProviderRemove,
+  executeFileSystemProviderRename,
+  executeFileSystemProviderWriteFile,
 } from '../ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import { executeHoverProvider } from '../ExecuteHoverProvider/ExecuteHoverProvider.ts'
@@ -119,8 +123,12 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
   'Extensions.executeFileSystemProviderGetPathSeparator': wrapCommand(executeFileSystemProviderGetPathSeparator),
   'Extensions.executeFileSystemProviderIsReadonly': wrapCommand(executeFileSystemProviderIsReadonly),
+  'Extensions.executeFileSystemProviderMkdir': wrapCommand(executeFileSystemProviderMkdir),
   'Extensions.executeFileSystemProviderReadDirWithFileTypes': wrapCommand(executeFileSystemProviderReadDirWithFileTypes),
   'Extensions.executeFileSystemProviderReadFile': wrapCommand(executeFileSystemProviderReadFile),
+  'Extensions.executeFileSystemProviderRemove': wrapCommand(executeFileSystemProviderRemove),
+  'Extensions.executeFileSystemProviderRename': wrapCommand(executeFileSystemProviderRename),
+  'Extensions.executeFileSystemProviderWriteFile': wrapCommand(executeFileSystemProviderWriteFile),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),
   'Extensions.executeLanguageProvider': wrapCommand(executeLanguageProvider),

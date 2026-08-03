@@ -63,6 +63,14 @@ export const executeFileSystemProviderIsReadonly = (extensionsState: ExtensionsS
   return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderIsReadonly', providerId)
 }
 
+export const executeFileSystemProviderMkdir = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  uri: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderMkdir', providerId, uri)
+}
+
 export const executeFileSystemProviderReadDirWithFileTypes = (
   extensionsState: ExtensionsState,
   providerId: string,
@@ -77,4 +85,30 @@ export const executeFileSystemProviderReadFile = (
   uri: string,
 ): Promise<FileSystemProviderResult> => {
   return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderReadFile', providerId, uri)
+}
+
+export const executeFileSystemProviderRemove = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  uri: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderRemove', providerId, uri)
+}
+
+export const executeFileSystemProviderRename = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  oldUri: string,
+  newUri: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderRename', providerId, oldUri, newUri)
+}
+
+export const executeFileSystemProviderWriteFile = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  uri: string,
+  content: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderWriteFile', providerId, uri, content)
 }

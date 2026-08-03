@@ -6,8 +6,12 @@ import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsSta
 import {
   executeFileSystemProviderGetPathSeparator,
   executeFileSystemProviderIsReadonly,
+  executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
   executeFileSystemProviderReadFile,
+  executeFileSystemProviderRemove,
+  executeFileSystemProviderRename,
+  executeFileSystemProviderWriteFile,
 } from '../src/parts/ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
@@ -102,6 +106,58 @@ test('executes isolated file system provider metadata and directory operations',
     ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
     ['ExtensionApi.executeFileSystemProviderGetPathSeparator', 'fetch'],
     ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
+  ])
+})
+
+test('executes isolated writable file system provider operations', async () => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return undefined
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('remote-ssh-extension', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      fileSystemProviders: [{ id: 'remote-ssh' }],
+      id: 'remote-ssh-extension',
+      isolated: true,
+    },
+  ])
+
+  await expect(executeFileSystemProviderMkdir(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src')).resolves.toEqual({
+    found: true,
+    result: undefined,
+  })
+  await expect(
+    executeFileSystemProviderWriteFile(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'updated'),
+  ).resolves.toEqual({ found: true, result: undefined })
+  await expect(
+    executeFileSystemProviderRename(
+      extensionsState,
+      'remote-ssh',
+      'remote-ssh:///test-folder/src/main.js',
+      'remote-ssh:///test-folder/src/index.js',
+    ),
+  ).resolves.toEqual({ found: true, result: undefined })
+  await expect(executeFileSystemProviderRemove(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src/index.js')).resolves.toEqual({
+    found: true,
+    result: undefined,
+  })
+  expect(invocations).toEqual([
+    ['ExtensionApi.executeFileSystemProviderMkdir', 'remote-ssh', 'remote-ssh:///test-folder/src'],
+    ['ExtensionApi.executeFileSystemProviderWriteFile', 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'updated'],
+    [
+      'ExtensionApi.executeFileSystemProviderRename',
+      'remote-ssh',
+      'remote-ssh:///test-folder/src/main.js',
+      'remote-ssh:///test-folder/src/index.js',
+    ],
+    ['ExtensionApi.executeFileSystemProviderRemove', 'remote-ssh', 'remote-ssh:///test-folder/src/index.js'],
   ])
 })
 

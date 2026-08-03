@@ -1,5 +1,5 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { afterEach, beforeEach, expect, test } from '@jest/globals'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { disableExtension2 } from '../src/parts/DisableExtension2/DisableExtension2.ts'
@@ -30,14 +30,22 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  jest.useRealTimers()
   state.rendererWorker?.[Symbol.dispose]()
   state.rendererWorker = undefined
 })
 
-test('disableExtension2 invalidates extension cache', async () => {
+test('disableExtension2 disposes the worker before deferring the cache invalidation', async () => {
+  jest.useFakeTimers()
   IsolatedExtensionHostWorkerState.set('sample.extension', { dispose: async () => {} } as any)
 
   await disableExtension2('sample.extension', PlatformType.Test)
+
+  expect(getRendererWorker().invocations).toEqual([
+    ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension'],
+  ])
+
+  await jest.runAllTimersAsync()
 
   expect(getRendererWorker().invocations).toEqual([
     ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension'],

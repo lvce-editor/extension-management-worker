@@ -1,3 +1,4 @@
+import { getContentSecurityPolicy } from '../GetContentSecurityPolicy/GetContentSecurityPolicy.ts'
 import * as RendererWorkerIpcParentType from '../RendererWorkerIpcParentType/RendererWorkerIpcParentType.ts'
 import * as ParentRpc from '../Rpc/Rpc.ts'
 
@@ -12,7 +13,8 @@ export const createWebViewWorkerRpc2 = async (rpcInfo: any, port: MessagePort): 
   // host sub-worker doesn't need to import the other file
   if (rpcInfo.contentSecurityPolicy) {
     const pathName = new URL(rpcInfo.url, 'http://localhost').pathname
-    await ParentRpc.invoke('ExtensionHostWorkerContentSecurityPolicy.set', pathName, rpcInfo.contentSecurityPolicy)
+    const contentSecurityPolicy = getContentSecurityPolicy(rpcInfo.contentSecurityPolicy, rpcInfo.url)
+    await ParentRpc.invoke('ExtensionHostWorkerContentSecurityPolicy.set', pathName, contentSecurityPolicy)
   }
   await ParentRpc.invokeAndTransfer('IpcParent.create', {
     method: RendererWorkerIpcParentType.ModuleWorkerAndWorkaroundForChromeDevtoolsBug,

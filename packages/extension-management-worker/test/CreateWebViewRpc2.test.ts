@@ -11,7 +11,7 @@ test('sets the worker content security policy before launch', async () => {
 
   await createWebViewWorkerRpc2(
     {
-      contentSecurityPolicy: `default-src 'none'; script-src 'self' 'unsafe-eval';`,
+      contentSecurityPolicy: [`default-src 'none'`, `script-src 'self' 'unsafe-eval'`],
       name: 'Node.js Sandbox',
       url: 'http://localhost/extensions/prettier/nodejsSandboxWorkerMain.js',
     },
@@ -22,7 +22,7 @@ test('sets the worker content security policy before launch', async () => {
     [
       'ExtensionHostWorkerContentSecurityPolicy.set',
       '/extensions/prettier/nodejsSandboxWorkerMain.js',
-      `default-src 'none'; script-src 'self' 'unsafe-eval';`,
+      `default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src 'none'; child-src 'none'; connect-src ws://localhost/websocket/capability http://localhost/extensions/prettier/;`,
     ],
     [
       'IpcParent.create',

@@ -69,6 +69,7 @@ import { getLanguages } from '../Languages/Languages.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
+import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
 import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
@@ -88,6 +89,7 @@ const wrapSourceControlProviderCommand = (methodName: string): ((providerId: str
 export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'ExtensionApi.readFile': readExtensionApiFile,
   'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
+  'ExtensionHostQuickPick.showQuickInput': showQuickInput,
   'ExtensionHostQuickPick.showQuickPick': showQuickPick,
   'ExtensionHostSourceControl.acceptInput': wrapSourceControlProviderCommand('executeSourceControlAcceptInput'),
   'ExtensionHostSourceControl.add': wrapSourceControlProviderCommand('executeSourceControlAdd'),

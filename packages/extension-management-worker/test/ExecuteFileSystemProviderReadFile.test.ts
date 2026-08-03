@@ -137,12 +137,7 @@ test('executes isolated writable file system provider operations', async () => {
     executeFileSystemProviderWriteFile(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'updated'),
   ).resolves.toEqual({ found: true, result: undefined })
   await expect(
-    executeFileSystemProviderRename(
-      extensionsState,
-      'remote-ssh',
-      'remote-ssh:///test-folder/src/main.js',
-      'remote-ssh:///test-folder/src/index.js',
-    ),
+    executeFileSystemProviderRename(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'remote-ssh:///test-folder/src/index.js'),
   ).resolves.toEqual({ found: true, result: undefined })
   await expect(executeFileSystemProviderRemove(extensionsState, 'remote-ssh', 'remote-ssh:///test-folder/src/index.js')).resolves.toEqual({
     found: true,
@@ -151,12 +146,7 @@ test('executes isolated writable file system provider operations', async () => {
   expect(invocations).toEqual([
     ['ExtensionApi.executeFileSystemProviderMkdir', 'remote-ssh', 'remote-ssh:///test-folder/src'],
     ['ExtensionApi.executeFileSystemProviderWriteFile', 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'updated'],
-    [
-      'ExtensionApi.executeFileSystemProviderRename',
-      'remote-ssh',
-      'remote-ssh:///test-folder/src/main.js',
-      'remote-ssh:///test-folder/src/index.js',
-    ],
+    ['ExtensionApi.executeFileSystemProviderRename', 'remote-ssh', 'remote-ssh:///test-folder/src/main.js', 'remote-ssh:///test-folder/src/index.js'],
     ['ExtensionApi.executeFileSystemProviderRemove', 'remote-ssh', 'remote-ssh:///test-folder/src/index.js'],
   ])
 })

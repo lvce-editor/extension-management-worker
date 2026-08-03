@@ -1,11 +1,31 @@
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, expect, jest, test } from '@jest/globals'
+import * as CommandMapRef from '../src/parts/CommandMapRef/CommandMapRef.ts'
 import { createExtensionCommandExecutor, createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
 import * as FileChangeHandlerRegistry from '../src/parts/FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 
 afterEach(() => {
+  jest.useRealTimers()
+  for (const key of Object.keys(CommandMapRef.commandMapRef)) {
+    delete (CommandMapRef.commandMapRef as Record<string, unknown>)[key]
+  }
   DeclaredRpcState.clear()
   FileChangeHandlerRegistry.reset()
+})
+
+test('defers workspace switches until the isolated command has returned', async () => {
+  jest.useFakeTimers()
+  const executeRendererCommand = jest.fn(async (..._args: readonly unknown[]) => {})
+  const commandMapRef = CommandMapRef.commandMapRef as Record<string, unknown>
+  commandMapRef['Extensions.executeCommand'] = executeRendererCommand
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap['Extensions.executeCommand']('Workspace.setUri', 'remote-ssh:///test-folder', '/')).toBeUndefined()
+  expect(executeRendererCommand).not.toHaveBeenCalled()
+
+  await jest.runAllTimersAsync()
+
+  expect(executeRendererCommand).toHaveBeenCalledWith('Workspace.setUri', 'remote-ssh:///test-folder', '/')
 })
 
 test('does not expose resolved node paths to extensions', async () => {

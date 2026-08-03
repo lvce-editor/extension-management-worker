@@ -1,6 +1,7 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNodeRpcConnection/CreateNodeRpcConnection.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
+import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import * as LegacyNodeRpc from '../LegacyNodeRpc/LegacyNodeRpc.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
 
@@ -17,6 +18,7 @@ class CommandNotFoundError extends Error {
 }
 
 const allowedElectronPortCommand = 'HandleMessagePortForEmbedsProcess.handleMessagePortForEmbedsProcess'
+const workspaceSetUriCommand = 'Workspace.setUri'
 const privilegedCommandPrefixes = [
   'ElectronNet.',
   'ClipBoard.',
@@ -49,9 +51,23 @@ const invokeGlobalCommand = (method: string, ...params: readonly any[]): any => 
   return command(...params)
 }
 
+const executeDeferredCommand = async (id: string, args: readonly any[]): Promise<void> => {
+  try {
+    await invokeGlobalCommand('Extensions.executeCommand', id, ...args)
+  } catch (error) {
+    await handleUncaughtExtensionError(error)
+  }
+}
+
 const executeCommand = (id: string, ...args: readonly any[]): any => {
   if (privilegedCommandPrefixes.some((prefix) => id.startsWith(prefix))) {
     throw new Error(`Isolated extensions cannot execute privileged command ${id}`)
+  }
+  if (id === workspaceSetUriCommand) {
+    setTimeout(() => {
+      void executeDeferredCommand(id, args).catch(() => {})
+    }, 0)
+    return undefined
   }
   return invokeGlobalCommand('Extensions.executeCommand', id, ...args)
 }

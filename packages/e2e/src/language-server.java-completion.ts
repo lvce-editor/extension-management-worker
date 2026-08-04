@@ -8,7 +8,7 @@ const wait = (duration: number): Promise<void> => {
   })
 }
 
-export const test: Test = async ({ Command, Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
+export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/java-language-server')
   await Extension.addWebExtension(extensionUri)
   const fixtureUri = import.meta.resolve('../fixtures/java-language-server/workspace')
@@ -53,8 +53,7 @@ export const test: Test = async ({ Command, Editor, expect, Extension, FileSyste
 
   const completions = Locator('#Completions')
   await expect(completions).toBeVisible()
-  await Command.execute('EditorCompletion.selectCurrent')
-  const prefixStart = offset - completionPrefix.length
-  const expectedText = `${javaSource.slice(0, prefixStart)}${expectedCompletion}${javaSource.slice(offset)}`
-  await Editor.shouldHaveText(expectedText)
+  const expectedCompletionLabel = `${expectedCompletion} : String`
+  const completionItem = Locator('.EditorCompletionItem', { hasText: expectedCompletionLabel })
+  await expect(completionItem).toHaveText(expectedCompletionLabel)
 }

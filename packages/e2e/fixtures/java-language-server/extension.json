@@ -1,0 +1,18 @@
+{
+  "id": "test.java-language-server",
+  "name": "Java Language Server",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "java",
+      "languageId": "java"
+    }
+  ],
+  "languages": [
+    {
+      "id": "java",
+      "extensions": [".java"]
+    }
+  ]
+}

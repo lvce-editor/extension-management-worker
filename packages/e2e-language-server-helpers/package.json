@@ -10,7 +10,7 @@
   "devDependencies": {
     "@elm-tooling/elm-language-server": "^2.8.0",
     "@types/node": "^25.9.3",
-    "elm": "^0.19.1-6",
+    "elm": "^0.19.2-0",
     "extract-zip": "^2.0.1",
     "typescript": "^7.0.2",
     "vscode-langservers-extracted": "^4.10.0"

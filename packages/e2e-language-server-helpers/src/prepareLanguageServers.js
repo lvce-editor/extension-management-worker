@@ -10,6 +10,14 @@ const vscodeJavaUrl = `https://github.com/redhat-developer/vscode-java/releases/
 const vscodeJavaSha256 = '011639c3ee347b9591895bfc77d8cf28f836c053d0a49ae4a83efe9dc473a603'
 
 /**
+ * @param {string} packageJsonUri
+ * @param {string} relativePath
+ */
+const resolvePackageFile = (packageJsonUri, relativePath) => {
+  return new URL(relativePath, packageJsonUri).href
+}
+
+/**
  * @param {string} name
  */
 const findExecutable = (name) => {
@@ -89,11 +97,17 @@ export const prepareLanguageServers = async ({ temporaryDirectory }) => {
   const javaLanguageServer = await prepareJavaLanguageServer(temporaryDirectory)
 
   return {
-    elmLanguageServerUri: import.meta.resolve('@elm-tooling/elm-language-server/out/node/index.js'),
+    elmLanguageServerUri: resolvePackageFile(import.meta.resolve('@elm-tooling/elm-language-server/package.json'), './out/node/index.js'),
     javaLanguageServer,
     rustAnalyzerUri,
-    typescriptLanguageServerUri: import.meta.resolve('typescript/lib/tsc.js'),
-    vscodeCssLanguageServerUri: import.meta.resolve('vscode-langservers-extracted/lib/css-language-server/node/cssServerMain.js'),
-    vscodeHtmlLanguageServerUri: import.meta.resolve('vscode-langservers-extracted/lib/html-language-server/node/htmlServerMain.js'),
+    typescriptLanguageServerUri: resolvePackageFile(import.meta.resolve('typescript/package.json'), './lib/tsc.js'),
+    vscodeCssLanguageServerUri: resolvePackageFile(
+      import.meta.resolve('vscode-langservers-extracted/package.json'),
+      './lib/css-language-server/node/cssServerMain.js',
+    ),
+    vscodeHtmlLanguageServerUri: resolvePackageFile(
+      import.meta.resolve('vscode-langservers-extracted/package.json'),
+      './lib/html-language-server/node/htmlServerMain.js',
+    ),
   }
 }

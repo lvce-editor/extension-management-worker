@@ -15,14 +15,11 @@
     "type-check": "tsc"
   },
   "devDependencies": {
-    "@elm-tooling/elm-language-server": "^2.8.0",
     "@lvce-editor/api": "^8.83.1",
     "@lvce-editor/rpc-registry": "^9.47.0",
     "@lvce-editor/test-with-playwright": "^22.20.0",
-    "elm": "^0.19.2-0",
+    "e2e-language-server-helpers": "0.0.0-dev",
     "esbuild": "^0.28.1",
-    "extract-zip": "^2.0.1",
-    "typescript": "^7.0.2",
-    "vscode-langservers-extracted": "^4.10.0"
+    "typescript": "^7.0.2"
   }
 }

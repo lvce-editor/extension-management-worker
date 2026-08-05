@@ -2,8 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "project": ["*.js"],
-      "ignoreDependencies": ["@lerna/legacy-package-management"]
+      "project": ["*.js"]
     },
     "packages/build": {
       "entry": ["src/build.js", "src/build-static.ts", "src/dev.js"],
@@ -13,7 +12,9 @@
     "packages/e2e": {
       "entry": ["src/**/*.ts", "fixtures/**/main.js"],
       "project": ["src/**/*.ts", "fixtures/**/*.js"],
-      "ignoreFiles": ["fixtures/failing-native-language-servers/extension/servers/*.js"]
+      "ignoreFiles": ["fixtures/failing-native-language-servers/extension/servers/*.js"],
+      "ignoreBinaries": ["rustup"],
+      "ignoreDependencies": ["@elm-tooling/elm-language-server", "elm"]
     },
     "packages/extension-management-worker": {
       "entry": ["test/**/*.test.ts"],

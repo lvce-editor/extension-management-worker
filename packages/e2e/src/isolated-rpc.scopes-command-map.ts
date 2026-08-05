@@ -3,23 +3,23 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 export const name = 'isolated-rpc.scopes-command-map'
 
 export const test: Test = async ({ Extension }) => {
-  const getDeclaredRpcInfo = async (): Promise<void> => {
+  const verifyScopedRpcPolicy = async (): Promise<void> => {
     const edits = await Extension.executeFormattingProvider({
       languageId: 'isolated-rpc-with-declared-rpc',
       text: '',
     })
-    const info = JSON.parse(edits[0].inserted)
-    if (info.name !== 'Test Client') {
-      throw new Error(`Expected Test Client rpc name, got ${JSON.stringify(info)}`)
+    const result = JSON.parse(edits[0].inserted)
+    if (!result.getInfoError.includes('Command not found Extensions.getNodeRpcInfo')) {
+      throw new Error(`Expected resolved rpc paths to be unavailable, got ${JSON.stringify(result)}`)
     }
-    if (!info.path.endsWith('/rpc-client.js')) {
-      throw new Error(`Expected rpc-client.js path, got ${JSON.stringify(info)}`)
+    if (!result.createError.includes('only available to built-in extensions')) {
+      throw new Error(`Expected third-party node rpc creation to be rejected, got ${JSON.stringify(result)}`)
     }
   }
 
   const extensionWithRpcUri = import.meta.resolve('../.tmp/extension-with-rpc-command-map')
   await Extension.addWebExtension(extensionWithRpcUri)
-  await getDeclaredRpcInfo()
+  await verifyScopedRpcPolicy()
 
   const extensionWithoutRpcUri = import.meta.resolve('../.tmp/extension-no-rpc-command-map')
   await Extension.addWebExtension(extensionWithoutRpcUri)
@@ -28,5 +28,5 @@ export const test: Test = async ({ Extension }) => {
     text: '',
   })
 
-  await getDeclaredRpcInfo()
+  await verifyScopedRpcPolicy()
 }

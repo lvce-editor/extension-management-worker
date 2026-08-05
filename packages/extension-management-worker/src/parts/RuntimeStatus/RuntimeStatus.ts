@@ -3,6 +3,7 @@ export interface RuntimeStatus {
   readonly activationEvent: string
   readonly activationStartTime: number
   readonly activationTime: number
+  readonly error?: string
   readonly id: string
   readonly importEndTime: number
   readonly importStartTime: number

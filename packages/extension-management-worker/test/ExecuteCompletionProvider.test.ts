@@ -142,6 +142,31 @@ test('executeCompletionProvider returns empty completions when no matching isola
   ).resolves.toEqual([])
 })
 
+test('executeCompletionProvider ignores disabled completion provider contributions', async () => {
+  const textDocument = {
+    languageId: 'typescript',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      completionProviders: [
+        {
+          id: 'completion.typescript',
+          languageId: 'typescript',
+        },
+      ],
+      disabled: true,
+      id: 'extension-typescript',
+      isolated: true,
+    },
+  ])
+  const rpc = createRpc([{ label: 'ignored' }])
+  IsolatedExtensionHostWorkerState.set('extension-typescript', rpc.rpc)
+
+  await expect(ExecuteCompletionProvider.executeCompletionProvider(extensionsState, textDocument)).resolves.toEqual([])
+
+  expect(rpc.invocations).toEqual([])
+})
+
 test('executeCompletionProvider routes language server contributions through the shared process', async () => {
   const textDocument = {
     languageId: 'typescript',

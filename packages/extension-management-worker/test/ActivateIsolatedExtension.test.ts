@@ -44,6 +44,7 @@ test('records an isolated extension activation error', async () => {
   expect(ExtensionsState.getRuntimeStatus('sample.extension')).toEqual(
     expect.objectContaining({
       activationEvent: 'onView:sample',
+      error: 'Failed to launch worker',
       id: 'sample.extension',
       status: RuntimeStatusType.Error,
     }),

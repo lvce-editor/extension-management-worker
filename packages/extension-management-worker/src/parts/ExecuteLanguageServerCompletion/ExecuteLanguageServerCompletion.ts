@@ -1,5 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { getLanguageServerRootUri } from '../GetLanguageServerRootUri/GetLanguageServerRootUri.ts'
 import * as Logger from '../Logger/Logger.ts'
 import { resolveLanguageServer } from '../ResolveLanguageServer/ResolveLanguageServer.ts'
 
@@ -59,10 +60,12 @@ export const executeLanguageServerCompletion = async (
   }
   let result: readonly LanguageServerCompletionItem[]
   try {
+    const rootUri = await getLanguageServerRootUri()
     result = (await SharedProcess.invoke('LanguageServer.complete', {
       argv: languageServer.argv,
       id: languageServer.id,
       offset,
+      ...(rootUri && { rootUri }),
       textDocument,
       uri: languageServer.uri,
     })) as readonly LanguageServerCompletionItem[]

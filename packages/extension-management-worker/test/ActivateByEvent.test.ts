@@ -1,8 +1,10 @@
+import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { activateByEvent } from '../src/parts/ActivateByEvent/ActivateByEvent.ts'
+import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location')
@@ -15,7 +17,14 @@ const state: {
   sharedProcess: undefined,
 }
 
+beforeEach(() => {
+  jest.useFakeTimers()
+})
+
 afterEach(() => {
+  jest.clearAllTimers()
+  jest.useRealTimers()
+  IsolatedExtensionHostWorkerState.clear()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
   state.rendererWorker = undefined
@@ -30,6 +39,127 @@ afterEach(() => {
   } else {
     delete (globalThis as any).location
   }
+})
+
+const createRpc = (): Rpc => {
+  return {
+    dispose: async () => {},
+    invoke: async () => undefined,
+    invokeAndTransfer: async () => undefined,
+    send: () => {},
+  }
+}
+
+const registerExtension = (extensionId: string, activationEvent = 'onCommand:test'): void => {
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: {
+      origin: 'https://example.test',
+      protocol: 'https:',
+    },
+  })
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          activation: [activationEvent],
+          browser: 'main.js',
+          id: extensionId,
+          isolated: true,
+          isWeb: true,
+          path: `/extensions/${extensionId}`,
+        },
+      ]
+    },
+  })
+  IsolatedExtensionHostWorkerState.set(extensionId, createRpc())
+}
+
+const getExtensionChangeInvocations = (): readonly unknown[] => {
+  return state.rendererWorker!.invocations.filter(([method]) => method === 'Layout.handleExtensionsChanged')
+}
+
+test('activateByEvent notifies the renderer after an extension starts running', async () => {
+  registerExtension('sample.notify-renderer')
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.handleExtensionsChanged'() {},
+  })
+
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
+    error: undefined,
+    hasActivatedExtensions: true,
+  })
+  await jest.runAllTimersAsync()
+
+  expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
+})
+
+test('activateByEvent records the extension as running before notifying the renderer', async () => {
+  registerExtension('sample.notify-state-order')
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    async 'Layout.handleExtensionsChanged'() {
+      const result = await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
+      expect(result).toEqual({
+        error: undefined,
+        hasActivatedExtensions: true,
+      })
+    },
+  })
+
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
+    error: undefined,
+    hasActivatedExtensions: true,
+  })
+  await jest.runAllTimersAsync()
+
+  expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
+})
+
+test('activateByEvent does not notify the renderer again when an extension is already running', async () => {
+  registerExtension('sample.notify-once')
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.handleExtensionsChanged'() {},
+  })
+
+  await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
+  await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
+  await jest.runAllTimersAsync()
+
+  expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
+})
+
+test('concurrent activateByEvent calls notify the renderer once', async () => {
+  registerExtension('sample.notify-concurrent')
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.handleExtensionsChanged'() {},
+  })
+
+  await Promise.all([
+    activateByEvent('onCommand:test', '/assets', PlatformType.Electron),
+    activateByEvent('onCommand:test', '/assets', PlatformType.Electron),
+  ])
+  await jest.runAllTimersAsync()
+
+  expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
+})
+
+test('activateByEvent resolves before notifying the renderer', async () => {
+  registerExtension('sample.notify-after-activation')
+  let notified = false
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.handleExtensionsChanged'() {
+      notified = true
+    },
+  })
+
+  await expect(activateByEvent('onCommand:test', '/assets', PlatformType.Electron)).resolves.toEqual({
+    error: undefined,
+    hasActivatedExtensions: true,
+  })
+  expect(notified).toBe(false)
+
+  await jest.runAllTimersAsync()
+  expect(notified).toBe(true)
 })
 
 test('activateByEvent returns hasActivatedExtensions false when no extensions match', async () => {

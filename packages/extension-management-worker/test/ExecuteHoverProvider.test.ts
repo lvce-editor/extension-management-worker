@@ -140,6 +140,33 @@ test('executeHoverProvider returns undefined when no matching isolated hover pro
   ).resolves.toBeUndefined()
 })
 
+test('executeHoverProvider ignores disabled hover provider contributions', async () => {
+  const textDocument = {
+    languageId: 'javascript',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      disabled: true,
+      hoverProviders: [
+        {
+          id: 'hover.javascript',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-javascript',
+      isolated: true,
+    },
+  ])
+  const rpc = createRpc({
+    documentation: 'ignored',
+  })
+  IsolatedExtensionHostWorkerState.set('extension-javascript', rpc.rpc)
+
+  await expect(ExecuteHoverProvider.executeHoverProvider(extensionsState, textDocument)).resolves.toBeUndefined()
+
+  expect(rpc.invocations).toEqual([])
+})
+
 test('executeHoverProvider ignores non-isolated hover provider contributions', async () => {
   const extensionsState = createExtensionsState([
     {

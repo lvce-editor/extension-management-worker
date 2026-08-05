@@ -16,6 +16,7 @@ interface ExtensionManifest {
   readonly browser?: string
   readonly builtin?: boolean
   readonly diagnosticProviders?: readonly DiagnosticProviderContribution[]
+  readonly disabled?: boolean
   readonly id?: string
   readonly isWeb?: boolean
   readonly languageServers?: readonly DiagnosticProviderContribution[]
@@ -44,6 +45,7 @@ const getMatchingExtensions = async (
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   return extensions.filter(
     (extension): boolean =>
+      !extension.disabled &&
       IsExtensionIsolated.isExtensionIsolated(extension) &&
       (contributesDiagnosticProvider(extension, textDocument.languageId) || contributesLanguageServer(extension, textDocument.languageId)),
   )

@@ -31,7 +31,12 @@ const state: {
 }
 
 const createRpc = (
-  options: { readonly createError?: Error; readonly focusSelector?: string } = {},
+  options: {
+    readonly createError?: Error
+    readonly eventListeners?: readonly unknown[]
+    readonly focusSelector?: string
+    readonly viewActionsDomError?: Error
+  } = {},
 ): {
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
@@ -41,6 +46,16 @@ const createRpc = (
     dispose: async () => {},
     invoke: async (method: string, ...params: readonly unknown[]): Promise<unknown> => {
       invocations.push([method, ...params])
+      if (method === 'ExtensionApi.getViewRegistrySnapshot') {
+        return {
+          views: [
+            {
+              ...(options.eventListeners && { eventListeners: options.eventListeners }),
+              id: 'sample.views.testing',
+            },
+          ],
+        }
+      }
       if (method === 'ExtensionApi.createViewInstance') {
         if (options.createError) {
           throw options.createError
@@ -85,6 +100,9 @@ const createRpc = (
         ]
       }
       if (method === 'ExtensionApi.getViewActionsDom') {
+        if (options.viewActionsDomError) {
+          throw options.viewActionsDomError
+        }
         return [
           {
             childCount: 0,
@@ -159,6 +177,7 @@ test('proxies virtual dom view lifecycle to isolated extension rpc', async () =>
   await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
 
   expect(mock.invocations).toEqual([
+    ['ExtensionApi.getViewRegistrySnapshot'],
     ['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}],
     ['ExtensionApi.dispatchViewEvent', 1, { type: 'click' }],
     ['ExtensionApi.disposeViewInstance', 1],
@@ -212,7 +231,7 @@ test('createViewInstance resolves empty web context before loading a virtual dom
     },
   })
 
-  expect(mock.invocations).toEqual([['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewRegistrySnapshot'], ['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
 })
 
 test('proxies focus selector in virtual dom view lifecycle results', async () => {
@@ -255,6 +274,44 @@ test('proxies focus selector in virtual dom view lifecycle results', async () =>
     focusSelector: '[name="newCardTitle:list-1"]',
     patches: [],
     type: 'setPatches',
+  })
+})
+
+test('returns event listeners registered through the isolated extension api', async () => {
+  const eventListeners = [
+    {
+      name: 'handleVideoError',
+      params: ['handleError', 'event.target.error.code', 'event.target.error.message'],
+    },
+  ]
+  const mock = createRpc({
+    eventListeners,
+  })
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          activation: ['onView:sample.views.testing'],
+          id: 'extension-one',
+          isolated: true,
+          views: [
+            {
+              id: 'sample.views.testing',
+            },
+          ],
+        },
+      ]
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
+
+  await expect(createViewInstance('sample.views.testing', 1, {}, '/assets', 2)).resolves.toEqual({
+    eventListeners,
+    ok: true,
+    result: {
+      dom: [],
+      type: 'setDom',
+    },
   })
 })
 
@@ -347,7 +404,7 @@ test('disposeViewInstance removes error state without invoking extension rpc', a
   await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
 
   expect(ExtensionViewInstanceState.get(1)).toBeUndefined()
-  expect(mock.invocations).toEqual([['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewRegistrySnapshot'], ['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
 })
 
 test('view lifecycle calls no-op after failed createViewInstance', async () => {
@@ -376,7 +433,7 @@ test('view lifecycle calls no-op after failed createViewInstance', async () => {
 
   await expect(dispatchViewEvent('sample.views.testing', 1, { type: 'click' }, '/assets', 2)).resolves.toBeUndefined()
   await expect(saveViewInstanceState('sample.views.testing', 1, '/assets', 2)).resolves.toBeUndefined()
-  expect(mock.invocations).toEqual([['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewRegistrySnapshot'], ['ExtensionApi.createViewInstance', 'sample.views.testing', 1, {}]])
 })
 
 test('requestViewRerender asks renderer worker to rerender viewlet instance', async () => {
@@ -471,6 +528,38 @@ test('getViewActionsDom proxies to isolated extension rpc', async () => {
   ])
 
   expect(mock.invocations).toEqual([['ExtensionApi.getViewActionsDom', 1]])
+})
+
+test('getViewActionsDom returns undefined when the optional extension api command is unavailable', async () => {
+  const error = new Error('Command not found ExtensionApi.getViewActionsDom')
+  Object.defineProperty(error, 'name', {
+    value: 'CommandNotFoundError',
+  })
+  const mock = createRpc({
+    viewActionsDomError: error,
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
+  expect(mock.invocations).toEqual([['ExtensionApi.getViewActionsDom', 1]])
+})
+
+test('getViewActionsDom rethrows extension errors', async () => {
+  const error = new Error('Failed to render view actions')
+  const mock = createRpc({
+    viewActionsDomError: error,
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewActionsDom('sample.views.testing', 1, '', 2)).rejects.toBe(error)
 })
 
 test('getViewMenuEntries returns empty array for disposed or failed instances', async () => {

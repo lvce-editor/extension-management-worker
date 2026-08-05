@@ -1,12 +1,34 @@
-import { afterEach, expect, test } from '@jest/globals'
+import { afterEach, expect, jest, test } from '@jest/globals'
+import * as CommandMapRef from '../src/parts/CommandMapRef/CommandMapRef.ts'
 import { createExtensionCommandExecutor, createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
+import * as FileChangeHandlerRegistry from '../src/parts/FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 
 afterEach(() => {
+  jest.useRealTimers()
+  for (const key of Object.keys(CommandMapRef.commandMapRef)) {
+    delete (CommandMapRef.commandMapRef as Record<string, unknown>)[key]
+  }
   DeclaredRpcState.clear()
+  FileChangeHandlerRegistry.reset()
 })
 
-test('scopes declared rpc lookup to the calling extension', async () => {
+test('defers workspace switches until the isolated command has returned', async () => {
+  jest.useFakeTimers()
+  const executeRendererCommand = jest.fn(async (..._args: readonly unknown[]) => {})
+  const commandMapRef = CommandMapRef.commandMapRef as Record<string, unknown>
+  commandMapRef['Extensions.executeCommand'] = executeRendererCommand
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap['Extensions.executeCommand']('Workspace.setUri', 'remote-ssh:///test-folder', '/')).toBeUndefined()
+  expect(executeRendererCommand).not.toHaveBeenCalled()
+
+  await jest.runAllTimersAsync()
+
+  expect(executeRendererCommand).toHaveBeenCalledWith('Workspace.setUri', 'remote-ssh:///test-folder', '/')
+})
+
+test('does not expose resolved node paths to extensions', async () => {
   DeclaredRpcState.set({
     id: 'extension-one',
     path: '/extensions/one',
@@ -17,17 +39,79 @@ test('scopes declared rpc lookup to the calling extension', async () => {
     path: '/extensions/two',
     rpc: [{ id: 'client', name: 'Two', type: 'node', url: 'client.js' }],
   })
-  const firstCommandMap = createExtensionCommandMap('extension-one')
-  const secondCommandMap = createExtensionCommandMap('extension-two')
-  const getFirstNodeRpcInfo = firstCommandMap['Extensions.getNodeRpcInfo'] as (id: string) => Promise<unknown>
-  const getSecondNodeRpcInfo = secondCommandMap['Extensions.getNodeRpcInfo'] as (id: string) => Promise<unknown>
+  const commandMap = createExtensionCommandMap('extension-one')
 
-  await expect(getFirstNodeRpcInfo('client')).resolves.toEqual({ name: 'One', path: '/extensions/one/client.js' })
-  await expect(getSecondNodeRpcInfo('client')).resolves.toEqual({ name: 'Two', path: '/extensions/two/client.js' })
+  expect(commandMap['Extensions.createNodeRpcConnection']).toEqual(expect.any(Function))
+  expect(commandMap['Extensions.createNodeRpcMessagePort']).toEqual(expect.any(Function))
+  expect(commandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
+})
+
+test('cannot request an rpc declared by another extension identity', async () => {
+  DeclaredRpcState.set({
+    builtin: true,
+    id: 'extension-one',
+    path: '/extensions/one',
+    rpc: [{ id: 'one-client', name: 'One', type: 'node', url: 'client.js' }],
+  })
+  DeclaredRpcState.set({
+    builtin: true,
+    id: 'extension-two',
+    path: '/extensions/two',
+    rpc: [{ id: 'two-client', name: 'Two', type: 'node', url: 'client.js' }],
+  })
+  const commandMap = createExtensionCommandMap('extension-one')
+
+  await expect(commandMap['Extensions.createNodeRpcConnection']('two-client')).rejects.toThrow(
+    'Node rpc two-client is not declared by extension extension-one',
+  )
 })
 
 test('createExtensionCommandExecutor rejects unknown commands', () => {
   const execute = createExtensionCommandExecutor({})
 
   expect(() => execute('Extensions.missing')).toThrow('Command not found Extensions.missing')
+})
+
+test('secret storage commands are bound to the calling extension', () => {
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap).toEqual(
+    expect.objectContaining({
+      'Extensions.deleteSecret': expect.any(Function),
+      'Extensions.getSecret': expect.any(Function),
+      'Extensions.storeSecret': expect.any(Function),
+    }),
+  )
+})
+
+test('file change registrations are bound to the calling extension', () => {
+  const firstCommandMap = createExtensionCommandMap('extension-one')
+  const secondCommandMap = createExtensionCommandMap('extension-two')
+
+  firstCommandMap['Extensions.registerFileChangeHandler']()
+  secondCommandMap['Extensions.registerFileChangeHandler']()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual(['extension-one', 'extension-two'])
+
+  firstCommandMap['Extensions.unregisterFileChangeHandler']()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual(['extension-two'])
+})
+
+test.each(['ExtensionNodeRpc.create', 'FileSystem.readFile', 'WebSocketCapability.create', 'SendMessagePortToElectron.sendMessagePortToElectron'])(
+  'rejects privileged renderer command %s',
+  (command) => {
+    const commandMap = createExtensionCommandMap('sample.extension')
+
+    expect(() => commandMap['Extensions.executeCommand'](command)).toThrow(`cannot execute privileged command ${command}`)
+  },
+)
+
+test('rejects arbitrary Electron port targets', () => {
+  const commandMap = createExtensionCommandMap('sample.extension')
+  const { port1, port2 } = new MessageChannel()
+
+  expect(() =>
+    commandMap['Extensions.sendMessagePortToElectron'](port1, 'HandleMessagePortForFileSystemProcess.handleMessagePortForFileSystemProcess'),
+  ).toThrow('cannot send a port')
+  port1.close()
+  port2.close()
 })

@@ -1,3 +1,4 @@
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
@@ -43,11 +44,18 @@ const getAbsolutePath = (extension: any, assetDir: string, platform: number): st
   )
 }
 
+const notifyRunningExtensionsChanged = (): void => {
+  setTimeout(() => {
+    void RendererWorker.invoke('Layout.handleExtensionsChanged')
+  }, 0)
+}
+
 const doActivateExtension = async (extension: any, absolutePath: string, event: string, platform: number): Promise<void> => {
   const extensionId = getExtensionId(extension)
   try {
     await activateExtension3(extension, absolutePath, event, platform)
     runningExtensions[extensionId] = true
+    notifyRunningExtensionsChanged()
   } finally {
     delete activatingExtensions[extensionId]
   }

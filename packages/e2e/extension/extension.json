@@ -2,12 +2,17 @@
   "id": "test.language-server-e2e",
   "name": "Language Server E2E",
   "browser": "main.js",
+  "contentSecurityPolicy": ["default-src 'none'"],
   "isolated": true,
-  "activation": ["onFormatting:reference-e2e-driver", "onReferences:reference-e2e"],
+  "activation": ["onFormatting:reference-e2e-driver", "onFormatting:typescript-native-diagnostic-driver", "onReferences:reference-e2e"],
   "formattingProviders": [
     {
       "id": "reference-e2e-driver",
       "languageId": "reference-e2e-driver"
+    },
+    {
+      "id": "typescript-native-diagnostic-driver",
+      "languageId": "typescript-native-diagnostic-driver"
     }
   ],
   "languageServers": [

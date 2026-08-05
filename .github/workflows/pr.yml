@@ -18,6 +18,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Compute node modules cache key
         id: nodeModulesCacheKey
         run: echo "value=$(node packages/build/src/computeNodeModulesCacheKey.js)" >> $GITHUB_OUTPUT
@@ -28,7 +32,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModules-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: npm ci
-        run: npm ci --ignore-scripts && npm run postinstall
+        run: npm ci
         if: steps.npm-cache.outputs.cache-hit != 'true'
       - run: npm run build
       - run: npm run build:static
@@ -41,6 +45,8 @@ jobs:
         if: steps.npm-cache.outputs.cache-hit != 'true'
         env:
           PLAYWRIGHT_BROWSERS_PATH: 0
+      - name: install rust analyzer
+        run: rustup component add rust-analyzer
       - name: e2e
         working-directory: ./packages/e2e
         run: npm run e2e:headless

@@ -11,3 +11,9 @@ export const invalidateExtensionsCache = async (extensionId?: string, disabled?:
     // Older renderer workers do not expose the cache invalidation notification.
   }
 }
+
+export const deferInvalidateExtensionsCache = (extensionId?: string, disabled?: boolean): void => {
+  setTimeout(() => {
+    void invalidateExtensionsCache(extensionId, disabled)
+  }, 0)
+}

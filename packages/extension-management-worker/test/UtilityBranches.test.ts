@@ -14,9 +14,7 @@ import { getRemoteUrlForWebView } from '../src/parts/GetRemoteUrlForWebView/GetR
 import { getRpcInfo } from '../src/parts/GetRpcInfo/GetRpcInfo.ts'
 import { getRuntimeStatus } from '../src/parts/GetRuntimeStatus/GetRuntimeStatus.ts'
 import { handleRpcInfos } from '../src/parts/HandleRpcInfos/HandleRpcInfos.ts'
-import { tryToGetActualImportErrorMessage } from '../src/parts/TryToGetActualImportErrorMessage/TryToGetActualImportErrorMessage.ts'
 
-const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
 const state: { sharedProcess: DisposableMockRpc | undefined } = {
   sharedProcess: undefined,
 }
@@ -29,11 +27,6 @@ beforeEach(() => {
 afterEach(() => {
   state.sharedProcess?.[Symbol.dispose]()
   state.sharedProcess = undefined
-  if (originalFetch) {
-    Object.defineProperty(globalThis, 'fetch', originalFetch)
-  } else {
-    delete (globalThis as any).fetch
-  }
 })
 
 test('createColorThemeFromJson rejects invalid theme data', () => {
@@ -189,40 +182,4 @@ test('getExtension returns matching extension or undefined', async () => {
 
   await expect(getExtension('two', '/assets', PlatformType.Electron)).resolves.toEqual({ id: 'two' })
   await expect(getExtension('missing', '/assets', PlatformType.Electron)).resolves.toBeUndefined()
-})
-
-test('tryToGetActualImportErrorMessage handles fetch failures', async () => {
-  Object.defineProperty(globalThis, 'fetch', {
-    configurable: true,
-    value: async (): Promise<Response> => {
-      throw new Error('offline')
-    },
-  })
-
-  await expect(tryToGetActualImportErrorMessage('https://example.com/main.js', new Error('import failed'))).resolves.toBe(
-    'Failed to import https://example.com/main.js: Error: offline',
-  )
-})
-
-test('tryToGetActualImportErrorMessage handles successful, missing, and failed responses', async () => {
-  const responses = [
-    { ok: true, status: 200 },
-    { ok: false, status: 404 },
-    { ok: false, status: 500 },
-  ]
-  Object.defineProperty(globalThis, 'fetch', {
-    configurable: true,
-    value: async (): Promise<Response> => responses.shift() as Response,
-  })
-  const error = new Error('import failed')
-
-  await expect(tryToGetActualImportErrorMessage('https://example.com/ok.js', error)).rejects.toThrow(
-    'Failed to import https://example.com/ok.js: Unknown Error',
-  )
-  await expect(tryToGetActualImportErrorMessage('https://example.com/missing.js', error)).rejects.toThrow(
-    'Failed to import https://example.com/missing.js: Not found (404)',
-  )
-  await expect(tryToGetActualImportErrorMessage('https://example.com/error.js', error)).resolves.toBe(
-    'Failed to import https://example.com/error.js: Error: import failed',
-  )
 })

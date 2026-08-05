@@ -48,7 +48,6 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: 0
       - name: e2e
         working-directory: ./packages/e2e
-        shell: pwsh
         run: |
           npm run e2e:headless *>&1 | Tee-Object -FilePath "e2e-attempt-${{ matrix.attempt }}.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

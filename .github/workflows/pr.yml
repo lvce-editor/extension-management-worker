@@ -10,8 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025]
-        attempt: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        os: [ubuntu-24.04, macos-14, windows-2025]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
@@ -48,18 +47,9 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: 0
       - name: e2e
         working-directory: ./packages/e2e
-        run: |
-          npm run e2e:headless *>&1 | Tee-Object -FilePath "e2e-attempt-${{ matrix.attempt }}.log"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: npm run e2e:headless
         env:
           PLAYWRIGHT_BROWSERS_PATH: 0
-      - name: upload e2e log
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2e-log-windows-attempt-${{ matrix.attempt }}
-          path: packages/e2e/e2e-attempt-${{ matrix.attempt }}.log
-          if-no-files-found: error
       - name: measure
         working-directory: ./packages/memory
         run: npm run measure

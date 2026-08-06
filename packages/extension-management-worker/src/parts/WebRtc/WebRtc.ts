@@ -10,6 +10,10 @@ export const startWebRtcAudioStream = async (options: StartWebRpcAudioStreamOpti
   return await RendererWorker.invoke('WebView.compatRendererProcessInvoke', 'WebRtc.startWebRtcAudioStream', options)
 }
 
+export const stopWebRtcAudioStream = async (uid: number): Promise<string> => {
+  return await RendererWorker.invoke('WebView.compatRendererProcessInvoke', 'WebRtc.stopWebRtcAudioStream', uid)
+}
+
 export interface SetRemoteDescriptionOptions {
   readonly sdp: string
   readonly type: 'answer'

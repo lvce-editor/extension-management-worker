@@ -4,10 +4,11 @@ export interface StartWebRpcAudioStreamOptions {
   readonly elementLocator: string
   readonly ephemeralKey: string
   readonly uid: number
+  readonly port: MessagePort
 }
 
 export const startWebRtcAudioStream = async (options: StartWebRpcAudioStreamOptions): Promise<string> => {
-  return await RendererWorker.invoke('WebView.compatRendererProcessInvoke', 'WebRtc.startWebRtcAudioStream', options)
+  return await RendererWorker.invokeAndTransfer('WebView.compatRendererProcessInvokeAndTransfer', 'WebRtc.startWebRtcAudioStream', options)
 }
 
 export const stopWebRtcAudioStream = async (uid: number): Promise<string> => {

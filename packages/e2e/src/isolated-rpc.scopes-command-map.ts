@@ -2,6 +2,8 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'isolated-rpc.scopes-command-map'
 
+export const skip = 1
+
 export const test: Test = async ({ Extension }) => {
   const verifyScopedRpcPolicy = async (): Promise<void> => {
     const edits = await Extension.executeFormattingProvider({

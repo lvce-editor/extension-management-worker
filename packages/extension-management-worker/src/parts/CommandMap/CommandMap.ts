@@ -180,6 +180,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
+  'WebRtc.readMicLevels': WebRtc.readMicLevels,
   'WebRtc.setRemoteDescription': WebRtc.setRemoteDescription,
   'WebRtc.startWebRtcAudioStream': WebRtc.startWebRtcAudioStream,
   'WebRtc.stopWebRtcAudioStream': WebRtc.stopWebRtcAudioStream,

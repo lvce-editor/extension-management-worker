@@ -73,6 +73,7 @@ import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
 import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
+import * as WebRtc from '../WebRtc/WebRtc.ts'
 
 const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
   return (...args: readonly any[]): any => {
@@ -179,4 +180,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
+  'WebRtc.setRemoteDescription': WebRtc.setRemoteDescription,
+  'WebRtc.startWebRtcAudioStream': WebRtc.startWebRtcAudioStream,
+  'WebRtc.stopWebRtcAudioStream': WebRtc.stopWebRtcAudioStream,
 }

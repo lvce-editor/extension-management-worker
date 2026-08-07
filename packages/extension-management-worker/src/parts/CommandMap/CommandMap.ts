@@ -72,8 +72,8 @@ import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSyste
 import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
 import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
-import * as WebRtc from '../WebRtc/WebRtc.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
+import * as WebRtc from '../WebRtc/WebRtc.ts'
 
 const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
   return (...args: readonly any[]): any => {

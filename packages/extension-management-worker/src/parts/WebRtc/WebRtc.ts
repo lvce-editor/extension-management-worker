@@ -3,8 +3,8 @@ import { RendererWorker } from '@lvce-editor/rpc-registry'
 export interface StartWebRpcAudioStreamOptions {
   readonly elementLocator: string
   readonly ephemeralKey: string
-  readonly uid: number
   readonly port: MessagePort
+  readonly uid: number
 }
 
 export const startWebRtcAudioStream = async (options: StartWebRpcAudioStreamOptions): Promise<string> => {

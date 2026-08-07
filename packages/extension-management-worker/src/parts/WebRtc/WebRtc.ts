@@ -24,3 +24,16 @@ export interface SetRemoteDescriptionOptions {
 export const setRemoteDescription = async (options: SetRemoteDescriptionOptions): Promise<void> => {
   await RendererWorker.invoke('WebView.compatRendererProcessInvoke', 'WebRtc.setRemoteDescription', options)
 }
+
+export interface MicLevelsResult {
+  readonly micAnalyzerData: Uint8Array
+  readonly remoteAnalyzerData: Uint8Array
+}
+
+interface ReadMicLevelOptions {
+  readonly uid: number
+}
+
+export const readMicLevels = async (options: ReadMicLevelOptions): Promise<MicLevelsResult> => {
+  return await RendererWorker.invoke('WebView.compatRendererProcessInvoke', 'WebRtc.readMicLevels', options)
+}

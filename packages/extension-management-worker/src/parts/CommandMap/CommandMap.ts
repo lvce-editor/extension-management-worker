@@ -183,4 +183,5 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'WebRtc.setRemoteDescription': WebRtc.setRemoteDescription,
   'WebRtc.startWebRtcAudioStream': WebRtc.startWebRtcAudioStream,
   'WebRtc.stopWebRtcAudioStream': WebRtc.stopWebRtcAudioStream,
+  'WebRtc.readMicLevels': WebRtc.readMicLevels,
 }

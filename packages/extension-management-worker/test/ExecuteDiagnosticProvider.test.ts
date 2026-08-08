@@ -258,7 +258,7 @@ test('executeDiagnosticProvider ignores non-isolated diagnostic provider contrib
   expect(rpc.invocations).toEqual([])
 })
 
-test('executeDiagnosticProvider propagates isolated diagnostic provider errors', async () => {
+test('executeDiagnosticProvider continues when one isolated diagnostic provider fails', async () => {
   const textDocument = {
     languageId: 'javascript',
     text: 'const value=1',
@@ -272,14 +272,37 @@ test('executeDiagnosticProvider propagates isolated diagnostic provider errors',
           languageId: 'javascript',
         },
       ],
-      id: 'extension-one',
+      id: 'extension-failing',
+      isolated: true,
+    },
+    {
+      diagnosticProviders: [
+        {
+          id: 'diagnostic.javascript.working',
+          languageId: 'javascript',
+        },
+      ],
+      id: 'extension-working',
       isolated: true,
     },
   ])
-  const rpc = createRpc([], new Error('isolated diagnostic failed'))
-  IsolatedExtensionHostWorkerState.set('extension-one', rpc.rpc)
+  const failingRpc = createRpc([], new Error('isolated diagnostic failed'))
+  const workingResult = [
+    {
+      columnIndex: 0,
+      endColumnIndex: 8,
+      endRowIndex: 0,
+      message: "Unexpected 'debugger' statement.",
+      rowIndex: 0,
+      type: 'warning',
+    },
+  ]
+  const workingRpc = createRpc(workingResult)
+  IsolatedExtensionHostWorkerState.set('extension-failing', failingRpc.rpc)
+  IsolatedExtensionHostWorkerState.set('extension-working', workingRpc.rpc)
 
-  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).rejects.toThrow('isolated diagnostic failed')
+  await expect(ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, textDocument)).resolves.toEqual(workingResult)
 
-  expect(rpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
+  expect(failingRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
+  expect(workingRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
 })

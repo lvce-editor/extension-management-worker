@@ -35,6 +35,12 @@ test('rejects directives containing newlines', () => {
   expect(() => getContentSecurityPolicy([`connect-src https://example.com\nscript-src 'self'`], workerUrl)).toThrow('cannot contain newlines')
 })
 
+test('reports the invalid value when a connect source is not an absolute URL', () => {
+  expect(() => getContentSecurityPolicy([`connect-src https:`], workerUrl)).toThrow(
+    'isolated extension connect source must be an absolute URL. Invalid value: "https:"',
+  )
+})
+
 test.each([`connect-src *`, `connect-src ws://localhost/file-system-process`, `worker-src 'self'`, `default-src 'self'`])(
   'rejects unsafe policy %s',
   (directive) => {

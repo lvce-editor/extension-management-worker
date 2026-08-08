@@ -34,7 +34,7 @@ const validateExternalConnectSource = (source: string, applicationOrigin: string
   try {
     url = new URL(source)
   } catch {
-    throw new Error(`isolated extension connect source must be an absolute URL: ${source}`)
+    throw new Error(`isolated extension connect source must be an absolute URL. Invalid value: ${JSON.stringify(source)}`)
   }
   if (!['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) || !url.hostname || url.username || url.password) {
     throw new Error(`invalid isolated extension connect source ${source}`)

@@ -25,6 +25,7 @@ const isCommitHash = (dirent) => {
 const dirents = await readdir(serverStaticPath)
 const commitHash = dirents.find(isCommitHash) || ''
 const rendererWorkerMainPath = join(serverStaticPath, commitHash, 'packages', 'renderer-worker', 'dist', 'rendererWorkerMain.js')
+const testWorkerMainPath = join(serverStaticPath, commitHash, 'packages', 'test-worker', 'dist', 'testWorkerMain.js')
 
 const content = await readFile(rendererWorkerMainPath, 'utf-8')
 
@@ -36,4 +37,44 @@ const extensionManagementWorkerUrl = \`${remoteUrl}\``
 
   const newContent = content.replace(occurrence, replacement)
   await writeFile(rendererWorkerMainPath, newContent)
+}
+
+const testWorkerContent = await readFile(testWorkerMainPath, 'utf-8')
+const extensionOccurrence = `const activateByEvent = async (event, assetDir, platform) => {
+  await invoke$3('Extensions.activateByEvent', event, assetDir, platform);
+};
+
+const Extension = {
+  activateByEvent,
+  addNodeExtension,
+  addWebExtension,
+  disableWorkspace: disableWorkspace$1,
+  enableWorkspace,
+  executeCompletionProvider,
+  executeFormattingProvider
+};`
+const extensionReplacement = `const activateByEvent = async (event, assetDir, platform) => {
+  await invoke$3('Extensions.activateByEvent', event, assetDir, platform);
+};
+const uninstallExtensionForTest = async id => {
+  await invoke$3('Extensions.uninstall', id);
+};
+
+const Extension = {
+  activateByEvent,
+  addNodeExtension,
+  addWebExtension,
+  disableWorkspace: disableWorkspace$1,
+  enableWorkspace,
+  executeCompletionProvider,
+  executeFormattingProvider,
+  uninstall: uninstallExtensionForTest
+};`
+
+if (!testWorkerContent.includes(extensionOccurrence) && !testWorkerContent.includes(extensionReplacement)) {
+  throw new Error('test worker extension occurrence not found')
+}
+
+if (testWorkerContent.includes(extensionOccurrence)) {
+  await writeFile(testWorkerMainPath, testWorkerContent.replace(extensionOccurrence, extensionReplacement))
 }

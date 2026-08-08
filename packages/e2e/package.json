@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "e2e": "npm run e2e:prepare && test-with-playwright --only-extension=./.tmp/extension --test-path=.",
-    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc && npm run e2e:headless:reference-provider",
+    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc && npm run e2e:headless:reference-provider && npm run e2e:headless:extension-uninstall",
     "e2e:headless:color-theme": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=color-theme-quick-pick --headless",
+    "e2e:headless:extension-uninstall": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=extension.uninstall-dynamic-web-extension --headless",
     "e2e:headless:isolated-rpc": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=isolated-rpc --headless",
     "e2e:headless:language-server": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=language-server --headless --timeout=60000",
     "e2e:headless:reference-provider": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=reference-provider --headless",

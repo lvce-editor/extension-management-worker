@@ -80,6 +80,18 @@ export const addExtension = (extension: any): void => {
   })
 }
 
+export const removeWebExtension = (id: string): boolean => {
+  const webExtensions = state.extensionsState.webExtensions.filter((extension) => extension.id !== id)
+  if (webExtensions.length === state.extensionsState.webExtensions.length) {
+    return false
+  }
+  update({
+    cachedExtensions: undefined,
+    webExtensions,
+  })
+  return true
+}
+
 export const clearCachedExtensions = (): void => {
   update({ cachedExtensions: undefined })
 }

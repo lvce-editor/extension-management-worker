@@ -1,7 +1,7 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { disableExtension2 } from '../src/parts/DisableExtension2/DisableExtension2.ts'
 import { enableExtension2 } from '../src/parts/EnableExtension2/EnableExtension2.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
@@ -10,8 +10,9 @@ import { invalidateExtensionsCache } from '../src/parts/InvalidateExtensionsCach
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import { uninstallExtension } from '../src/parts/UninstallExtension/UninstallExtension.ts'
 
-const state: { rendererWorker: DisposableMockRpc | undefined } = {
+const state: { rendererWorker: DisposableMockRpc | undefined; sharedProcess: DisposableMockRpc | undefined } = {
   rendererWorker: undefined,
+  sharedProcess: undefined,
 }
 
 const getRendererWorker = (): DisposableMockRpc => {
@@ -27,12 +28,17 @@ beforeEach(() => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
   })
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.uninstall'() {},
+  })
 })
 
 afterEach(() => {
   jest.useRealTimers()
   state.rendererWorker?.[Symbol.dispose]()
   state.rendererWorker = undefined
+  state.sharedProcess?.[Symbol.dispose]()
+  state.sharedProcess = undefined
 })
 
 test('disableExtension2 disposes the worker before deferring the cache invalidation', async () => {
@@ -60,8 +66,19 @@ test('enableExtension2 invalidates extension cache', async () => {
 })
 
 test('uninstallExtension invalidates extension cache', async () => {
-  await uninstallExtension()
+  await uninstallExtension('sample.extension')
 
+  expect(state.sharedProcess?.invocations).toEqual([['ExtensionManagement.uninstall', 'sample.extension']])
+  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
+})
+
+test('uninstallExtension removes a dynamic web extension without invoking the shared process', async () => {
+  ExtensionsState.setWebExtensions([{ id: 'sample.extension', uri: 'file:///sample-extension' }])
+
+  await uninstallExtension('sample.extension')
+
+  expect(state.sharedProcess?.invocations).toEqual([])
+  expect(ExtensionsState.get().webExtensions).toEqual([])
   expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 

@@ -67,6 +67,21 @@ const executeExtensionDiagnosticProvider = async (
   return executeRpcDiagnosticProvider(rpc, textDocument, args)
 }
 
+const executeMatchingDiagnosticProvider = async (
+  extension: ExtensionManifest,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+  assetDir: string,
+  platform: number,
+): Promise<readonly unknown[]> => {
+  try {
+    const rpc = await getRpc(extension, assetDir, platform)
+    return await executeExtensionDiagnosticProvider(rpc, extension, textDocument, args)
+  } catch {
+    return []
+  }
+}
+
 export const executeDiagnosticProvider = async (
   extensionsState: ExtensionsState,
   textDocument: TextDocument,
@@ -74,7 +89,8 @@ export const executeDiagnosticProvider = async (
 ): Promise<readonly unknown[]> => {
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
-  const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc, index) => executeExtensionDiagnosticProvider(rpc, extensions[index], textDocument, args)))
+  const results = await Promise.all(
+    extensions.map((extension) => executeMatchingDiagnosticProvider(extension, textDocument, args, assetDir, platform)),
+  )
   return results.flat()
 }

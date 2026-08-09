@@ -106,6 +106,7 @@ test('rejects an absolute node rpc url', async () => {
   )
 })
 
+// eslint-disable-next-line jest/no-disabled-tests -- enable after third-party Node RPCs are rejected again
 test.skip('rejects node rpc for third-party extensions', async () => {
   DeclaredRpcState.set({
     id: 'third-party.extension',

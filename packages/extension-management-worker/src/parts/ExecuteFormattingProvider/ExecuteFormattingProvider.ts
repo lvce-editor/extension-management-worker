@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { executeLanguageServerFormatting } from '../ExecuteLanguageServerFormatting/ExecuteLanguageServerFormatting.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -18,6 +19,7 @@ interface ExtensionManifest {
   readonly formattingProviders?: readonly FormattingProviderContribution[]
   readonly id?: string
   readonly isWeb?: boolean
+  readonly languageServers?: readonly FormattingProviderContribution[]
   readonly path?: string
   readonly uri?: string
 }
@@ -30,6 +32,10 @@ const contributesFormattingProvider = (extension: ExtensionManifest, languageId:
   return Array.isArray(extension.formattingProviders) && extension.formattingProviders.some((provider) => provider.languageId === languageId)
 }
 
+const contributesLanguageServer = (extension: ExtensionManifest, languageId: string): boolean => {
+  return Array.isArray(extension.languageServers) && extension.languageServers.some((languageServer) => languageServer.languageId === languageId)
+}
+
 const getMatchingExtensions = async (
   extensionsState: ExtensionsState,
   textDocument: TextDocument,
@@ -39,12 +45,26 @@ const getMatchingExtensions = async (
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   return extensions.filter(
     (extension): boolean =>
-      !extension.disabled && IsExtensionIsolated.isExtensionIsolated(extension) && contributesFormattingProvider(extension, textDocument.languageId),
+      !extension.disabled &&
+      IsExtensionIsolated.isExtensionIsolated(extension) &&
+      (contributesFormattingProvider(extension, textDocument.languageId) || contributesLanguageServer(extension, textDocument.languageId)),
   )
 }
 
 const executeRpcFormattingProvider = async (rpc: Rpc, textDocument: TextDocument, args: readonly unknown[]): Promise<readonly unknown[]> => {
   return rpc.invoke('ExtensionApi.executeFormattingProvider', textDocument, ...args)
+}
+
+const executeExtensionFormattingProvider = async (
+  rpc: Rpc,
+  extension: ExtensionManifest,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+): Promise<readonly unknown[]> => {
+  if (contributesLanguageServer(extension, textDocument.languageId)) {
+    return executeLanguageServerFormatting(rpc, extension, textDocument)
+  }
+  return executeRpcFormattingProvider(rpc, textDocument, args)
 }
 
 export const executeFormattingProvider = async (
@@ -55,6 +75,6 @@ export const executeFormattingProvider = async (
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcFormattingProvider(rpc, textDocument, args)))
+  const results = await Promise.all(rpcs.map((rpc, index) => executeExtensionFormattingProvider(rpc, extensions[index], textDocument, args)))
   return results[0] || []
 }

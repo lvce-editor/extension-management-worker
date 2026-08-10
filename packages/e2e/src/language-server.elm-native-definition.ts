@@ -2,8 +2,6 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.elm-native-definition'
 
-export const skip = 1
-
 export const test: Test = async ({ Editor, Extension, FileSystem, Main, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/elm-native-language-server')
   await Extension.addWebExtension(extensionUri)
@@ -21,5 +19,5 @@ export const test: Test = async ({ Editor, Extension, FileSystem, Main, Workspac
 
   await Editor.goToDefinition()
 
-  await Editor.shouldHaveSelections(new Uint32Array([5, 0, 5, 0]))
+  await Editor.shouldHaveSelections(new Uint32Array([6, 0, 6, 0]))
 }

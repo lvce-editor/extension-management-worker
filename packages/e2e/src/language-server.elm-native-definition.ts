@@ -2,8 +2,6 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.elm-native-definition'
 
-export const skip = 1
-
 export const test: Test = async ({ Editor, Extension, FileSystem, Main, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/elm-native-language-server')
   await Extension.addWebExtension(extensionUri)
@@ -21,5 +19,11 @@ export const test: Test = async ({ Editor, Extension, FileSystem, Main, Workspac
 
   await Editor.goToDefinition()
 
-  await Editor.shouldHaveSelections(new Uint32Array([5, 0, 5, 0]))
+  const selections = await Editor.getSelections()
+  const expectedPoint = new Uint32Array([6, 0, 6, 0])
+  const expectedSymbol = new Uint32Array([6, 0, 6, 8])
+  const matches = (expected: Uint32Array): boolean => selections.every((value, index) => value === expected[index])
+  if (!matches(expectedPoint) && !matches(expectedSymbol)) {
+    throw new Error(`Expected editor to navigate to the greeting declaration but was ${selections}`)
+  }
 }

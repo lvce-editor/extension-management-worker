@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteFormattingProvider from '../src/parts/ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -167,4 +167,56 @@ test('executeFormattingProvider ignores disabled formatting provider contributio
   await expect(ExecuteFormattingProvider.executeFormattingProvider(extensionsState, textDocument)).resolves.toEqual([])
 
   expect(rpc.invocations).toEqual([])
+})
+
+test('executeFormattingProvider routes language server contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'elm',
+    text: 'module Main exposing ( main )\r\nmain=1',
+    uri: 'file:///workspace/src/Main.elm',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'builtin.language-features-elm',
+      isolated: true,
+      languageServers: [{ id: 'elm-language-server', languageId: 'elm' }],
+      uri: 'file:///extensions/language-features-elm',
+    },
+  ])
+  const invocations: unknown[] = []
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.format'(options: unknown) {
+      invocations.push(options)
+      return [
+        {
+          newText: 'module Main exposing (main)\n\nmain =\n    1\n',
+          range: {
+            end: { character: 6, line: 1 },
+            start: { character: 0, line: 0 },
+          },
+        },
+      ]
+    },
+  })
+  const extensionRpc = createRpc({
+    languageServers: [
+      {
+        argv: [],
+        id: 'elm-language-server',
+        languageId: 'elm',
+        uri: 'dist/language-server/elm-language-server.mjs',
+      },
+    ],
+  } as never)
+  IsolatedExtensionHostWorkerState.set('builtin.language-features-elm', extensionRpc.rpc)
+
+  await expect(ExecuteFormattingProvider.executeFormattingProvider(extensionsState, textDocument)).resolves.toEqual([
+    {
+      endOffset: textDocument.text.length,
+      inserted: 'module Main exposing (main)\n\nmain =\n    1\n',
+      startOffset: 0,
+    },
+  ])
+  expect(invocations).toHaveLength(1)
+  sharedProcess[Symbol.dispose]()
 })

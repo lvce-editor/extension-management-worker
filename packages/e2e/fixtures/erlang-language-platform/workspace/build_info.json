@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "erlang_language_platform_e2e",
+      "dir": "",
+      "src_dirs": ["src"]
+    }
+  ],
+  "deps": []
+}

@@ -50,6 +50,9 @@ await Promise.all([
   prepareFixtureExtension('elm-native-language-server', {
     'globalThis.__ELM_LANGUAGE_SERVER_URI__': JSON.stringify(languageServers.elmLanguageServerUri),
   }),
+  prepareFixtureExtension('erlang-language-platform', {
+    'globalThis.__ERLANG_LANGUAGE_PLATFORM_URI__': JSON.stringify(languageServers.erlangLanguagePlatformUri),
+  }),
   prepareFixtureExtension('extension-with-rpc-command-map'),
   prepareFixtureExtension('extension-no-rpc-command-map'),
   prepareFixtureExtension('java-language-server', {

@@ -18,6 +18,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
+      - uses: erlef/setup-beam@v1.24.1
+        with:
+          otp-version: '27.3.4.16'
+          version-type: strict
       - uses: actions/setup-java@v5
         with:
           distribution: temurin

@@ -13,7 +13,8 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
   await Extension.addWebExtension(extensionUri)
   const fixtureUri = import.meta.resolve('../fixtures/erlang-language-platform/workspace')
   const memoryWorkspaceUri = await FileSystem.loadFixture(fixtureUri)
-  const workspaceUri = await FileSystem.getTmpDir({ scheme: 'file' })
+  const temporaryWorkspaceUri = await FileSystem.getTmpDir({ scheme: 'file' })
+  const workspaceUri = /^file:\/\/\/[a-z]:/i.test(temporaryWorkspaceUri) ? temporaryWorkspaceUri.toLowerCase() : temporaryWorkspaceUri
   await FileSystem.mkdir(`${workspaceUri}/src`)
   for (const relativePath of ['.elp.toml', 'build_info.json', 'src/completion.erl', 'src/diagnostic.erl']) {
     const content = await FileSystem.readFile(`${memoryWorkspaceUri}/${relativePath}`)

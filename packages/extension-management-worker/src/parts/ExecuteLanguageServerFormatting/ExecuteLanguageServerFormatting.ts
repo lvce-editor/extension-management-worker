@@ -44,8 +44,8 @@ const getOffset = (text: string, position: Position | undefined): number | undef
   if (
     typeof line !== 'number' ||
     typeof character !== 'number' ||
-    !Number.isInteger(line) ||
-    !Number.isInteger(character) ||
+    !Number.isSafeInteger(line) ||
+    !Number.isSafeInteger(character) ||
     line < 0 ||
     character < 0
   ) {

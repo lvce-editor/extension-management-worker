@@ -4,6 +4,13 @@ import { getIcon } from '../GetIcon/GetIcon.ts'
 import { getIframe } from '../GetIframe/GetIframe.ts'
 import { getExtensionId } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 
+const getPreferredLocation = (preferredLocation: ManifestView['preferredLocation']): 'preview' | 'secondaryPreview' | 'sideBar' => {
+  if (preferredLocation === 'preview' || preferredLocation === 'secondaryPreview') {
+    return preferredLocation
+  }
+  return 'sideBar'
+}
+
 export const toView = (extension: ExtensionManifest, manifestView: ManifestView, assetDir: string, platform: number): any => {
   const id = manifestView.id || ''
   const css = getCss(extension, manifestView, assetDir, platform)
@@ -21,7 +28,7 @@ export const toView = (extension: ExtensionManifest, manifestView: ManifestView,
     id,
     iframe: getIframe(extension, manifestView, assetDir, platform),
     kind: manifestView.kind || '',
-    preferredLocation: manifestView.preferredLocation === 'preview' ? 'preview' : 'sideBar',
+    preferredLocation: getPreferredLocation(manifestView.preferredLocation),
     showSideBarHeader: manifestView.showSideBarHeader !== false,
     title: manifestView.title || id,
   }

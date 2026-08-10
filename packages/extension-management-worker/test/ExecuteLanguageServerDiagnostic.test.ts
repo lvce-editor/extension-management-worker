@@ -93,6 +93,7 @@ test('executeLanguageServerDiagnostic invokes the shared process and sanitizes d
   expect(invocations).toEqual([
     {
       argv: ['--stdio'],
+      extensionId: 'test.markdown-language-server',
       id: 'test.markdown-language-server.vscode-markdown',
       rootUri: 'file:///workspace',
       textDocument,

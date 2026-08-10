@@ -63,6 +63,7 @@ export const executeLanguageServerCompletion = async (
     const rootUri = await getLanguageServerRootUri()
     result = (await SharedProcess.invoke('LanguageServer.complete', {
       argv: languageServer.argv,
+      extensionId: languageServer.extensionId,
       id: languageServer.id,
       offset,
       ...(rootUri && { rootUri }),

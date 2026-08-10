@@ -30,6 +30,7 @@ beforeEach(() => {
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.uninstall'() {},
+    'LanguageServer.dispose'() {},
   })
 })
 
@@ -47,6 +48,7 @@ test('disableExtension2 disposes the worker before deferring the cache invalidat
 
   await disableExtension2('sample.extension', PlatformType.Test)
 
+  expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.dispose', 'sample.extension']])
   expect(getRendererWorker().invocations).toEqual([['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.extension']])
 
   await jest.runAllTimersAsync()
@@ -68,7 +70,10 @@ test('enableExtension2 invalidates extension cache', async () => {
 test('uninstallExtension invalidates extension cache', async () => {
   await uninstallExtension('sample.extension')
 
-  expect(state.sharedProcess?.invocations).toEqual([['ExtensionManagement.uninstall', 'sample.extension']])
+  expect(state.sharedProcess?.invocations).toEqual([
+    ['ExtensionManagement.uninstall', 'sample.extension'],
+    ['LanguageServer.dispose', 'sample.extension'],
+  ])
   expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
 
@@ -77,7 +82,7 @@ test('uninstallExtension removes a dynamic web extension without invoking the sh
 
   await uninstallExtension('sample.extension')
 
-  expect(state.sharedProcess?.invocations).toEqual([])
+  expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.dispose', 'sample.extension']])
   expect(ExtensionsState.get().webExtensions).toEqual([])
   expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated']])
 })
@@ -103,4 +108,15 @@ test('cache invalidation includes the changed extension state', async () => {
   await invalidateExtensionsCache('sample.extension', true)
 
   expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true]])
+})
+
+test('disableExtension2 remains compatible with shared processes without language server disposal', async () => {
+  state.sharedProcess?.[Symbol.dispose]()
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.dispose'() {
+      throw new Error('Command not found')
+    },
+  })
+
+  await expect(disableExtension2('sample.extension', PlatformType.Test)).resolves.toBeUndefined()
 })

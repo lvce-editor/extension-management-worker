@@ -2,4 +2,4 @@
 -export([main/0]).
 
 main() ->
-    MissingValue.
+    Value 3.

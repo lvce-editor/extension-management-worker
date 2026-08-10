@@ -46,3 +46,21 @@ test('toView converts manifest view metadata', () => {
     type: 'preview',
   })
 })
+
+test('toView preserves the secondary preview location', () => {
+  const result = toView(
+    {
+      id: 'sample.extension',
+      path: '/extensions/sample',
+      views: [],
+    },
+    {
+      id: 'sample.views.chat',
+      preferredLocation: 'secondaryPreview',
+    },
+    '',
+    PlatformType.Remote,
+  )
+
+  expect(result.preferredLocation).toBe('secondaryPreview')
+})

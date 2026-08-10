@@ -24,7 +24,7 @@ export interface ManifestView {
   readonly id?: string
   readonly iframe?: ManifestViewIframe
   readonly kind?: string
-  readonly preferredLocation?: 'preview' | 'sideBar'
+  readonly preferredLocation?: 'preview' | 'secondaryPreview' | 'sideBar'
   readonly selector?: readonly string[]
   readonly showSideBarHeader?: boolean
   readonly title?: string

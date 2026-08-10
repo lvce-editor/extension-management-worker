@@ -1,7 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteLanguageProvider from '../src/parts/ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -58,6 +58,68 @@ test('executes the matching isolated definition provider', async () => {
     { found: true, result: { uri: '/definition.ts' } },
   )
   expect(invocations).toEqual([['ExtensionApi.executeLanguageProvider', 'definition', 'provideDefinition', textDocument, 2]])
+})
+
+test('routes language server definition contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'elm',
+    text: 'greeting = "Hello"\nmain = greeting',
+    uri: 'file:///workspace/src/Main.elm',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'builtin.language-features-elm',
+      isolated: true,
+      languageServers: [{ id: 'elm-language-server', languageId: 'elm' }],
+      uri: 'file:///extension',
+    },
+  ])
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.definition'() {
+      return {
+        range: {
+          end: { character: 8, line: 0 },
+          start: { character: 0, line: 0 },
+        },
+        uri: textDocument.uri,
+      }
+    },
+  })
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => ({
+      languageServers: [
+        {
+          argv: [],
+          id: 'elm-language-server',
+          languageId: 'elm',
+          uri: 'dist/elm-language-server.mjs',
+        },
+      ],
+    }),
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('builtin.language-features-elm', rpc)
+
+  try {
+    await expect(
+      ExecuteLanguageProvider.executeLanguageProvider(extensionsState, 'definition', 'provideDefinition', textDocument, 30),
+    ).resolves.toEqual({
+      found: true,
+      result: {
+        endColumnIndex: 8,
+        endOffset: 8,
+        endRowIndex: 0,
+        startColumnIndex: 0,
+        startOffset: 0,
+        startRowIndex: 0,
+        uri: textDocument.uri,
+      },
+    })
+  } finally {
+    sharedProcess[Symbol.dispose]()
+  }
 })
 
 test('reports no provider when no activation event matches', async () => {

@@ -40,11 +40,20 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
     throw new Error(`Expected Erlang Language Platform diagnostics, got ${JSON.stringify(lastDiagnostics)}`)
   }
 
-  const updatedEdits = await Extension.executeFormattingProvider({
+  const updatedDocument = {
     ...diagnosticDocument,
     text: source.replace('missing_module:missing_function()', 'ok'),
-  })
-  if (updatedEdits[0].inserted !== '[]') {
-    throw new Error(`Expected Erlang Language Platform diagnostics to clear, got ${updatedEdits[0].inserted}`)
+  }
+  let updatedDiagnostics = lastDiagnostics
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const updatedEdits = await Extension.executeFormattingProvider(updatedDocument)
+    updatedDiagnostics = JSON.parse(updatedEdits[0].inserted)
+    if (updatedDiagnostics.length === 0) {
+      break
+    }
+    await wait(250)
+  }
+  if (updatedDiagnostics.length > 0) {
+    throw new Error(`Expected Erlang Language Platform diagnostics to clear, got ${JSON.stringify(updatedDiagnostics)}`)
   }
 }

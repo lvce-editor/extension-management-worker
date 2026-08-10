@@ -8,6 +8,31 @@ import extract from 'extract-zip'
 const vscodeJavaVersion = '1.55.0-995'
 const vscodeJavaUrl = `https://github.com/redhat-developer/vscode-java/releases/download/v1.55.0/vscode-java-${vscodeJavaVersion}.vsix`
 const vscodeJavaSha256 = '011639c3ee347b9591895bfc77d8cf28f836c053d0a49ae4a83efe9dc473a603'
+const erlangLanguagePlatformVersion = '2026-08-10'
+
+/** @type {Record<string, { readonly name: string, readonly sha256: string }>} */
+const erlangLanguagePlatformAssets = {
+  'darwin-arm64': {
+    name: 'elp-macos-aarch64-apple-darwin-otp-27.3.vsix',
+    sha256: '823a9ae3b70299585abe8baf5eb3f1e1d12e220288bf600a54c5fe1d1b89d141',
+  },
+  'darwin-x64': {
+    name: 'elp-macos-x86_64-apple-darwin-otp-27.3.vsix',
+    sha256: '32cc07c8bc97e7be13d4469c9be9057875d0db3888238aa4cabc89b96d19983b',
+  },
+  'linux-arm64': {
+    name: 'elp-linux-aarch64-unknown-linux-gnu-otp-27.3.vsix',
+    sha256: 'c3e723df393f51abae774912e1ed0e11cf59ffa66912377bc89d04bc844c45a0',
+  },
+  'linux-x64': {
+    name: 'elp-linux-x86_64-unknown-linux-gnu-otp-27.3.vsix',
+    sha256: 'ed6f31ee25cab60c00c4c6b589747ad19a0fce5a9e4f5198b048e0b7b82048e9',
+  },
+  'win32-x64': {
+    name: 'elp-windows-x86_64-pc-windows-msvc-otp-27.3.vsix',
+    sha256: '734874375a3c79ca2145676381677b643cc6d7e289a6b4fa296db5443d9c5653',
+  },
+}
 
 /**
  * @param {string} packageJsonUri
@@ -23,6 +48,35 @@ const resolvePackageFile = (packageJsonUri, relativePath) => {
 const findExecutable = (name) => {
   const command = process.platform === 'win32' ? 'where.exe' : 'which'
   return execFileSync(command, [name], { encoding: 'utf8' }).trim().split(/\r?\n/)[0]
+}
+
+/**
+ * @param {string} temporaryDirectory
+ */
+const prepareErlangLanguagePlatform = async (temporaryDirectory) => {
+  const platform = `${process.platform}-${process.arch}`
+  const asset = erlangLanguagePlatformAssets[platform]
+  if (!asset) {
+    throw new Error(`Erlang Language Platform ${erlangLanguagePlatformVersion} has no fixture binary for ${platform}`)
+  }
+  const url = `https://github.com/WhatsApp/erlang-language-platform/releases/download/${erlangLanguagePlatformVersion}/${asset.name}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to download Erlang Language Platform ${erlangLanguagePlatformVersion}: ${response.status} ${response.statusText}`)
+  }
+  const archive = Buffer.from(await response.arrayBuffer())
+  const sha256 = createHash('sha256').update(archive).digest('hex')
+  if (sha256 !== asset.sha256) {
+    throw new Error(`Unexpected Erlang Language Platform ${erlangLanguagePlatformVersion} checksum: ${sha256}`)
+  }
+
+  const archivePath = join(temporaryDirectory, asset.name)
+  const extractionPath = join(temporaryDirectory, 'erlang-language-platform')
+  await writeFile(archivePath, archive)
+  await extract(archivePath, { dir: extractionPath })
+
+  const executableName = process.platform === 'win32' ? 'elp.exe' : 'elp'
+  return pathToFileURL(join(extractionPath, 'extension', 'bin', executableName)).href
 }
 
 /**
@@ -93,11 +147,13 @@ const prepareRustAnalyzer = () => {
 export const prepareLanguageServers = async ({ temporaryDirectory }) => {
   await mkdir(temporaryDirectory, { recursive: true })
 
+  const erlangLanguagePlatformUri = await prepareErlangLanguagePlatform(temporaryDirectory)
   const rustAnalyzerUri = prepareRustAnalyzer()
   const javaLanguageServer = await prepareJavaLanguageServer(temporaryDirectory)
 
   return {
     elmLanguageServerUri: resolvePackageFile(import.meta.resolve('@elm-tooling/elm-language-server/package.json'), './out/node/index.js'),
+    erlangLanguagePlatformUri,
     javaLanguageServer,
     rustAnalyzerUri,
     typescriptLanguageServerUri: resolvePackageFile(import.meta.resolve('typescript/package.json'), './lib/tsc.js'),

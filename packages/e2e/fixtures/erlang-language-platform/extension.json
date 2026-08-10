@@ -1,0 +1,25 @@
+{
+  "id": "test.erlang-language-platform",
+  "name": "Erlang Language Platform",
+  "browser": "main.js",
+  "isolated": true,
+  "activation": ["onFormatting:erlang-language-platform-diagnostic-driver"],
+  "formattingProviders": [
+    {
+      "id": "erlang-language-platform-diagnostic-driver",
+      "languageId": "erlang-language-platform-diagnostic-driver"
+    }
+  ],
+  "languageServers": [
+    {
+      "id": "erlang-language-platform",
+      "languageId": "erlang"
+    }
+  ],
+  "languages": [
+    {
+      "id": "erlang",
+      "extensions": [".erl", ".hrl"]
+    }
+  ]
+}

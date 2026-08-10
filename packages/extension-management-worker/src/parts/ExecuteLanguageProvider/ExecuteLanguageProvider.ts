@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -15,12 +16,18 @@ interface ExtensionManifest {
   readonly disabled?: boolean
   readonly id?: string
   readonly isWeb?: boolean
+  readonly languageServers?: readonly {
+    readonly id?: string
+    readonly languageId?: string
+  }[]
   readonly path?: string
   readonly uri?: string
 }
 
 interface TextDocument {
   readonly languageId: string
+  readonly text?: string
+  readonly uri?: string
 }
 
 export interface LanguageProviderResult {
@@ -44,6 +51,9 @@ const contributesLanguageProvider = (extension: ExtensionManifest, kind: string,
     const hasCodeActionActivation = extension.activation?.includes(`onCodeAction:${languageId}`)
     const hasLegacyCodeActions = Array.isArray(extension.codeActions) && extension.activation?.includes(`onLanguage:${languageId}`)
     return Boolean(hasCodeActionActivation || hasLegacyCodeActions)
+  }
+  if (kind === 'definition' && extension.languageServers?.some((languageServer) => languageServer.languageId === languageId)) {
+    return true
   }
   const activationEvent = activationEventByKind[kind] || 'onLanguage'
   return Array.isArray(extension.activation) && extension.activation.includes(`${activationEvent}:${languageId}`)
@@ -75,6 +85,26 @@ const executeRpcLanguageProvider = async (
   return rpc.invoke('ExtensionApi.executeLanguageProvider', kind, methodName, textDocument, ...args)
 }
 
+const contributesExplicitLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
+  const activationEvent = activationEventByKind[kind] || 'onLanguage'
+  return Array.isArray(extension.activation) && extension.activation.includes(`${activationEvent}:${languageId}`)
+}
+
+const executeExtensionLanguageProvider = async (
+  rpc: Rpc,
+  extension: ExtensionManifest,
+  kind: string,
+  methodName: string,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+): Promise<unknown> => {
+  if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    const offset = typeof args[0] === 'number' ? args[0] : 0
+    return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
+  }
+  return executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
+}
+
 export const executeLanguageProvider = async (
   extensionsState: ExtensionsState,
   kind: string,
@@ -87,8 +117,9 @@ export const executeLanguageProvider = async (
   if (extensions.length === 0) {
     return { found: false }
   }
-  const rpc = await getRpc(extensions[0], assetDir, platform)
-  const result = await executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
+  const extension = extensions[0]
+  const rpc = await getRpc(extension, assetDir, platform)
+  const result = await executeExtensionLanguageProvider(rpc, extension, kind, methodName, textDocument, args)
   return { found: true, result }
 }
 

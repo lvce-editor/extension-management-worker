@@ -1,5 +1,5 @@
 import * as Assert from '@lvce-editor/assert'
-import { disposeIsolatedExtensionHostWorker } from '../DisposeIsolatedExtensionHostWorker/DisposeIsolatedExtensionHostWorker.ts'
+import { disposeExtensionRuntime } from '../DisposeExtensionRuntime/DisposeExtensionRuntime.ts'
 import * as ExtensionStorage from '../ExtensionStorage/ExtensionStorage.ts'
 import { deferInvalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 
@@ -8,7 +8,7 @@ export const disableExtension2 = async (id: string, platform: number): Promise<u
   Assert.number(platform)
   try {
     await ExtensionStorage.disableExtension2(id, platform)
-    await disposeIsolatedExtensionHostWorker(id)
+    await disposeExtensionRuntime(id)
     deferInvalidateExtensionsCache(id, true)
     return undefined
   } catch (error) {

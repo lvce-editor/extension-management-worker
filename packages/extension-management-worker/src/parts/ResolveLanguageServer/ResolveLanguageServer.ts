@@ -25,6 +25,7 @@ interface LanguageServerRegistrySnapshot {
 
 export interface ResolvedLanguageServer {
   readonly argv: readonly string[]
+  readonly extensionId: string
   readonly id: string
   readonly uri: string
 }
@@ -68,9 +69,11 @@ export const resolveLanguageServer = async (
   if (!languageServer) {
     throw new Error(`language server ${contribution.id || '<unknown>'} is contributed in extension.json but not registered`)
   }
+  const extensionId = extension.id || extension.uri || extension.path || 'extension'
   return {
     argv: languageServer.argv,
-    id: `${extension.id || extension.uri || extension.path || 'extension'}.${languageServer.id}`,
+    extensionId,
+    id: `${extensionId}.${languageServer.id}`,
     uri: resolveLanguageServerUri(extension, languageServer.uri),
   }
 }

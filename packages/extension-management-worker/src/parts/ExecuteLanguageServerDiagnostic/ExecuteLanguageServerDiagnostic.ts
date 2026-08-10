@@ -83,6 +83,7 @@ export const executeLanguageServerDiagnostic = async (
   const rootUri = await getLanguageServerRootUri()
   const result = (await SharedProcess.invoke('LanguageServer.diagnostic', {
     argv: languageServer.argv,
+    extensionId: languageServer.extensionId,
     id: languageServer.id,
     ...(rootUri && { rootUri }),
     textDocument,

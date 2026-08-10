@@ -106,6 +106,9 @@ afterEach(() => {
 
 test('disableWorkspaceExtension creates workspace disabled extensions file', async () => {
   const mockFileSystem = registerMocks()
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.dispose'() {},
+  })
   IsolatedExtensionHostWorkerState.set('sample.extension', { dispose: async () => {} } as any)
 
   await disableWorkspaceExtension('sample.extension')
@@ -114,6 +117,7 @@ test('disableWorkspaceExtension creates workspace disabled extensions file', asy
   expect(mockFileSystem.files.get('memfs:///workspace/.lvce/disabled-extensions.json')).toBe(
     '{\n  "disabledExtensions": [\n    "sample.extension"\n  ]\n}\n',
   )
+  expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.dispose', 'sample.extension']])
   expect(state.rendererWorker?.invocations).toContainEqual(['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', true])
 })
 

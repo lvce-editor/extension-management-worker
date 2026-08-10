@@ -112,6 +112,7 @@ test('executeLanguageServerCompletion invokes the shared-process proxy and sanit
   expect(invocations).toEqual([
     {
       argv: ['--lsp', '--stdio'],
+      extensionId: 'test.typescript-native',
       id: 'test.typescript-native.typescript-native',
       offset: 3,
       rootUri: 'file:///workspace',

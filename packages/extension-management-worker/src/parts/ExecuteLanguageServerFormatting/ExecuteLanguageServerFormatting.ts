@@ -94,6 +94,7 @@ export const executeLanguageServerFormatting = async (
   const rootUri = await getLanguageServerRootUri()
   const result = (await SharedProcess.invoke('LanguageServer.format', {
     argv: languageServer.argv,
+    extensionId: languageServer.extensionId,
     id: languageServer.id,
     ...(rootUri && { rootUri }),
     textDocument: {

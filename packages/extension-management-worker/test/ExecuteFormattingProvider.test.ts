@@ -217,6 +217,14 @@ test('executeFormattingProvider routes language server contributions through the
       startOffset: 0,
     },
   ])
-  expect(invocations).toHaveLength(1)
+  expect(invocations).toEqual([
+    {
+      argv: [],
+      extensionId: 'builtin.language-features-elm',
+      id: 'builtin.language-features-elm.elm-language-server',
+      textDocument,
+      uri: 'file:///extensions/language-features-elm/dist/language-server/elm-language-server.mjs',
+    },
+  ])
   sharedProcess[Symbol.dispose]()
 })

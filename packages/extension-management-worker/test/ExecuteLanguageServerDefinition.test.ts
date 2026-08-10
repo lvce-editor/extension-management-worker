@@ -174,6 +174,7 @@ test('executeLanguageServerDefinition invokes the shared process', async () => {
     expect(invocations).toEqual([
       {
         argv: [],
+        extensionId: 'builtin.language-features-elm',
         id: 'builtin.language-features-elm.elm-language-server',
         offset: 3,
         rootUri: 'file:///workspace',

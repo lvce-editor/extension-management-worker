@@ -121,6 +121,7 @@ export const executeLanguageServerDefinition = async (
   const rootUri = await getLanguageServerRootUri()
   const result = await SharedProcess.invoke('LanguageServer.definition', {
     argv: languageServer.argv,
+    extensionId: languageServer.extensionId,
     id: languageServer.id,
     offset,
     ...(rootUri && { rootUri }),

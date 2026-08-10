@@ -2,6 +2,8 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.erlang-language-platform-diagnostics'
 
+const expectedMessage = "variable 'MissingValue' is unbound"
+
 const wait = (duration: number): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(resolve, duration)
@@ -31,18 +33,18 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
   for (let attempt = 0; attempt < 20; attempt++) {
     const diagnosticEdits = await Extension.executeFormattingProvider(diagnosticDocument)
     lastDiagnostics = JSON.parse(diagnosticEdits[0].inserted)
-    if (lastDiagnostics.some((diagnostic) => diagnostic.message?.includes("Function 'missing_module:missing_function/0' is undefined"))) {
+    if (lastDiagnostics.some((diagnostic) => diagnostic.message?.includes(expectedMessage))) {
       break
     }
     await wait(250)
   }
-  if (lastDiagnostics.every((diagnostic) => !diagnostic.message?.includes("Function 'missing_module:missing_function/0' is undefined"))) {
+  if (lastDiagnostics.every((diagnostic) => !diagnostic.message?.includes(expectedMessage))) {
     throw new Error(`Expected Erlang Language Platform diagnostics, got ${JSON.stringify(lastDiagnostics)}`)
   }
 
   const updatedDocument = {
     ...diagnosticDocument,
-    text: source.replace('missing_module:missing_function()', 'ok'),
+    text: source.replace('MissingValue', 'ok'),
   }
   let updatedDiagnostics = lastDiagnostics
   for (let attempt = 0; attempt < 20; attempt++) {

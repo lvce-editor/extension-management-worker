@@ -207,6 +207,90 @@ test('merges matching code action provider results', async () => {
   expect(secondInvocations).toEqual([['ExtensionApi.executeLanguageProvider', 'code action', 'provideCodeActions', textDocument, 15]])
 })
 
+test('routes language server code action contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'elm',
+    text: 'module Main exposing (main)\n\nimport Task\n\nmain = 1',
+    uri: 'file:///workspace/src/Main.elm',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'builtin.language-features-elm',
+      isolated: true,
+      languageServers: [{ id: 'elm-language-server', languageId: 'elm' }],
+      uri: 'file:///extension',
+    },
+  ])
+  const invocations: unknown[] = []
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.codeAction'(options: unknown) {
+      invocations.push(options)
+      return [
+        {
+          edit: {
+            changes: {
+              [textDocument.uri]: [
+                {
+                  newText: '',
+                  range: {
+                    end: { character: 0, line: 3 },
+                    start: { character: 0, line: 2 },
+                  },
+                },
+              ],
+            },
+          },
+          kind: 'quickfix',
+          title: 'Remove unused import `Task`',
+        },
+      ]
+    },
+  })
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => ({
+      languageServers: [
+        {
+          argv: [],
+          id: 'elm-language-server',
+          languageId: 'elm',
+          uri: 'dist/elm-language-server.mjs',
+        },
+      ],
+    }),
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('builtin.language-features-elm', rpc)
+
+  try {
+    await expect(ExecuteLanguageProvider.executeCodeActionProviders(extensionsState, textDocument, 37)).resolves.toEqual([
+      {
+        edits: [
+          {
+            endOffset: textDocument.text.indexOf('main = 1') - 1,
+            inserted: '',
+            startOffset: textDocument.text.indexOf('import Task'),
+          },
+        ],
+        name: 'Remove unused import `Task`',
+      },
+    ])
+    expect(invocations).toEqual([
+      {
+        argv: [],
+        extensionId: 'builtin.language-features-elm',
+        id: 'builtin.language-features-elm.elm-language-server',
+        offset: 37,
+        textDocument,
+        uri: 'file:///extension/dist/elm-language-server.mjs',
+      },
+    ])
+  } finally {
+    sharedProcess[Symbol.dispose]()
+  }
+})
+
 test('returns no code actions when no provider matches', async () => {
   await expect(ExecuteLanguageProvider.executeCodeActionProviders(createExtensionsState([]), { languageId: 'javascript' }, 0)).resolves.toEqual([])
 })

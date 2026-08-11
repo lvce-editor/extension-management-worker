@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { executeLanguageServerCodeAction } from '../ExecuteLanguageServerCodeAction/ExecuteLanguageServerCodeAction.ts'
 import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
@@ -46,13 +47,21 @@ const activationEventByKind: Readonly<Record<string, string>> = {
   'type definition': 'onTypeDefinition',
 }
 
+const contributesCodeActionProvider = (extension: ExtensionManifest, languageId: string): boolean => {
+  const hasCodeActionActivation = extension.activation?.includes(`onCodeAction:${languageId}`)
+  const hasLegacyCodeActions = Array.isArray(extension.codeActions) && extension.activation?.includes(`onLanguage:${languageId}`)
+  return Boolean(hasCodeActionActivation || hasLegacyCodeActions)
+}
+
+const contributesLanguageServer = (extension: ExtensionManifest, languageId: string): boolean => {
+  return Boolean(extension.languageServers?.some((languageServer) => languageServer.languageId === languageId))
+}
+
 const contributesLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
   if (kind === 'code action') {
-    const hasCodeActionActivation = extension.activation?.includes(`onCodeAction:${languageId}`)
-    const hasLegacyCodeActions = Array.isArray(extension.codeActions) && extension.activation?.includes(`onLanguage:${languageId}`)
-    return Boolean(hasCodeActionActivation || hasLegacyCodeActions)
+    return contributesCodeActionProvider(extension, languageId) || contributesLanguageServer(extension, languageId)
   }
-  if (kind === 'definition' && extension.languageServers?.some((languageServer) => languageServer.languageId === languageId)) {
+  if (kind === 'definition' && contributesLanguageServer(extension, languageId)) {
     return true
   }
   const activationEvent = activationEventByKind[kind] || 'onLanguage'
@@ -86,6 +95,9 @@ const executeRpcLanguageProvider = async (
 }
 
 const contributesExplicitLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
+  if (kind === 'code action') {
+    return contributesCodeActionProvider(extension, languageId)
+  }
   const activationEvent = activationEventByKind[kind] || 'onLanguage'
   return Array.isArray(extension.activation) && extension.activation.includes(`${activationEvent}:${languageId}`)
 }
@@ -98,6 +110,10 @@ const executeExtensionLanguageProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<unknown> => {
+  if (kind === 'code action' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    const offset = typeof args[0] === 'number' ? args[0] : 0
+    return executeLanguageServerCodeAction(rpc, extension, textDocument, offset)
+  }
   if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
@@ -131,7 +147,9 @@ export const executeCodeActionProviders = async (
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, 'code action', textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcLanguageProvider(rpc, 'code action', 'provideCodeActions', textDocument, [offset])))
+  const results = await Promise.all(
+    rpcs.map((rpc, index) => executeExtensionLanguageProvider(rpc, extensions[index], 'code action', 'provideCodeActions', textDocument, [offset])),
+  )
   const actions: unknown[] = []
   for (const result of results) {
     if (!Array.isArray(result)) {

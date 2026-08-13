@@ -3,6 +3,7 @@ import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNode
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import * as LegacyNodeRpc from '../LegacyNodeRpc/LegacyNodeRpc.ts'
+import { createNotification } from '../Notifications/Notifications.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
 
 export type ExtensionCommand = (...args: readonly any[]) => any
@@ -105,6 +106,9 @@ export const createExtensionCommandMap = (extensionId: string): ExtensionCommand
         throw new Error(`Isolated extensions cannot send a port using ${initialCommand}`)
       }
       return invokeGlobalCommand('Extensions.sendMessagePortToElectron', port, initialCommand)
+    },
+    'Extensions.showNotification'(type: string, message: string) {
+      return createNotification(extensionId, type, message)
     },
     'Extensions.storeSecret'(key: string, value: string) {
       return storeSecret(extensionId, key, value)

@@ -56,8 +56,8 @@ const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedEr
   }
 }
 
-const isViewActionsDomCommandNotFoundError = (error: unknown): boolean => {
-  return error instanceof Error && error.name === 'CommandNotFoundError' && error.message.includes('ExtensionApi.getViewActionsDom')
+const isCommandNotFoundError = (error: unknown, command: string): boolean => {
+  return error instanceof Error && error.name === 'CommandNotFoundError' && error.message.includes(command)
 }
 
 const hasView = (extension: ExtensionManifest, viewId: string): boolean => {
@@ -180,8 +180,23 @@ export const getViewActionsDom = async (viewId: string, uid: number, assetDir: s
   try {
     return (await instance.rpc.invoke('ExtensionApi.getViewActionsDom', uid)) as readonly unknown[] | undefined
   } catch (error) {
-    if (isViewActionsDomCommandNotFoundError(error)) {
+    if (isCommandNotFoundError(error, 'ExtensionApi.getViewActionsDom')) {
       return undefined
+    }
+    throw error
+  }
+}
+
+export const setViewInstanceActive = async (viewId: string, uid: number, active: boolean, assetDir: string, platform: number): Promise<void> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (!instance || instance.status === 'error') {
+    return
+  }
+  try {
+    await instance.rpc.invoke('ExtensionApi.setViewInstanceActive', uid, active)
+  } catch (error) {
+    if (isCommandNotFoundError(error, 'ExtensionApi.setViewInstanceActive')) {
+      return
     }
     throw error
   }

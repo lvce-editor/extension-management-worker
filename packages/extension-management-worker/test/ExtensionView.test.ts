@@ -14,6 +14,7 @@ import {
   renderViewInstance,
   requestViewRerender,
   saveViewInstanceState,
+  setViewInstanceActive,
   showViewContextMenu,
 } from '../src/parts/ExtensionView/ExtensionView.ts'
 import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
@@ -32,10 +33,9 @@ const state: {
 
 const createRpc = (
   options: {
-    readonly createError?: Error
+    readonly errors?: Readonly<Record<string, Error>>
     readonly eventListeners?: readonly unknown[]
     readonly focusSelector?: string
-    readonly viewActionsDomError?: Error
   } = {},
 ): {
   readonly invocations: readonly unknown[]
@@ -46,6 +46,10 @@ const createRpc = (
     dispose: async () => {},
     invoke: async (method: string, ...params: readonly unknown[]): Promise<unknown> => {
       invocations.push([method, ...params])
+      const error = options.errors?.[method]
+      if (error) {
+        throw error
+      }
       if (method === 'ExtensionApi.getViewRegistrySnapshot') {
         return {
           views: [
@@ -57,9 +61,6 @@ const createRpc = (
         }
       }
       if (method === 'ExtensionApi.createViewInstance') {
-        if (options.createError) {
-          throw options.createError
-        }
         return {
           dom: [],
           ...(options.focusSelector && { focusSelector: options.focusSelector }),
@@ -100,9 +101,6 @@ const createRpc = (
         ]
       }
       if (method === 'ExtensionApi.getViewActionsDom') {
-        if (options.viewActionsDomError) {
-          throw options.viewActionsDomError
-        }
         return [
           {
             childCount: 0,
@@ -341,7 +339,7 @@ test('createViewInstance returns error result when rpc creation fails', async ()
 
 test('createViewInstance returns error result when extension create fails', async () => {
   const mock = createRpc({
-    createError: new Error('create failed'),
+    errors: { 'ExtensionApi.createViewInstance': new Error('create failed') },
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {
@@ -380,7 +378,7 @@ test('createViewInstance returns error result when extension create fails', asyn
 
 test('disposeViewInstance removes error state without invoking extension rpc', async () => {
   const mock = createRpc({
-    createError: new Error('create failed'),
+    errors: { 'ExtensionApi.createViewInstance': new Error('create failed') },
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {
@@ -409,7 +407,7 @@ test('disposeViewInstance removes error state without invoking extension rpc', a
 
 test('view lifecycle calls no-op after failed createViewInstance', async () => {
   const mock = createRpc({
-    createError: new Error('create failed'),
+    errors: { 'ExtensionApi.createViewInstance': new Error('create failed') },
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {
@@ -470,6 +468,65 @@ test('renderViewInstance proxies to isolated extension rpc', async () => {
   })
 
   expect(mock.invocations).toEqual([['ExtensionApi.renderViewInstance', 1]])
+})
+
+test('setViewInstanceActive proxies to isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await setViewInstanceActive('sample.views.testing', 1, true, '', 2)
+
+  expect(mock.invocations).toEqual([['ExtensionApi.setViewInstanceActive', 1, true]])
+})
+
+test('setViewInstanceActive ignores extension api versions without the optional command', async () => {
+  const error = new Error('Command not found ExtensionApi.setViewInstanceActive')
+  Object.defineProperty(error, 'name', {
+    value: 'CommandNotFoundError',
+  })
+  const mock = createRpc({
+    errors: { 'ExtensionApi.setViewInstanceActive': error },
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(setViewInstanceActive('sample.views.testing', 1, false, '', 2)).resolves.toBeUndefined()
+  expect(mock.invocations).toEqual([['ExtensionApi.setViewInstanceActive', 1, false]])
+})
+
+test('setViewInstanceActive rethrows extension errors', async () => {
+  const error = new Error('Failed to update active view')
+  const mock = createRpc({
+    errors: { 'ExtensionApi.setViewInstanceActive': error },
+  })
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(setViewInstanceActive('sample.views.testing', 1, true, '', 2)).rejects.toBe(error)
+})
+
+test('setViewInstanceActive no-ops for disposed or failed instances', async () => {
+  await expect(setViewInstanceActive('sample.views.testing', 1, true, '', 2)).resolves.toBeUndefined()
+  ExtensionViewInstanceState.set(1, {
+    error: {
+      message: 'create failed',
+      name: 'Error',
+    },
+    status: 'error',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(setViewInstanceActive('sample.views.testing', 1, true, '', 2)).resolves.toBeUndefined()
 })
 
 test('getViewMenuEntries proxies to isolated extension rpc', async () => {
@@ -536,7 +593,7 @@ test('getViewActionsDom returns undefined when the optional extension api comman
     value: 'CommandNotFoundError',
   })
   const mock = createRpc({
-    viewActionsDomError: error,
+    errors: { 'ExtensionApi.getViewActionsDom': error },
   })
   ExtensionViewInstanceState.set(1, {
     rpc: mock.rpc,
@@ -551,7 +608,7 @@ test('getViewActionsDom returns undefined when the optional extension api comman
 test('getViewActionsDom rethrows extension errors', async () => {
   const error = new Error('Failed to render view actions')
   const mock = createRpc({
-    viewActionsDomError: error,
+    errors: { 'ExtensionApi.getViewActionsDom': error },
   })
   ExtensionViewInstanceState.set(1, {
     rpc: mock.rpc,

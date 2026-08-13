@@ -177,6 +177,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.sendMessagePortToElectron': sendMessagePortToElectron,
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
   'Extensions.setPreference': setPreference,
+  'Extensions.setViewInstanceActive': ExtensionView.setViewInstanceActive,
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,

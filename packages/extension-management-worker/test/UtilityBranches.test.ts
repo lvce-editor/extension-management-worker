@@ -157,8 +157,8 @@ test('getRpcInfo throws for unknown rpc', () => {
   expect(() => getRpcInfo('utility-branches-missing')).toThrow('Rpc not found utility-branches-missing')
 })
 
-test('getRuntimeStatus returns an empty status and then a stored status', () => {
-  expect(getRuntimeStatus('sample.extension')).toEqual({
+test('getRuntimeStatus returns an empty status and then a stored status', async () => {
+  await expect(getRuntimeStatus('sample.extension')).resolves.toEqual({
     activationEndTime: 0,
     activationEvent: '',
     activationStartTime: 0,
@@ -167,10 +167,11 @@ test('getRuntimeStatus returns an empty status and then a stored status', () => 
     importEndTime: 0,
     importStartTime: 0,
     importTime: 0,
+    memoryUsage: 0,
     status: 0,
   })
   ExtensionsState.updateRuntimeStatus('sample.extension', { status: 1 })
-  expect(getRuntimeStatus('sample.extension')).toEqual(expect.objectContaining({ id: 'sample.extension', status: 1 }))
+  await expect(getRuntimeStatus('sample.extension')).resolves.toEqual(expect.objectContaining({ id: 'sample.extension', memoryUsage: 0, status: 1 }))
 })
 
 test('getExtension returns matching extension or undefined', async () => {

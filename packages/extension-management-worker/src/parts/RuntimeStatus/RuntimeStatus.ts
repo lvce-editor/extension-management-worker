@@ -8,5 +8,6 @@ export interface RuntimeStatus {
   readonly importEndTime: number
   readonly importStartTime: number
   readonly importTime: number
+  readonly memoryUsage?: number
   readonly status: number
 }

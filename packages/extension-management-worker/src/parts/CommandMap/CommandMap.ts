@@ -66,6 +66,14 @@ import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
+import {
+  clearNotifications,
+  dismissNotification,
+  getNotificationCount,
+  getNotifications,
+  hideNotificationsFromExtension,
+  createNotification,
+} from '../Notifications/Notifications.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
@@ -107,6 +115,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,
+  'Extensions.clearNotifications': clearNotifications,
   'Extensions.clearOutputChannel': wrapCommand(clearOutputChannel),
   'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
@@ -114,6 +123,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.disable': disableExtension,
   'Extensions.disable2': disableExtension2,
   'Extensions.disableWorkspace': disableWorkspaceExtension,
+  'Extensions.dismissNotification': dismissNotification,
   'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
   'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
@@ -151,6 +161,8 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getExtension': getExtension,
   'Extensions.getKeyBindings': getKeyBindings,
   'Extensions.getLanguages': getLanguages,
+  'Extensions.getNotificationCount': getNotificationCount,
+  'Extensions.getNotifications': getNotifications,
   'Extensions.getOutputChannelProviders': wrapCommand(getOutputChannelProviders),
   'Extensions.getPreference': getPreference,
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
@@ -167,6 +179,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleUncaughtExtensionError': handleUncaughtExtensionError,
   'Extensions.handleViewContextChange': handleViewContextChange,
+  'Extensions.hideNotificationsFromExtension': hideNotificationsFromExtension,
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
@@ -178,6 +191,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.sendMessagePortToFileSystemWorker': sendMessagePortToFileSystemWorker,
   'Extensions.setPreference': setPreference,
   'Extensions.setViewInstanceActive': ExtensionView.setViewInstanceActive,
+  'Extensions.showNotification': (type: string, message: string): Promise<void> => createNotification('unknown.extension', type, message),
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,

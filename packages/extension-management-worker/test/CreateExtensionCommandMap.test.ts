@@ -84,6 +84,12 @@ test('secret storage commands are bound to the calling extension', () => {
   )
 })
 
+test('notification commands are bound to the calling extension', () => {
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap['Extensions.showNotification']).toEqual(expect.any(Function))
+})
+
 test('file change registrations are bound to the calling extension', () => {
   const firstCommandMap = createExtensionCommandMap('extension-one')
   const secondCommandMap = createExtensionCommandMap('extension-two')

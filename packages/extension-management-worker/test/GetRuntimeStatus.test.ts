@@ -34,7 +34,7 @@ test('does not measure memory for an extension that is not activated', async () 
   expect(getMemoryUsage).not.toHaveBeenCalled()
 })
 
-test.each([Number.NaN, -1, 0])('normalizes invalid memory usage %s to zero', async (memoryUsage) => {
+test.each([NaN, -1, 0])('normalizes invalid memory usage %s to zero', async (memoryUsage) => {
   ExtensionsState.updateRuntimeStatus('sample.extension', {
     status: RuntimeStatusType.Activated,
   })

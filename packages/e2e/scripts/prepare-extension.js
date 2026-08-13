@@ -6,6 +6,7 @@ import { build } from 'esbuild'
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 const temporaryDirectory = join(packageRoot, '.tmp')
+const cachedDependenciesDirectory = join(packageRoot, '..', '..', '.cache')
 const outputDirectory = join(temporaryDirectory, 'extension')
 const serverFixtures = join(packageRoot, 'fixtures', 'failing-native-language-servers', 'extension', 'servers')
 
@@ -14,7 +15,7 @@ await mkdir(outputDirectory, { recursive: true })
 await cp(join(packageRoot, 'extension', 'extension.json'), join(outputDirectory, 'extension.json'))
 await cp(serverFixtures, join(outputDirectory, 'servers'), { recursive: true })
 
-const languageServers = await prepareLanguageServers({ temporaryDirectory })
+const languageServers = await prepareLanguageServers({ cachedDependenciesDirectory, temporaryDirectory })
 
 await build({
   bundle: true,
@@ -61,5 +62,8 @@ await Promise.all([
   }),
   prepareFixtureExtension('rust-analyzer-language-server', {
     'globalThis.__RUST_ANALYZER_URI__': JSON.stringify(languageServers.rustAnalyzerUri),
+  }),
+  prepareFixtureExtension('zig-language-server', {
+    'globalThis.__ZIG_LANGUAGE_SERVER_URI__': JSON.stringify(languageServers.zigLanguageServerUri),
   }),
 ])

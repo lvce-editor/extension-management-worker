@@ -21,6 +21,14 @@ const assertType: (type: string) => asserts type is Notification['type'] = (type
   }
 }
 
+const showPopup = async (type: Notification['type'], message: string): Promise<void> => {
+  try {
+    await RendererWorker.invoke('Notification.create', type, message)
+  } catch {
+    // Notification storage must keep working while an older renderer is connected.
+  }
+}
+
 export const clearNotifications = async (): Promise<void> => {
   NotificationState.clear()
   await notifyNotificationsChanged()
@@ -36,7 +44,7 @@ export const createNotification = async (extensionId: string, type: string, mess
     return
   }
   NotificationState.add(extensionId, type, message)
-  await Promise.all([notifyNotificationsChanged(), RendererWorker.invoke('Notification.create', type, message)])
+  await Promise.all([notifyNotificationsChanged(), showPopup(type, message)])
 }
 
 export const dismissNotification = async (id: number): Promise<void> => {

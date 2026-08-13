@@ -17,6 +17,7 @@ value = "wrong"`
 
   const expected = [
     {
+      code: 2322,
       columnIndex: 0,
       endColumnIndex: 5,
       endRowIndex: 1,

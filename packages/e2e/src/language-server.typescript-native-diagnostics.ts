@@ -9,6 +9,7 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
 
   const expectedDiagnostics = [
     {
+      code: 2322,
       columnIndex: 6,
       endColumnIndex: 11,
       endRowIndex: 0,

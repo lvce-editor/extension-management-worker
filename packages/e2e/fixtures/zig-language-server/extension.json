@@ -1,0 +1,18 @@
+{
+  "id": "test.zig-language-server",
+  "name": "Zig Language Server",
+  "browser": "main.js",
+  "isolated": true,
+  "languageServers": [
+    {
+      "id": "zls",
+      "languageId": "zig"
+    }
+  ],
+  "languages": [
+    {
+      "id": "zig",
+      "extensions": [".zig"]
+    }
+  ]
+}

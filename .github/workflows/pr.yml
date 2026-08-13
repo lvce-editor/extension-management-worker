@@ -35,6 +35,11 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModules-${{ steps.nodeModulesCacheKey.outputs.value }}
+      - name: Cache Zig tooling
+        uses: actions/cache@v6
+        with:
+          path: .cache/zig-tools
+          key: ${{ runner.os }}-${{ runner.arch }}-zig-tools-${{ hashFiles('packages/e2e-language-server-helpers/src/prepareZigLanguageServer.js') }}
       - name: npm ci
         run: npm ci
         if: steps.npm-cache.outputs.cache-hit != 'true'

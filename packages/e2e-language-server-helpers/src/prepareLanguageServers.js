@@ -4,6 +4,7 @@ import { mkdir, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import extract from 'extract-zip'
+import { prepareZigLanguageServer } from './prepareZigLanguageServer.js'
 
 const vscodeJavaVersion = '1.55.0-995'
 const vscodeJavaUrl = `https://github.com/redhat-developer/vscode-java/releases/download/v1.55.0/vscode-java-${vscodeJavaVersion}.vsix`
@@ -142,14 +143,15 @@ const prepareRustAnalyzer = () => {
 }
 
 /**
- * @param {{ temporaryDirectory: string }} options
+ * @param {{ cachedDependenciesDirectory: string, temporaryDirectory: string }} options
  */
-export const prepareLanguageServers = async ({ temporaryDirectory }) => {
+export const prepareLanguageServers = async ({ cachedDependenciesDirectory, temporaryDirectory }) => {
   await mkdir(temporaryDirectory, { recursive: true })
 
   const erlangLanguagePlatformUri = await prepareErlangLanguagePlatform(temporaryDirectory)
   const rustAnalyzerUri = prepareRustAnalyzer()
   const javaLanguageServer = await prepareJavaLanguageServer(temporaryDirectory)
+  const zigLanguageServerUri = await prepareZigLanguageServer(temporaryDirectory, cachedDependenciesDirectory)
 
   return {
     elmLanguageServerUri: resolvePackageFile(import.meta.resolve('@elm-tooling/elm-language-server/package.json'), './out/node/index.js'),
@@ -165,5 +167,6 @@ export const prepareLanguageServers = async ({ temporaryDirectory }) => {
       import.meta.resolve('vscode-langservers-extracted/package.json'),
       './lib/html-language-server/node/htmlServerMain.js',
     ),
+    zigLanguageServerUri,
   }
 }

@@ -103,6 +103,30 @@ const contributesExplicitLanguageProvider = (extension: ExtensionManifest, kind:
   return Array.isArray(extension.activation) && extension.activation.includes(`${activationEvent}:${languageId}`)
 }
 
+const executeExtensionCodeActionProviders = async (
+  rpc: Rpc,
+  extension: ExtensionManifest,
+  textDocument: TextDocument,
+  offset: number,
+): Promise<readonly unknown[]> => {
+  const providers: Promise<unknown>[] = []
+  if (contributesExplicitLanguageProvider(extension, 'code action', textDocument.languageId)) {
+    providers.push(executeRpcLanguageProvider(rpc, 'code action', 'provideCodeActions', textDocument, [offset]))
+  }
+  if (contributesLanguageServer(extension, textDocument.languageId)) {
+    providers.push(executeLanguageServerCodeAction(rpc, extension, textDocument, offset))
+  }
+  const results = await Promise.all(providers)
+  const actions: unknown[] = []
+  for (const result of results) {
+    if (!Array.isArray(result)) {
+      throw new TypeError('Code action provider result must be an array')
+    }
+    actions.push(...result)
+  }
+  return actions
+}
+
 const executeExtensionLanguageProvider = async (
   rpc: Rpc,
   extension: ExtensionManifest,
@@ -111,9 +135,9 @@ const executeExtensionLanguageProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<unknown> => {
-  if (kind === 'code action' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+  if (kind === 'code action') {
     const offset = typeof args[0] === 'number' ? args[0] : 0
-    return executeLanguageServerCodeAction(rpc, extension, textDocument, offset)
+    return executeExtensionCodeActionProviders(rpc, extension, textDocument, offset)
   }
   if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0

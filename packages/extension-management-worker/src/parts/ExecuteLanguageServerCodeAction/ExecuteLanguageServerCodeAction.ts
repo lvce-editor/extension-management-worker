@@ -26,9 +26,17 @@ interface LanguageServerTextEdit {
   }
 }
 
+interface LanguageServerTextDocumentEdit {
+  readonly edits?: readonly LanguageServerTextEdit[]
+  readonly textDocument?: {
+    readonly uri?: string
+  }
+}
+
 interface LanguageServerCodeAction {
   readonly edit?: {
     readonly changes?: Readonly<Record<string, readonly LanguageServerTextEdit[]>>
+    readonly documentChanges?: readonly LanguageServerTextDocumentEdit[]
   }
   readonly title?: string
 }
@@ -94,18 +102,37 @@ const normalizeDocumentUri = (uri: string): string => {
   return uri.startsWith('/') ? `file://${uri}` : uri
 }
 
+const getCodeActionEdits = (documentUri: string, action: LanguageServerCodeAction): readonly LanguageServerTextEdit[] => {
+  const normalizedDocumentUri = normalizeDocumentUri(documentUri)
+  const edits: LanguageServerTextEdit[] = []
+  const changes = action.edit?.changes
+  if (changes && typeof changes === 'object') {
+    for (const [uri, uriEdits] of Object.entries(changes)) {
+      if (normalizeDocumentUri(uri) === normalizedDocumentUri && Array.isArray(uriEdits)) {
+        edits.push(...uriEdits)
+      }
+    }
+  }
+  const documentChanges = action.edit?.documentChanges
+  if (Array.isArray(documentChanges)) {
+    for (const change of documentChanges) {
+      if (
+        typeof change?.textDocument?.uri === 'string' &&
+        normalizeDocumentUri(change.textDocument.uri) === normalizedDocumentUri &&
+        Array.isArray(change.edits)
+      ) {
+        edits.push(...change.edits)
+      }
+    }
+  }
+  return edits
+}
+
 const sanitizeCodeAction = (text: string, documentUri: string, action: LanguageServerCodeAction): CodeAction | undefined => {
   if (!action || typeof action !== 'object' || typeof action.title !== 'string') {
     return undefined
   }
-  const changes = action.edit?.changes
-  if (!changes || typeof changes !== 'object') {
-    return undefined
-  }
-  const edits = changes[documentUri] || changes[normalizeDocumentUri(documentUri)]
-  if (!Array.isArray(edits)) {
-    return undefined
-  }
+  const edits = getCodeActionEdits(documentUri, action)
   const sanitizedEdits = edits.map((edit) => sanitizeTextEdit(text, edit)).filter((edit): edit is OffsetBasedEdit => edit !== undefined)
   if (sanitizedEdits.length === 0) {
     return undefined

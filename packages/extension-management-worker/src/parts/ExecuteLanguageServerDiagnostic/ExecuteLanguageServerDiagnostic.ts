@@ -20,6 +20,7 @@ interface TextDocument {
 }
 
 interface LanguageServerDiagnostic {
+  readonly code?: number | string
   readonly message?: string
   readonly range?: {
     readonly end?: {
@@ -36,6 +37,7 @@ interface LanguageServerDiagnostic {
 }
 
 interface Diagnostic {
+  readonly code?: number | string
   readonly columnIndex: number
   readonly endColumnIndex: number
   readonly endRowIndex: number
@@ -58,6 +60,7 @@ const sanitizeDiagnostic = (diagnostic: LanguageServerDiagnostic): Diagnostic | 
     return undefined
   }
   return {
+    ...((typeof diagnostic.code === 'number' || typeof diagnostic.code === 'string') && { code: diagnostic.code }),
     columnIndex: start.character,
     endColumnIndex: end.character,
     endRowIndex: end.line,

@@ -355,6 +355,92 @@ test('routes language server code action contributions through the shared proces
   }
 })
 
+test('merges explicit and language server code actions from the same extension', async () => {
+  const textDocument = {
+    languageId: 'erlang',
+    text: 'main() -> ok',
+    uri: 'file:///workspace/src/main.erl',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onCodeAction:erlang'],
+      id: 'builtin.language-features-erlang',
+      isolated: true,
+      languageServers: [{ id: 'erlang-language-platform', languageId: 'erlang' }],
+      uri: 'file:///extension',
+    },
+  ])
+  const extensionInvocations: unknown[] = []
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.codeAction'() {
+      return [
+        {
+          edit: {
+            changes: {
+              [textDocument.uri]: [
+                {
+                  newText: '_',
+                  range: {
+                    end: { character: 0, line: 0 },
+                    start: { character: 0, line: 0 },
+                  },
+                },
+              ],
+            },
+          },
+          title: 'Ignore unused variable',
+        },
+      ]
+    },
+  })
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      extensionInvocations.push([method, ...params])
+      if (method === 'ExtensionApi.executeLanguageProvider') {
+        return [
+          {
+            edits: [{ endOffset: textDocument.text.length, inserted: '.', startOffset: textDocument.text.length }],
+            name: "Add missing '.'",
+          },
+        ]
+      }
+      return {
+        languageServers: [
+          {
+            argv: ['server'],
+            id: 'erlang-language-platform',
+            languageId: 'erlang',
+            uri: 'dist/language-server/elp',
+          },
+        ],
+      }
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('builtin.language-features-erlang', rpc)
+
+  try {
+    await expect(ExecuteLanguageProvider.executeCodeActionProviders(extensionsState, textDocument, textDocument.text.length)).resolves.toEqual([
+      {
+        edits: [{ endOffset: textDocument.text.length, inserted: '.', startOffset: textDocument.text.length }],
+        name: "Add missing '.'",
+      },
+      {
+        edits: [{ endOffset: 0, inserted: '_', startOffset: 0 }],
+        name: 'Ignore unused variable',
+      },
+    ])
+    expect(extensionInvocations).toEqual([
+      ['ExtensionApi.executeLanguageProvider', 'code action', 'provideCodeActions', textDocument, textDocument.text.length],
+      ['ExtensionApi.getLanguageServerRegistrySnapshot'],
+    ])
+  } finally {
+    sharedProcess[Symbol.dispose]()
+  }
+})
+
 test('returns no code actions when no provider matches', async () => {
   await expect(ExecuteLanguageProvider.executeCodeActionProviders(createExtensionsState([]), { languageId: 'javascript' }, 0)).resolves.toEqual([])
 })

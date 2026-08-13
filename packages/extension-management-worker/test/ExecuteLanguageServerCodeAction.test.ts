@@ -102,6 +102,35 @@ test('executeLanguageServerCodeAction sanitizes same-document edits', async () =
           },
           title: 'Update second line',
         },
+        {
+          edit: {
+            documentChanges: [
+              {
+                edits: [
+                  {
+                    newText: '\nmissing() ->\n  todo',
+                    range: {
+                      end: { character: 2, line: 1 },
+                      start: { character: 2, line: 1 },
+                    },
+                  },
+                ],
+                textDocument: {
+                  uri: 'file:///workspace/Main.elm',
+                  version: 1,
+                },
+              },
+              {
+                edits: [],
+                textDocument: {
+                  uri: 'file:///workspace/Other.elm',
+                  version: 1,
+                },
+              },
+            ],
+          },
+          title: 'Create function `missing/0`',
+        },
       ]
     },
   })
@@ -122,6 +151,16 @@ test('executeLanguageServerCodeAction sanitizes same-document edits', async () =
           },
         ],
         name: 'Update second line',
+      },
+      {
+        edits: [
+          {
+            endOffset: 5,
+            inserted: '\nmissing() ->\n  todo',
+            startOffset: 5,
+          },
+        ],
+        name: 'Create function `missing/0`',
       },
     ])
   } finally {

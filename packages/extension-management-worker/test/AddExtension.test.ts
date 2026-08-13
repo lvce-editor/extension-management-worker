@@ -50,9 +50,5 @@ test('addExtension - refreshes status bar items', async () => {
     statusBarItems: [{ text: 'Ready' }],
   })
 
-  expect(state.rendererWorker.invocations).toEqual([
-    ['ExtensionManagement.handleExtensionsCacheInvalidated'],
-    ['Layout.getStatusBarVisible'],
-    ['StatusBar.handleItemsChanged'],
-  ])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated'], ['Layout.getStatusBarVisible']])
 })

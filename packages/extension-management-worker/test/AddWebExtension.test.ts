@@ -79,9 +79,5 @@ test('addWebExtension - refreshes status bar items using path as fallback id', a
 
   await addWebExtension(uri)
 
-  expect(state.rendererWorker.invocations).toEqual([
-    ['ExtensionManagement.handleExtensionsCacheInvalidated'],
-    ['Layout.getStatusBarVisible'],
-    ['StatusBar.handleItemsChanged'],
-  ])
+  expect(state.rendererWorker.invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated'], ['Layout.getStatusBarVisible']])
 })

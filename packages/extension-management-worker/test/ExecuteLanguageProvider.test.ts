@@ -122,6 +122,70 @@ test('routes language server definition contributions through the shared process
   }
 })
 
+test('routes language server reference contributions through the shared process', async () => {
+  const textDocument = {
+    languageId: 'zig',
+    text: 'const greeting = "Hello";\n_ = greeting;',
+    uri: 'file:///workspace/src/main.zig',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      id: 'builtin.language-features-zig',
+      isolated: true,
+      languageServers: [{ id: 'zls', languageId: 'zig' }],
+      uri: 'file:///extension',
+    },
+  ])
+  const sharedProcess = SharedProcess.registerMockRpc({
+    'LanguageServer.references'() {
+      return [
+        {
+          range: {
+            end: { character: 14, line: 0 },
+            start: { character: 6, line: 0 },
+          },
+          uri: textDocument.uri,
+        },
+      ]
+    },
+  })
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async () => ({
+      languageServers: [
+        {
+          argv: [],
+          id: 'zls',
+          languageId: 'zig',
+          uri: 'dist/language-server/zls.sh',
+        },
+      ],
+    }),
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('builtin.language-features-zig', rpc)
+
+  try {
+    await expect(
+      ExecuteLanguageProvider.executeLanguageProvider(extensionsState, 'reference', 'provideReferences2', textDocument, 8),
+    ).resolves.toEqual({
+      found: true,
+      result: [
+        {
+          endColumnIndex: 14,
+          endRowIndex: 0,
+          startColumnIndex: 6,
+          startRowIndex: 0,
+          uri: textDocument.uri,
+        },
+      ],
+    })
+  } finally {
+    sharedProcess[Symbol.dispose]()
+  }
+})
+
 test('reports no provider when no activation event matches', async () => {
   await expect(
     ExecuteLanguageProvider.executeLanguageProvider(createExtensionsState([]), 'definition', 'provideDefinition', { languageId: 'typescript' }, 2),

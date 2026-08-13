@@ -1,18 +1,11 @@
+import * as NotificationCenterWorker from '../NotificationCenterWorker/NotificationCenterWorker.ts'
 import * as NotificationState from '../NotificationState/NotificationState.ts'
-import * as RendererWorker from '../Rpc/Rpc.ts'
-
-const invokeIfAvailable = async (method: string, ...params: readonly unknown[]): Promise<void> => {
-  try {
-    await RendererWorker.invoke(method, ...params)
-  } catch {
-    // The target view is lazy and may not be loaded yet.
-  }
-}
+import * as StatusBarWorker from '../StatusBarWorker/StatusBarWorker.ts'
 
 export const notifyNotificationsChanged = async (): Promise<void> => {
   const notifications = NotificationState.getAll()
   await Promise.all([
-    invokeIfAvailable('NotificationCenter.handleNotificationsChanged', notifications),
-    invokeIfAvailable('StatusBar.handleNotificationCountChanged', notifications.length),
+    NotificationCenterWorker.invoke('NotificationCenter.handleNotificationsChanged', notifications),
+    StatusBarWorker.invoke('StatusBar.handleNotificationCountChanged', notifications.length),
   ])
 }

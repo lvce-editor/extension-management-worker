@@ -17,6 +17,7 @@ const second: number = "wrong"`
 
   const expected = [
     {
+      code: 2322,
       columnIndex: 6,
       endColumnIndex: 11,
       endRowIndex: 0,
@@ -26,6 +27,7 @@ const second: number = "wrong"`
       type: 'error',
     },
     {
+      code: 2322,
       columnIndex: 6,
       endColumnIndex: 12,
       endRowIndex: 1,

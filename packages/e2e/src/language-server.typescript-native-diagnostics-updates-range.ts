@@ -22,6 +22,7 @@ const value = missingValue`,
 
   const expected = [
     {
+      code: 2304,
       columnIndex: 14,
       endColumnIndex: 26,
       endRowIndex: 1,

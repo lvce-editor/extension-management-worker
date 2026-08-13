@@ -50,6 +50,7 @@ test('executeLanguageServerDiagnostic invokes the shared process and sanitizes d
       invocations.push(options)
       return [
         {
+          code: 'W0004',
           message: "No link definition found: 'reference'",
           range: {
             end: { character: 20, line: 0 },
@@ -73,6 +74,7 @@ test('executeLanguageServerDiagnostic invokes the shared process and sanitizes d
 
   await expect(executeLanguageServerDiagnostic(createRpc(), extension, textDocument)).resolves.toEqual([
     {
+      code: 'W0004',
       columnIndex: 10,
       endColumnIndex: 20,
       endRowIndex: 0,

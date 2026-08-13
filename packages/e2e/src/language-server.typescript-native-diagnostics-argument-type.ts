@@ -17,6 +17,7 @@ takesNumber("wrong")`
 
   const expected = [
     {
+      code: 2345,
       columnIndex: 12,
       endColumnIndex: 19,
       endRowIndex: 1,
@@ -26,6 +27,7 @@ takesNumber("wrong")`
       type: 'error',
     },
     {
+      code: 6133,
       columnIndex: 21,
       endColumnIndex: 26,
       endRowIndex: 0,

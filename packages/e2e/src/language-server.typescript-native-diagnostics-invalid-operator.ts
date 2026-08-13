@@ -16,6 +16,7 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
 
   const expected = [
     {
+      code: 2365,
       columnIndex: 14,
       endColumnIndex: 22,
       endRowIndex: 0,

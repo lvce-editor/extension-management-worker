@@ -17,6 +17,7 @@ value()`
 
   const expected = [
     {
+      code: 2349,
       columnIndex: 0,
       endColumnIndex: 5,
       endRowIndex: 1,

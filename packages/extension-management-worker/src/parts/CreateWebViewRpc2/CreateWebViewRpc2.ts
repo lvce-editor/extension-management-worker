@@ -21,6 +21,7 @@ export const createWebViewWorkerRpc2 = async (rpcInfo: any, port: MessagePort): 
     name: rpcInfo.name,
     port,
     raw: true,
+    ...(rpcInfo.traceId && { traceId: rpcInfo.traceId }),
     url: rpcInfo.url,
   })
 }

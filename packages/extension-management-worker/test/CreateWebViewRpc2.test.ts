@@ -13,6 +13,7 @@ test('sets the worker content security policy before launch', async () => {
     {
       contentSecurityPolicy: [`default-src 'none'`, `script-src 'self' 'unsafe-eval'`],
       name: 'Node.js Sandbox',
+      traceId: 'builtin.prettier.nodejs-sandbox-worker',
       url: 'http://localhost/extensions/prettier/nodejsSandboxWorkerMain.js',
     },
     port1,
@@ -31,6 +32,7 @@ test('sets the worker content security policy before launch', async () => {
         name: 'Node.js Sandbox',
         port: port1,
         raw: true,
+        traceId: 'builtin.prettier.nodejs-sandbox-worker',
         url: 'http://localhost/extensions/prettier/nodejsSandboxWorkerMain.js',
       },
     ],

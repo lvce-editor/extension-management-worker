@@ -131,3 +131,11 @@ export const resetExtensionRuntimeState = (extensionId: string): void => {
     runtimeStatuses: omit(state.extensionsState.runtimeStatuses, extensionId),
   })
 }
+
+export const resetRuntimeState = (): void => {
+  update({
+    activatedExtensions: Object.create(null),
+    cachedActivationEvents: Object.create(null),
+    runtimeStatuses: Object.create(null),
+  })
+}

@@ -9,6 +9,7 @@ import { createWebViewWorkerRpc } from '../CreateWebViewRpc/CreateWebViewRpc.ts'
 import { disableExtension2 } from '../DisableExtension2/DisableExtension2.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { disableWorkspaceExtension } from '../DisableWorkspaceExtension/DisableWorkspaceExtension.ts'
+import { disposeAllExtensionRuntimes } from '../DisposeAllExtensionRuntimes/DisposeAllExtensionRuntimes.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
@@ -125,6 +126,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.disableWorkspace': disableWorkspaceExtension,
   'Extensions.dismissNotification': dismissNotification,
   'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
+  'Extensions.disposeAllRuntimes': disposeAllExtensionRuntimes,
   'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,

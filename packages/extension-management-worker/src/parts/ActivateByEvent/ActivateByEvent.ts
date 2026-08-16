@@ -18,6 +18,19 @@ export const resetExtensionActivation = (extensionId: string): void => {
   delete runningExtensions[extensionId]
 }
 
+export const resetAllExtensionActivations = (): void => {
+  for (const extensionId of Object.keys(activatingExtensions)) {
+    delete activatingExtensions[extensionId]
+  }
+  for (const extensionId of Object.keys(runningExtensions)) {
+    delete runningExtensions[extensionId]
+  }
+}
+
+export const waitForExtensionActivations = async (): Promise<void> => {
+  await Promise.all(Object.values(activatingExtensions))
+}
+
 const matchesEvent = (extension: any, event: string): boolean => {
   return (
     !extension.disabled &&

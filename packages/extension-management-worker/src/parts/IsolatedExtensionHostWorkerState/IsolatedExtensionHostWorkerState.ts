@@ -10,6 +10,10 @@ export const getAll = (): readonly Rpc[] => {
   return Object.values(rpcs)
 }
 
+export const getIds = (): readonly string[] => {
+  return Object.keys(rpcs)
+}
+
 export const set = (extensionId: string, rpc: Rpc): void => {
   rpcs[extensionId] = rpc
 }

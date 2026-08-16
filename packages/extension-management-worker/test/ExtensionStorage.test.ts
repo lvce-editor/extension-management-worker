@@ -65,13 +65,16 @@ test('web platform creates and updates cached disabled extensions', async () => 
   const cache = mockCaches()
 
   await ExtensionStorage.disableExtension2('sample.extension', PlatformType.Web)
-  expect(cache.getData()).toEqual({ disabledExtensions: ['sample.extension'] })
+  expect(cache.getData()).toEqual({ disabledExtensions: ['sample.extension'], enabledExtensions: [] })
 
   await ExtensionStorage.disableExtension2('other.extension', PlatformType.Web)
-  expect(cache.getData()).toEqual({ disabledExtensions: ['sample.extension', 'other.extension'] })
+  expect(cache.getData()).toEqual({ disabledExtensions: ['sample.extension', 'other.extension'], enabledExtensions: [] })
 
   await ExtensionStorage.enableExtension2('sample.extension', PlatformType.Web)
-  expect(cache.getData()).toEqual({ disabledExtensions: ['other.extension'] })
+  expect(cache.getData()).toEqual({ disabledExtensions: ['other.extension'], enabledExtensions: ['sample.extension'] })
+
+  await ExtensionStorage.disableExtension2('sample.extension', PlatformType.Web)
+  expect(cache.getData()).toEqual({ disabledExtensions: ['other.extension', 'sample.extension'], enabledExtensions: [] })
 })
 
 test('web platform handles cached data without disabled extensions', async () => {
@@ -79,7 +82,7 @@ test('web platform handles cached data without disabled extensions', async () =>
 
   await ExtensionStorage.enableExtension2('sample.extension', PlatformType.Web)
 
-  expect(cache.getData()).toEqual({ disabledExtensions: [] })
+  expect(cache.getData()).toEqual({ disabledExtensions: [], enabledExtensions: ['sample.extension'] })
 })
 
 test('desktop platform delegates disabling to the shared process', async () => {
@@ -92,10 +95,12 @@ test('desktop platform delegates disabling to the shared process', async () => {
   expect(state.sharedProcess.invocations).toEqual([['ExtensionManagement.disable', 'sample.extension']])
 })
 
-test('desktop platform enabling does not modify test state or cache', async () => {
-  ExtensionsState.update({ disabledIds: ['sample.extension'] })
+test('desktop platform delegates enabling to the shared process', async () => {
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.enable'() {},
+  })
 
   await ExtensionStorage.enableExtension2('sample.extension', PlatformType.Electron)
 
-  expect(ExtensionsState.get().disabledIds).toEqual(['sample.extension'])
+  expect(state.sharedProcess.invocations).toEqual([['ExtensionManagement.enable', 'sample.extension']])
 })

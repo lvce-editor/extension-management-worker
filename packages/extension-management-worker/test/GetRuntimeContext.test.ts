@@ -8,6 +8,7 @@ import { getRuntimeContext } from '../src/parts/GetRuntimeContext/GetRuntimeCont
 
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location')
+const originalCaches = Object.getOwnPropertyDescriptor(globalThis, 'caches')
 
 const state: {
   rendererWorker: DisposableMockRpc | undefined
@@ -56,6 +57,11 @@ afterEach(() => {
     Object.defineProperty(globalThis, 'fetch', originalFetch)
   } else {
     delete (globalThis as any).fetch
+  }
+  if (originalCaches) {
+    Object.defineProperty(globalThis, 'caches', originalCaches)
+  } else {
+    delete (globalThis as any).caches
   }
   restoreLocation()
 })
@@ -169,6 +175,47 @@ test('getAllExtensionsWithState reads static web extensions for the web platform
       id: 'sample.extension',
       isWeb: true,
       path: '/static/extensions/sample.extension',
+    },
+  ])
+})
+
+test('getAllExtensionsWithState applies an explicit web enable to an extension disabled by default', async () => {
+  setLocation('https:')
+  Object.defineProperties(globalThis, {
+    caches: {
+      configurable: true,
+      value: {
+        async match(): Promise<Response> {
+          return {
+            json: async () => ({ enabledExtensions: ['builtin.gpt-voice'] }),
+          } as Response
+        },
+      },
+    },
+    fetch: {
+      configurable: true,
+      value: async (): Promise<Response> => {
+        return {
+          json: async () => [
+            {
+              disabled: true,
+              id: 'builtin.gpt-voice',
+              isWeb: true,
+              path: '/static/extensions/builtin.gpt-voice',
+            },
+          ],
+          ok: true,
+        } as Response
+      },
+    },
+  })
+
+  await expect(getAllExtensionsWithState(createExtensionsState(), '/static', PlatformType.Web)).resolves.toEqual([
+    {
+      disabled: false,
+      id: 'builtin.gpt-voice',
+      isWeb: true,
+      path: '/static/extensions/builtin.gpt-voice',
     },
   ])
 })

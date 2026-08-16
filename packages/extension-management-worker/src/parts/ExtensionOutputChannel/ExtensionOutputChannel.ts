@@ -8,6 +8,7 @@ import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 
 const protocol = 'extension-output://'
+const outputChannelRegistrySnapshotCommand = 'ExtensionApi.getOutputChannelRegistrySnapshot'
 
 interface OutputChannelContribution {
   readonly id?: string
@@ -48,6 +49,10 @@ const getOutputChannelUri = (extensionId: string, outputChannelId: string): stri
   return `${protocol}${encodeURIComponent(extensionId)}/${encodeURIComponent(outputChannelId)}`
 }
 
+const isCommandNotFoundError = (error: unknown, command: string): boolean => {
+  return error instanceof Error && error.message.includes(`Command not found ${command}`)
+}
+
 const getRegisteredOutputChannelIds = (snapshot: OutputChannelRegistrySnapshot): ReadonlySet<string> => {
   if (!snapshot || !Array.isArray(snapshot.outputChannels)) {
     return new Set()
@@ -62,7 +67,15 @@ const getExtensionOutputChannelProviders = async (
 ): Promise<readonly OutputChannelProvider[]> => {
   const extensionId = getExtensionId(extension)
   const rpc = await getRpc(extension, assetDir, platform)
-  const snapshot = await rpc.invoke('ExtensionApi.getOutputChannelRegistrySnapshot')
+  let snapshot: OutputChannelRegistrySnapshot
+  try {
+    snapshot = await rpc.invoke(outputChannelRegistrySnapshotCommand)
+  } catch (error) {
+    if (isCommandNotFoundError(error, outputChannelRegistrySnapshotCommand)) {
+      return []
+    }
+    throw error
+  }
   const registeredIds = getRegisteredOutputChannelIds(snapshot)
   const outputChannels = extension.outputChannels || []
   return outputChannels

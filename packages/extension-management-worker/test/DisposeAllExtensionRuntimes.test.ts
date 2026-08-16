@@ -9,7 +9,10 @@ import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensio
 const disposeFirst = jest.fn(async () => {})
 const disposeSecond = jest.fn(async () => {})
 
-const state: { rendererWorker?: DisposableMockRpc; sharedProcess?: DisposableMockRpc } = {}
+const state: { rendererWorker: DisposableMockRpc | undefined; sharedProcess: DisposableMockRpc | undefined } = {
+  rendererWorker: undefined,
+  sharedProcess: undefined,
+}
 
 beforeEach(() => {
   disposeFirst.mockClear()

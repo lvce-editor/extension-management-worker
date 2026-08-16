@@ -128,6 +128,42 @@ test('getOutputChannelProviders ignores an invalid registry snapshot', async () 
   await expect(ExtensionOutputChannel.getOutputChannelProviders(extensionsState)).resolves.toEqual([])
 })
 
+test('getOutputChannelProviders ignores an extension without snapshot support', async () => {
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension.legacy',
+      isolated: true,
+      outputChannels: [{ id: 'legacy-output', label: 'Legacy Output' }],
+    },
+  ])
+  const rpc = createRpc({
+    'ExtensionApi.getOutputChannelRegistrySnapshot': () => {
+      throw new Error('Command not found ExtensionApi.getOutputChannelRegistrySnapshot')
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension.legacy', rpc.rpc)
+
+  await expect(ExtensionOutputChannel.getOutputChannelProviders(extensionsState)).resolves.toEqual([])
+})
+
+test('getOutputChannelProviders rethrows extension errors', async () => {
+  const extensionsState = createExtensionsState([
+    {
+      id: 'extension.broken',
+      isolated: true,
+      outputChannels: [{ id: 'broken-output', label: 'Broken Output' }],
+    },
+  ])
+  const rpc = createRpc({
+    'ExtensionApi.getOutputChannelRegistrySnapshot': () => {
+      throw new Error('Extension host crashed')
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension.broken', rpc.rpc)
+
+  await expect(ExtensionOutputChannel.getOutputChannelProviders(extensionsState)).rejects.toThrow('Extension host crashed')
+})
+
 test('readOutputChannel reads from the matching isolated extension worker', async () => {
   const extensionsState = createExtensionsState([
     {

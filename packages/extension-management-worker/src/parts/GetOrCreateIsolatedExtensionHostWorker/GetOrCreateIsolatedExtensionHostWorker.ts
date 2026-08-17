@@ -79,9 +79,14 @@ const createAndStoreRpc = async (
   contentSecurityPolicy: string,
   create: CreateWorker,
 ): Promise<Rpc> => {
-  const rpc = await create(extensionId, absolutePath, workerName, contentSecurityPolicy)
-  IsolatedExtensionHostWorkerState.set(extensionId, rpc)
-  return rpc
+  try {
+    const rpc = await create(extensionId, absolutePath, workerName, contentSecurityPolicy)
+    IsolatedExtensionHostWorkerState.set(extensionId, rpc)
+    return rpc
+  } catch (error) {
+    console.error(`[extension-management-worker] ${extensionId} failed to activate`, error)
+    throw error
+  }
 }
 
 export const getOrCreateIsolatedExtensionHostWorker = async (

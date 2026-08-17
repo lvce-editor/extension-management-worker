@@ -9,6 +9,7 @@ const invokeAndTransferNoop = async (): Promise<void> => {}
 afterEach(() => {
   DeclaredRpcState.clear()
   IsolatedExtensionHostWorkerState.clear()
+  jest.restoreAllMocks()
 })
 
 test('createIsolatedExtensionHostWorker launches extension main entry', async () => {
@@ -195,7 +196,9 @@ test('getOrCreateIsolatedExtensionHostWorker retries after worker creation fails
     invokeAndTransfer: async () => undefined,
     send: () => {},
   }
-  const create = jest.fn<() => Promise<Rpc>>().mockRejectedValueOnce(new Error('Failed to create worker')).mockResolvedValueOnce(rpc)
+  const error = new Error('Failed to create worker')
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+  const create = jest.fn<() => Promise<Rpc>>().mockRejectedValueOnce(error).mockResolvedValueOnce(rpc)
 
   await expect(
     GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', '', create),
@@ -204,4 +207,6 @@ test('getOrCreateIsolatedExtensionHostWorker retries after worker creation fails
     GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker('sample.extension', '/remote/sample/main.js', '', '', create),
   ).resolves.toBe(rpc)
   expect(create).toHaveBeenCalledTimes(2)
+  expect(consoleError).toHaveBeenCalledTimes(1)
+  expect(consoleError).toHaveBeenCalledWith('[extension-management-worker] sample.extension failed to activate', error)
 })

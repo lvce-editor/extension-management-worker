@@ -4,6 +4,7 @@ import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerCodeAction } from '../ExecuteLanguageServerCodeAction/ExecuteLanguageServerCodeAction.ts'
 import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
+import { executeLanguageServerDocumentSymbols } from '../ExecuteLanguageServerDocumentSymbols/ExecuteLanguageServerDocumentSymbols.ts'
 import { executeLanguageServerReferences } from '../ExecuteLanguageServerReferences/ExecuteLanguageServerReferences.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
@@ -41,6 +42,7 @@ const activationEventByKind: Readonly<Record<string, string>> = {
   'brace completion': 'onBraceCompletion',
   'closing tag': 'onClosingTag',
   definition: 'onDefinition',
+  'document symbol': 'onDocumentSymbol',
   implementation: 'onImplementation',
   reference: 'onReferences',
   rename: 'onRename',
@@ -62,7 +64,7 @@ const contributesLanguageProvider = (extension: ExtensionManifest, kind: string,
   if (kind === 'code action') {
     return contributesCodeActionProvider(extension, languageId) || contributesLanguageServer(extension, languageId)
   }
-  if ((kind === 'definition' || kind === 'reference') && contributesLanguageServer(extension, languageId)) {
+  if (['definition', 'document symbol', 'reference'].includes(kind) && contributesLanguageServer(extension, languageId)) {
     return true
   }
   const activationEvent = activationEventByKind[kind] || 'onLanguage'
@@ -142,6 +144,9 @@ const executeExtensionLanguageProvider = async (
   if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
+  }
+  if (kind === 'document symbol' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    return executeLanguageServerDocumentSymbols(rpc, extension, textDocument)
   }
   if (kind === 'reference' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0

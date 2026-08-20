@@ -60,6 +60,36 @@ test('executes the matching isolated definition provider', async () => {
   expect(invocations).toEqual([['ExtensionApi.executeLanguageProvider', 'definition', 'provideDefinition', textDocument, 2]])
 })
 
+test('executes the matching isolated document symbol provider', async () => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return [{ endOffset: 5, kind: 12, name: 'value', selectionEndOffset: 5, selectionStartOffset: 0, startOffset: 0 }]
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('typescript', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onDocumentSymbol:typescript'],
+      id: 'typescript',
+      isolated: true,
+    },
+  ])
+  const textDocument = { languageId: 'typescript', text: 'value', uri: '/test.ts' }
+
+  await expect(
+    ExecuteLanguageProvider.executeLanguageProvider(extensionsState, 'document symbol', 'provideDocumentSymbols', textDocument),
+  ).resolves.toEqual({
+    found: true,
+    result: [{ endOffset: 5, kind: 12, name: 'value', selectionEndOffset: 5, selectionStartOffset: 0, startOffset: 0 }],
+  })
+  expect(invocations).toEqual([['ExtensionApi.executeLanguageProvider', 'document symbol', 'provideDocumentSymbols', textDocument]])
+})
+
 test('routes language server definition contributions through the shared process', async () => {
   const textDocument = {
     languageId: 'elm',

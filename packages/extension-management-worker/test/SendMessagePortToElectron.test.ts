@@ -1,6 +1,6 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
-import { RendererWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker, RpcId } from '@lvce-editor/rpc-registry'
 import { sendMessagePortToElectron } from '../src/parts/SendMessagePortToElectron/SendMessagePortToElectron.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
@@ -15,14 +15,14 @@ afterEach(() => {
 test('forwards the message port and initial command to the renderer worker', async () => {
   const invocations: unknown[] = []
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'SendMessagePortToElectron.sendMessagePortToElectron'(port: MessagePort, initialCommand: string): void {
-      invocations.push(port, initialCommand)
+    'SendMessagePortToElectron.sendMessagePortToElectron'(port: MessagePort, initialCommand: string, ipcId: number): void {
+      invocations.push(port, initialCommand, ipcId)
     },
   })
   const channel = new MessageChannel()
 
   await sendMessagePortToElectron(channel.port1, 'HandleMessagePort.handleMessagePort')
 
-  expect(invocations).toEqual([channel.port1, 'HandleMessagePort.handleMessagePort'])
+  expect(invocations).toEqual([channel.port1, 'HandleMessagePort.handleMessagePort', RpcId.EmbedsWorker])
   channel.port2.close()
 })

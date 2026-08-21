@@ -11,6 +11,14 @@ const UriSchemeRegex = /^[a-zA-Z][a-zA-Z\d+.-]*:/
 const WindowsDrivePathRegex = /^[a-zA-Z]:[\\/]/
 const WindowsDriveSegmentRegex = /^[a-zA-Z]:$/
 
+const cache: {
+  disabledExtensionIds: Promise<readonly string[]> | undefined
+  uri: string | undefined
+} = {
+  disabledExtensionIds: undefined,
+  uri: undefined,
+}
+
 const encodePathSegment = (segment: string, index: number): string => {
   if (index === 0 && WindowsDriveSegmentRegex.test(segment)) {
     return segment
@@ -76,9 +84,37 @@ const readDisabledExtensionIdsFromUri = async (uri: string): Promise<readonly st
   return parseDisabledExtensions(content)
 }
 
+const setCachedDisabledExtensionIds = (uri: string, disabledExtensionIds: readonly string[]): void => {
+  cache.uri = uri
+  cache.disabledExtensionIds = Promise.resolve(disabledExtensionIds)
+}
+
+const readDisabledExtensionIdsFromUriCached = async (uri: string): Promise<readonly string[]> => {
+  if (cache.uri === uri && cache.disabledExtensionIds) {
+    return cache.disabledExtensionIds
+  }
+  const promise = readDisabledExtensionIdsFromUri(uri)
+  cache.uri = uri
+  cache.disabledExtensionIds = promise
+  try {
+    return await promise
+  } catch (error) {
+    if (cache.disabledExtensionIds === promise) {
+      cache.uri = undefined
+      cache.disabledExtensionIds = undefined
+    }
+    throw error
+  }
+}
+
 const readDisabledExtensionIds = async (): Promise<readonly string[]> => {
   const uri = await getWorkspaceDisabledExtensionsJsonUri()
-  return readDisabledExtensionIdsFromUri(uri)
+  return readDisabledExtensionIdsFromUriCached(uri)
+}
+
+export const clearCache = (): void => {
+  cache.uri = undefined
+  cache.disabledExtensionIds = undefined
 }
 
 export const readDisabledExtensionIdsSafe = async (): Promise<readonly string[]> => {
@@ -109,6 +145,7 @@ export const disableExtension = async (id: string): Promise<void> => {
   const oldDisabled = await readDisabledExtensionIdsFromUri(uri)
   const newDisabled = oldDisabled.includes(id) ? oldDisabled : [...oldDisabled, id]
   await writeDisabledExtensionIds(uri, newDisabled)
+  setCachedDisabledExtensionIds(uri, newDisabled)
 }
 
 export const enableExtension = async (id: string): Promise<void> => {
@@ -116,9 +153,11 @@ export const enableExtension = async (id: string): Promise<void> => {
   const uri = await getWorkspaceDisabledExtensionsJsonUri()
   const exists = await FileSystemWorker.exists(uri)
   if (!exists) {
+    setCachedDisabledExtensionIds(uri, [])
     return
   }
   const oldDisabled = await readDisabledExtensionIdsFromUri(uri)
   const newDisabled = oldDisabled.filter((item) => item !== id)
   await writeDisabledExtensionIds(uri, newDisabled)
+  setCachedDisabledExtensionIds(uri, newDisabled)
 }

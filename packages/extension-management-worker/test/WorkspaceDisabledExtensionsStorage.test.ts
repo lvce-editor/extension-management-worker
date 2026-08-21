@@ -11,6 +11,7 @@ import { disableWorkspaceExtension } from '../src/parts/DisableWorkspaceExtensio
 import { enableWorkspaceExtension } from '../src/parts/EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+import * as WorkspaceDisabledExtensionsStorage from '../src/parts/WorkspaceDisabledExtensionsStorage/WorkspaceDisabledExtensionsStorage.ts'
 
 interface MockFileSystem {
   readonly directories: Set<string>
@@ -96,6 +97,7 @@ const registerMocks = (mockFileSystem = createMockFileSystem(), workspacePath = 
 
 afterEach(() => {
   IsolatedExtensionHostWorkerState.clear()
+  WorkspaceDisabledExtensionsStorage.clearCache()
   state.fileSystemWorker?.[Symbol.dispose]()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
@@ -253,6 +255,47 @@ test('getAllExtensionsWithState marks workspace disabled extensions', async () =
       id: 'sample.disabled',
     },
   ])
+})
+
+test('getAllExtensionsWithState reads missing workspace disabled extensions only once', async () => {
+  const mockFileSystem = registerMocks()
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          id: 'sample.extension',
+        },
+      ]
+    },
+  })
+  const extensionsState = createExtensionsState()
+
+  await getAllExtensionsWithState(extensionsState, '/assets', PlatformType.Electron)
+  await getAllExtensionsWithState(extensionsState, '/assets', PlatformType.Electron)
+
+  expect(mockFileSystem.uris).toEqual(['memfs:///workspace/.lvce/disabled-extensions.json'])
+})
+
+test('getAllExtensionsWithState reads existing workspace disabled extensions only once', async () => {
+  const disabledExtensionsUri = 'memfs:///workspace/.lvce/disabled-extensions.json'
+  const mockFileSystem = registerMocks(
+    createMockFileSystem([[disabledExtensionsUri, '{\n  "disabledExtensions": [\n    "sample.disabled"\n  ]\n}\n']]),
+  )
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          id: 'sample.disabled',
+        },
+      ]
+    },
+  })
+  const extensionsState = createExtensionsState()
+
+  await getAllExtensionsWithState(extensionsState, '/assets', PlatformType.Electron)
+  await getAllExtensionsWithState(extensionsState, '/assets', PlatformType.Electron)
+
+  expect(mockFileSystem.uris).toEqual([disabledExtensionsUri, disabledExtensionsUri])
 })
 
 test('getAllExtensionsWithState applies test disabled state without reading workspace disabled extensions', async () => {

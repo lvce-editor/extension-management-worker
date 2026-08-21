@@ -39,7 +39,7 @@ const getExtensionsWithState = async (extensions: readonly any[], extensionsStat
   }
   const { disabledIds, enabledIds } = await getExtensionEnablement(extensionsState, platform)
   const extensionsWithDisabledState = withDisabledState(extensions, disabledIds, enabledIds)
-  if (platform === PlatformType.Test) {
+  if (platform === PlatformType.Test || platform === PlatformType.Web) {
     return extensionsWithDisabledState
   }
   const workspaceDisabledIds = await WorkspaceDisabledExtensionsStorage.readDisabledExtensionIdsSafe()

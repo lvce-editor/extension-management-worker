@@ -1,7 +1,7 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
-import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
+import { FileSystemWorker, RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRuntimeContext } from '../src/parts/GetRuntimeContext/GetRuntimeContext.ts'
@@ -11,9 +11,11 @@ const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location')
 const originalCaches = Object.getOwnPropertyDescriptor(globalThis, 'caches')
 
 const state: {
+  fileSystemWorker: DisposableMockRpc | undefined
   rendererWorker: DisposableMockRpc | undefined
   sharedProcess: DisposableMockRpc | undefined
 } = {
+  fileSystemWorker: undefined,
   rendererWorker: undefined,
   sharedProcess: undefined,
 }
@@ -49,8 +51,10 @@ const restoreLocation = (): void => {
 }
 
 afterEach(() => {
+  state.fileSystemWorker?.[Symbol.dispose]()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
+  state.fileSystemWorker = undefined
   state.rendererWorker = undefined
   state.sharedProcess = undefined
   if (originalFetch) {
@@ -139,10 +143,18 @@ test('getAllExtensionsWithState reads static web extensions for the web platform
     'Layout.getAssetDir'() {
       return '/static'
     },
+    'Workspace.getPath'() {
+      return 'memfs:///workspace'
+    },
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions'() {
       throw new Error('Expected static build to use web extensions')
+    },
+  })
+  state.fileSystemWorker = FileSystemWorker.registerMockRpc({
+    'FileSystem.exists'() {
+      return false
     },
   })
   Object.defineProperty(globalThis, 'fetch', {
@@ -177,6 +189,7 @@ test('getAllExtensionsWithState reads static web extensions for the web platform
       path: '/static/extensions/sample.extension',
     },
   ])
+  expect(state.fileSystemWorker.invocations).toEqual([])
 })
 
 test('getAllExtensionsWithState applies an explicit web enable to an extension disabled by default', async () => {

@@ -4,6 +4,11 @@ import { getOrigin } from '../GetOrigin/GetOrigin.ts'
 
 const allowedScriptSources = new Set([`'self'`, `'unsafe-eval'`])
 const reservedDirectives = new Set(['child-src', 'connect-src', 'default-src', 'script-src', 'worker-src'])
+const nodeProcessType = 'node-process'
+
+interface RpcInfo {
+  readonly type?: unknown
+}
 
 const parseDirective = (directive: string): readonly string[] => {
   if (directive.includes('\n') || directive.includes('\r')) {
@@ -12,7 +17,9 @@ const parseDirective = (directive: string): readonly string[] => {
   return directive.replace(/;$/, '').trim().split(/\s+/)
 }
 
-const getWorkerUrls = (absolutePath: string): { readonly assetSource?: string; readonly capabilitySource?: string; readonly origin: string } => {
+const getWorkerUrls = (
+  absolutePath: string,
+): { readonly assetSource?: string; readonly capabilitySource?: string; readonly nodeProcessSource?: string; readonly origin: string } => {
   const applicationUrl = new URL(getOrigin())
   const workerUrl = new URL(absolutePath, applicationUrl)
   if (workerUrl.protocol !== 'http:' && workerUrl.protocol !== 'https:') {
@@ -22,8 +29,13 @@ const getWorkerUrls = (absolutePath: string): { readonly assetSource?: string; r
   return {
     assetSource: new URL('./', workerUrl).href,
     capabilitySource: `${webSocketProtocol}//${applicationUrl.host}/websocket/capability`,
+    nodeProcessSource: `${webSocketProtocol}//${applicationUrl.host}/websocket/extension-node-process`,
     origin: applicationUrl.origin,
   }
+}
+
+const hasNodeProcess = (rpcInfos: readonly unknown[] | undefined): boolean => {
+  return rpcInfos?.some((rpcInfo) => typeof rpcInfo === 'object' && rpcInfo !== null && (rpcInfo as RpcInfo).type === nodeProcessType) === true
 }
 
 const validateExternalConnectSource = (source: string, applicationOrigin: string): string => {
@@ -101,8 +113,8 @@ const applyDirective = (
   }
 }
 
-export const getContentSecurityPolicy = (directives: readonly string[] | undefined, absolutePath: string): string => {
-  const { assetSource, capabilitySource, origin } = getWorkerUrls(absolutePath)
+export const getContentSecurityPolicy = (directives: readonly string[] | undefined, absolutePath: string, rpcInfos?: readonly unknown[]): string => {
+  const { assetSource, capabilitySource, nodeProcessSource, origin } = getWorkerUrls(absolutePath)
   const scriptSources = new Set([`'self'`])
   const connectSources = new Set<string>()
   if (capabilitySource) {
@@ -110,6 +122,9 @@ export const getContentSecurityPolicy = (directives: readonly string[] | undefin
   }
   if (assetSource) {
     connectSources.add(assetSource)
+  }
+  if (nodeProcessSource && hasNodeProcess(rpcInfos)) {
+    connectSources.add(nodeProcessSource)
   }
 
   const manifestDirectives = directives || []

@@ -9,6 +9,13 @@ test('adds the host security boundary when the manifest has no policy', () => {
   )
 })
 
+test('allows the direct node process endpoint only for node-process declarations', () => {
+  expect(getContentSecurityPolicy(undefined, workerUrl, [{ id: 'client', type: 'node-process' }])).toBe(
+    `default-src 'none'; script-src 'self'; worker-src 'none'; child-src 'none'; connect-src ws://localhost/websocket/capability http://localhost/extensions/builtin.language-features-nvmrc/dist/ ws://localhost/websocket/extension-node-process;`,
+  )
+  expect(getContentSecurityPolicy(undefined, workerUrl, [{ id: 'client', type: 'node' }])).not.toContain(`/websocket/extension-node-process`)
+})
+
 test('adds explicit external connect origins', () => {
   expect(getContentSecurityPolicy([`default-src 'none'`, `connect-src https://nodejs.org`, `script-src 'self' 'unsafe-eval';`], workerUrl)).toBe(
     `default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src 'none'; child-src 'none'; connect-src ws://localhost/websocket/capability http://localhost/extensions/builtin.language-features-nvmrc/dist/ https://nodejs.org;`,

@@ -10,6 +10,6 @@ export const activateExtension3 = async (extension: any, absolutePath: string, a
     throw new Error(`Extension ${extensionId} does not use the isolated extension API`)
   }
   HandleRpcInfos.handleRpcInfos(extension, platform)
-  const contentSecurityPolicy = getContentSecurityPolicy(extension.contentSecurityPolicy, absolutePath)
+  const contentSecurityPolicy = getContentSecurityPolicy(extension.contentSecurityPolicy, absolutePath, extension.rpc)
   await activateIsolatedExtension(extensionId, absolutePath, extension.workerName || '', contentSecurityPolicy, activationEvent)
 }

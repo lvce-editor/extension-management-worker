@@ -44,7 +44,7 @@ export const getRpc = async (extension: ExtensionManifest, assetDir: string, pla
   }
   HandleRpcInfos.handleRpcInfos(extension, platform)
   const absolutePath = getAbsolutePath(extension, assetDir, platform)
-  const contentSecurityPolicy = getContentSecurityPolicy(extension.contentSecurityPolicy, absolutePath)
+  const contentSecurityPolicy = getContentSecurityPolicy(extension.contentSecurityPolicy, absolutePath, extension.rpc)
   return GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker(
     extensionId,
     absolutePath,

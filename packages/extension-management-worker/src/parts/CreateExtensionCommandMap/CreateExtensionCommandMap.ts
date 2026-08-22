@@ -2,7 +2,6 @@ import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNodeRpcConnection/CreateNodeRpcConnection.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
-import * as LegacyNodeRpc from '../LegacyNodeRpc/LegacyNodeRpc.ts'
 import { createNotification } from '../Notifications/Notifications.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
 
@@ -76,9 +75,6 @@ const executeCommand = (id: string, ...args: readonly any[]): any => {
 export const createExtensionCommandMap = (extensionId: string): ExtensionCommandMap => {
   return {
     ...CommandMapRef.commandMapRef,
-    'Extensions.createLegacyNodeRpc'(rpcId: string) {
-      return LegacyNodeRpc.create(extensionId, rpcId)
-    },
     'Extensions.createNodeRpcConnection'(rpcId: string) {
       return createNodeRpcConnection(extensionId, rpcId)
     },
@@ -88,15 +84,9 @@ export const createExtensionCommandMap = (extensionId: string): ExtensionCommand
     'Extensions.deleteSecret'(key: string) {
       return deleteSecret(extensionId, key)
     },
-    'Extensions.disposeLegacyNodeRpc'(id: number) {
-      return LegacyNodeRpc.dispose(extensionId, id)
-    },
     'Extensions.executeCommand': executeCommand,
     'Extensions.getSecret'(key: string) {
       return getSecret(extensionId, key)
-    },
-    'Extensions.invokeLegacyNodeRpc'(id: number, method: string, ...params: readonly any[]) {
-      return LegacyNodeRpc.invoke(extensionId, id, method, ...params)
     },
     'Extensions.registerFileChangeHandler'() {
       FileChangeHandlerRegistry.register(extensionId)

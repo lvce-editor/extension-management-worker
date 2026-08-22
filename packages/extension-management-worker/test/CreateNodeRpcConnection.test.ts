@@ -10,7 +10,7 @@ afterEach(() => {
   ExtensionsState.reset()
 })
 
-const declareRpc = (type: 'node' | 'node-process' = 'node-process', builtin = true): void => {
+const declareRpc = (type = 'node-process', builtin = true): void => {
   DeclaredRpcState.set({
     builtin,
     id: 'builtin.git',
@@ -38,11 +38,11 @@ test('creates a remote capability for the calling extension and declared rpc', a
   expect(invocations).toEqual([['builtin.git', 'git-client']])
 })
 
-test('uses the bound legacy proxy for legacy node declarations', async () => {
+test('rejects legacy node declarations', async () => {
   declareRpc('node')
   ExtensionsState.setPlatform(PlatformType.Remote)
 
-  await expect(createNodeRpcConnection('builtin.git', 'git-client')).resolves.toEqual({ type: 'legacy-proxy' })
+  await expect(createNodeRpcConnection('builtin.git', 'git-client')).rejects.toThrow('is not a node process')
 })
 
 test('rejects a node process when the remote renderer command is missing', async () => {

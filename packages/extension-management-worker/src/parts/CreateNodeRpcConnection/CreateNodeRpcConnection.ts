@@ -1,7 +1,7 @@
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
-import { getNodeRpcType, legacyNodeRpcType } from '../GetNodeRpcPath/GetNodeRpcPath.ts'
+import { validateNodeProcessRpc } from '../ValidateNodeProcessRpc/ValidateNodeProcessRpc.ts'
 
 const isMissingRendererCommand = (error: unknown, command: string): boolean => {
   const moduleName = command.slice(0, command.indexOf('.'))
@@ -11,8 +11,6 @@ const isMissingRendererCommand = (error: unknown, command: string): boolean => {
     /command not found|not found/i.test(error.message)
   )
 }
-
-const createLegacyConnection = (): unknown => ({ type: 'legacy-proxy' })
 
 const createUnsupportedDirectLaunchError = (rpcId: string): Error => {
   return new Error(`Node process ${rpcId} requires direct renderer support`)
@@ -46,13 +44,10 @@ const createElectronConnection = async (rpcId: string): Promise<unknown> => {
 }
 
 export const createNodeRpcConnection = async (extensionId: string, rpcId: string): Promise<unknown> => {
-  const rpcType = getNodeRpcType(extensionId, rpcId)
+  validateNodeProcessRpc(extensionId, rpcId)
   const { platform } = ExtensionsState.get()
   if (platform !== PlatformType.Remote && platform !== PlatformType.Electron) {
     throw new Error('Node rpc is not available on this platform')
-  }
-  if (rpcType === legacyNodeRpcType) {
-    return createLegacyConnection()
   }
   if (platform === PlatformType.Remote) {
     return createRemoteConnection(extensionId, rpcId)
@@ -65,9 +60,6 @@ export const createNodeRpcMessagePort = async (extensionId: string, rpcId: strin
   if (platform !== PlatformType.Electron) {
     throw new Error('Node rpc message ports are only available in Electron')
   }
-  const rpcType = getNodeRpcType(extensionId, rpcId)
-  if (rpcType === legacyNodeRpcType) {
-    throw new Error(`Node rpc ${rpcId} is not a node process`)
-  }
+  validateNodeProcessRpc(extensionId, rpcId)
   await RendererWorker.invokeAndTransfer('ExtensionNodeRpc.createMessagePort', port, extensionId, rpcId)
 }

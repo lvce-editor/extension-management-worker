@@ -14,8 +14,8 @@ export const test: Test = async ({ Extension }) => {
     if (!result.getInfoError.includes('Command not found Extensions.getNodeRpcInfo')) {
       throw new Error(`Expected resolved rpc paths to be unavailable, got ${JSON.stringify(result)}`)
     }
-    if (!result.createError.includes('only available to built-in extensions')) {
-      throw new Error(`Expected third-party node rpc creation to be rejected, got ${JSON.stringify(result)}`)
+    if (!result.createError.includes('not available on this platform')) {
+      throw new Error(`Expected node process creation to be rejected in the web editor, got ${JSON.stringify(result)}`)
     }
   }
 

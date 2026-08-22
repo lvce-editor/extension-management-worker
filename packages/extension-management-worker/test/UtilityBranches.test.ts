@@ -140,6 +140,14 @@ test('handleRpcInfos stores rpc contributions with absolute urls', () => {
   expect(rpc.url).toBe('/extensions/sample/worker.js')
 })
 
+test.each(['node', 'node-process'])('handleRpcInfos does not expose %s declarations as web worker rpcs', (type) => {
+  const id = `utility-branches-${type}`
+
+  handleRpcInfos({ id: 'sample.extension', path: '/extensions/sample', rpc: [{ id, type, url: 'process.js' }] }, PlatformType.Web)
+
+  expect(ExtensionHostRpcState.get(id)).toBeUndefined()
+})
+
 test('handleRpcInfos warns when a malformed contribution throws', () => {
   const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
   const extension = {

@@ -32,12 +32,12 @@ test('does not expose resolved node paths to extensions', async () => {
   DeclaredRpcState.set({
     id: 'extension-one',
     path: '/extensions/one',
-    rpc: [{ id: 'client', name: 'One', type: 'node', url: 'client.js' }],
+    rpc: [{ id: 'client', name: 'One', type: 'node-process', url: 'client.js' }],
   })
   DeclaredRpcState.set({
     id: 'extension-two',
     path: '/extensions/two',
-    rpc: [{ id: 'client', name: 'Two', type: 'node', url: 'client.js' }],
+    rpc: [{ id: 'client', name: 'Two', type: 'node-process', url: 'client.js' }],
   })
   const commandMap = createExtensionCommandMap('extension-one')
 
@@ -46,18 +46,26 @@ test('does not expose resolved node paths to extensions', async () => {
   expect(commandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
 })
 
+test('does not expose legacy node rpc proxy commands', () => {
+  const commandMap = createExtensionCommandMap('sample.extension')
+
+  expect(commandMap['Extensions.createLegacyNodeRpc']).toBeUndefined()
+  expect(commandMap['Extensions.disposeLegacyNodeRpc']).toBeUndefined()
+  expect(commandMap['Extensions.invokeLegacyNodeRpc']).toBeUndefined()
+})
+
 test('cannot request an rpc declared by another extension identity', async () => {
   DeclaredRpcState.set({
     builtin: true,
     id: 'extension-one',
     path: '/extensions/one',
-    rpc: [{ id: 'one-client', name: 'One', type: 'node', url: 'client.js' }],
+    rpc: [{ id: 'one-client', name: 'One', type: 'node-process', url: 'client.js' }],
   })
   DeclaredRpcState.set({
     builtin: true,
     id: 'extension-two',
     path: '/extensions/two',
-    rpc: [{ id: 'two-client', name: 'Two', type: 'node', url: 'client.js' }],
+    rpc: [{ id: 'two-client', name: 'Two', type: 'node-process', url: 'client.js' }],
   })
   const commandMap = createExtensionCommandMap('extension-one')
 

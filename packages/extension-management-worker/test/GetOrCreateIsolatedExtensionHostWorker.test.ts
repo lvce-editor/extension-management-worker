@@ -96,7 +96,7 @@ test('createIsolatedExtensionHostWorker exposes only the restricted node rpc fac
   DeclaredRpcState.set({
     id: 'builtin.git',
     path: '/extensions/builtin.git',
-    rpc: [{ id: 'git-client', name: 'Git', type: 'node', url: 'node/gitClient.js' }],
+    rpc: [{ id: 'git-client', name: 'Git', type: 'node-process', url: 'node/gitClient.js' }],
   })
   DeclaredRpcState.set({
     id: 'builtin.prettier',

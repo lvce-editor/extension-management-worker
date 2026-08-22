@@ -24,7 +24,7 @@ export const handleRpcInfos = (extension: any, platform: any): void => {
 
     const urlPrefix = GetUrlPrefix.getUrlPrefix(platform, extension.path)
     for (const rpc of rpcs) {
-      if (rpc.type === 'node') {
+      if (rpc.type === 'node' || rpc.type === 'node-process') {
         continue
       }
       rpc.url = `${urlPrefix}/${rpc.url}`

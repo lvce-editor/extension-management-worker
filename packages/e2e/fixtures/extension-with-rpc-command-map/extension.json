@@ -14,7 +14,7 @@
     {
       "id": "test-client",
       "name": "Test Client",
-      "type": "node",
+      "type": "node-process",
       "url": "rpc-client.js"
     }
   ]

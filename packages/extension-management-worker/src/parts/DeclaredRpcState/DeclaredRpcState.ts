@@ -1,4 +1,4 @@
-export interface DeclaredRpc {
+interface DeclaredRpc {
   readonly id: string
   readonly name?: string
   readonly type: string

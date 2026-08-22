@@ -1,5 +1,5 @@
 import { RendererWorker } from '@lvce-editor/rpc-registry'
-import { getNodeRpcInfo } from '../GetNodeRpcPath/GetNodeRpcPath.ts'
+import { getNodeRpcInfo, getNodeRpcType, legacyNodeRpcType } from '../GetNodeRpcPath/GetNodeRpcPath.ts'
 
 interface LegacyNodeRpc {
   readonly extensionId: string
@@ -18,6 +18,9 @@ const getRpc = (extensionId: string, id: number): LegacyNodeRpc => {
 }
 
 export const create = async (extensionId: string, rpcId: string): Promise<number> => {
+  if (getNodeRpcType(extensionId, rpcId) !== legacyNodeRpcType) {
+    throw new Error(`Node rpc ${rpcId} is not a legacy node rpc`)
+  }
   const { name, path } = await getNodeRpcInfo(extensionId, rpcId)
   const rendererRpcId = await RendererWorker.invoke('ExtensionNodeRpc.create', name, path)
   const id = ++state.nextId

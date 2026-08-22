@@ -35,3 +35,14 @@ test('binds compatibility proxy handles to the requesting extension', async () =
   await expect(LegacyNodeRpc.dispose('other.extension', id)).rejects.toThrow(`Node rpc ${id} not found`)
   await expect(LegacyNodeRpc.dispose('builtin.git', id)).resolves.toBeUndefined()
 })
+
+test('rejects node process declarations through the compatibility proxy', async () => {
+  DeclaredRpcState.set({
+    builtin: true,
+    id: 'builtin.git',
+    path: '/extensions/builtin.git',
+    rpc: [{ id: 'git-client', name: 'Git', type: 'node-process', url: 'client.js' }],
+  })
+
+  await expect(LegacyNodeRpc.create('builtin.git', 'git-client')).rejects.toThrow('is not a legacy node rpc')
+})

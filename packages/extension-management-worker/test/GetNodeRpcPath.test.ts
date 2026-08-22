@@ -2,7 +2,7 @@ import { afterEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
-import { getNodeRpcInfo, getNodeRpcPath } from '../src/parts/GetNodeRpcPath/GetNodeRpcPath.ts'
+import { getNodeRpcInfo, getNodeRpcPath, getNodeRpcType } from '../src/parts/GetNodeRpcPath/GetNodeRpcPath.ts'
 import { handleRpcInfos } from '../src/parts/HandleRpcInfos/HandleRpcInfos.ts'
 
 afterEach(() => {
@@ -106,13 +106,16 @@ test('rejects an absolute node rpc url', async () => {
   )
 })
 
-// eslint-disable-next-line jest/no-disabled-tests -- enable after third-party Node RPCs are rejected again
-test.skip('rejects node rpc for third-party extensions', async () => {
+test('resolves a node process rpc from a third-party extension without prompting', async () => {
   DeclaredRpcState.set({
     id: 'third-party.extension',
     path: '/extensions/third-party',
-    rpc: [{ id: 'client', type: 'node', url: 'client.js' }],
+    rpc: [{ id: 'client', type: 'node-process', url: 'client.js' }],
   })
 
-  await expect(getNodeRpcPath('third-party.extension', 'client')).rejects.toThrow('only available to built-in extensions')
+  await expect(getNodeRpcInfo('third-party.extension', 'client')).resolves.toEqual({
+    name: '',
+    path: '/extensions/third-party/client.js',
+  })
+  expect(getNodeRpcType('third-party.extension', 'client')).toBe('node-process')
 })

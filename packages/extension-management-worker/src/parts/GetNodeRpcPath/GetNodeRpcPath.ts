@@ -1,7 +1,14 @@
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as DeclaredRpcState from '../DeclaredRpcState/DeclaredRpcState.ts'
 
-const nodeRpcType = 'node'
+export const legacyNodeRpcType = 'node'
+const nodeProcessRpcType = 'node-process'
+
+export type NodeRpcType = typeof legacyNodeRpcType | typeof nodeProcessRpcType
+
+const isNodeRpcType = (type: string): type is NodeRpcType => {
+  return type === legacyNodeRpcType || type === nodeProcessRpcType
+}
 
 const joinPath = (base: string, relativePath: string): string => {
   let normalizedBase = base.replaceAll('\\', '/')
@@ -35,18 +42,20 @@ const getExtensionRoot = async (extension: DeclaredRpcState.ExtensionWithDeclare
   return toFileSystemPath(extensionPath)
 }
 
-const getDeclaredNodeRpc = (extension: DeclaredRpcState.ExtensionWithDeclaredRpcs, rpcId: string): DeclaredRpcState.DeclaredRpc => {
+type DeclaredNodeRpc = DeclaredRpcState.DeclaredRpc & { readonly type: NodeRpcType }
+
+const getDeclaredNodeRpc = (extension: DeclaredRpcState.ExtensionWithDeclaredRpcs, rpcId: string): DeclaredNodeRpc => {
   const rpc = extension.rpc.find((candidate) => candidate.id === rpcId)
   if (!rpc) {
     throw new Error(`Node rpc ${rpcId} is not declared by extension ${extension.id}`)
   }
-  if (rpc.type !== nodeRpcType) {
+  if (!isNodeRpcType(rpc.type)) {
     throw new Error(`Rpc ${rpcId} declared by extension ${extension.id} is not a node rpc`)
   }
   if (!rpc.url || rpc.url.startsWith('/') || /^[A-Za-z][A-Za-z\d+.-]*:/.test(rpc.url)) {
     throw new Error(`Node rpc ${rpcId} declared by extension ${extension.id} must use a relative url`)
   }
-  return rpc
+  return rpc as DeclaredNodeRpc
 }
 
 export interface NodeRpcInfo {
@@ -54,15 +63,22 @@ export interface NodeRpcInfo {
   readonly path: string
 }
 
-export const getNodeRpcInfo = async (extensionId: string, rpcId: string): Promise<NodeRpcInfo> => {
+const getExtension = (extensionId: string): DeclaredRpcState.ExtensionWithDeclaredRpcs => {
   const extension = DeclaredRpcState.get(extensionId)
   if (!extension) {
     throw new Error(`Extension ${extensionId} has no declared rpcs`)
   }
-  if (!extension.builtin) {
-    // TODO
-    console.warn(`Node rpc ${rpcId} is only available to built-in extensions`)
-  }
+  return extension
+}
+
+export const getNodeRpcType = (extensionId: string, rpcId: string): NodeRpcType => {
+  const extension = getExtension(extensionId)
+  const rpc = getDeclaredNodeRpc(extension, rpcId)
+  return rpc.type
+}
+
+export const getNodeRpcInfo = async (extensionId: string, rpcId: string): Promise<NodeRpcInfo> => {
+  const extension = getExtension(extensionId)
   const rpc = getDeclaredNodeRpc(extension, rpcId)
   const extensionRoot = await getExtensionRoot(extension)
   return {

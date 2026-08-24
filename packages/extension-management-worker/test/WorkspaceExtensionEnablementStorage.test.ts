@@ -70,7 +70,7 @@ const registerMocks = (mockFileSystem = createMockFileSystem(), getWorkspaceUri:
       }
       return ConfigUri
     },
-    'Workspace.getUri'() {
+    'Workspace.getPath'() {
       return getWorkspaceUri()
     },
   })

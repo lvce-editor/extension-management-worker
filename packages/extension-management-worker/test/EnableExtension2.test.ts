@@ -22,6 +22,9 @@ afterEach(() => {
 const registerRendererWorker = (): void => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
+    'Workspace.getUri'() {
+      return ''
+    },
   })
 }
 
@@ -41,5 +44,8 @@ test('enableExtension2 delegates desktop enabling to the shared process', async 
   await enableExtension2('sample.extension', PlatformType.Remote)
 
   expect(state.sharedProcess.invocations).toEqual([['ExtensionManagement.enable', 'sample.extension']])
-  expect(getRendererWorker().invocations).toEqual([['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', false]])
+  expect(getRendererWorker().invocations).toEqual([
+    ['Workspace.getUri'],
+    ['ExtensionManagement.handleExtensionsCacheInvalidated', 'sample.extension', false],
+  ])
 })

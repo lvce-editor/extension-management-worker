@@ -90,7 +90,7 @@ const getWorkspaceUri = async (): Promise<string> => {
 }
 
 const getConfigUri = async (): Promise<string> => {
-  const configUri = await RendererWorker.invoke('WebView.compatSharedProcessInvoke', 'PlatformPaths.getConfigUri')
+  const configUri = await RendererWorker.invoke('WebView.compatSharedProcessInvoke', 'Platform.getConfigUri')
   if (typeof configUri !== 'string' || configUri === '') {
     throw new Error('Config uri is not available')
   }

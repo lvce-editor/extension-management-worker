@@ -119,6 +119,7 @@ export const createViewInstance = async (
     const eventListeners = await getViewEventListeners(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {
+      context,
       rpc,
       status: 'ready',
       viewId,

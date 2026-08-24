@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
 import type { Rpc } from '@lvce-editor/rpc'
 
 export interface SerializedError {
@@ -6,7 +8,8 @@ export interface SerializedError {
   readonly stack?: string
 }
 
-interface ReadyExtensionViewInstance {
+export interface ReadyExtensionViewInstance {
+  readonly context?: unknown
   readonly rpc: Rpc
   readonly status: 'ready'
   readonly viewId: string
@@ -18,7 +21,7 @@ interface ErrorExtensionViewInstance {
   readonly viewId: string
 }
 
-type ExtensionViewInstance = ReadyExtensionViewInstance | ErrorExtensionViewInstance
+export type ExtensionViewInstance = ReadyExtensionViewInstance | ErrorExtensionViewInstance
 
 const instances: Record<number, ExtensionViewInstance> = Object.create(null)
 
@@ -28,6 +31,13 @@ export const set = (uid: number, instance: ExtensionViewInstance): void => {
 
 export const get = (uid: number): ExtensionViewInstance | undefined => {
   return instances[uid]
+}
+
+export const getEntries = (): readonly { readonly instance: ExtensionViewInstance; readonly uid: number }[] => {
+  return Object.entries(instances).map(([uid, instance]) => ({
+    instance,
+    uid: Number(uid),
+  }))
 }
 
 export const remove = (uid: number): void => {

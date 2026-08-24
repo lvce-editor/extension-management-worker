@@ -8,7 +8,7 @@ import { getExtensionEnablement } from '../GetExtensionEnablement/GetExtensionEn
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
 import { isExtensionCompatible } from '../IsExtensionCompatible/IsExtensionCompatible.ts'
-import * as WorkspaceDisabledExtensionsStorage from '../WorkspaceDisabledExtensionsStorage/WorkspaceDisabledExtensionsStorage.ts'
+import * as WorkspaceExtensionEnablementStorage from '../WorkspaceExtensionEnablementStorage/WorkspaceExtensionEnablementStorage.ts'
 
 const withDisabledState = (extensions: readonly any[], disabledIds: readonly string[], enabledIds: readonly string[] = []): readonly any[] => {
   if (disabledIds.length === 0 && enabledIds.length === 0) {
@@ -39,11 +39,12 @@ const getExtensionsWithState = async (extensions: readonly any[], extensionsStat
   }
   const { disabledIds, enabledIds } = await getExtensionEnablement(extensionsState, platform)
   const extensionsWithDisabledState = withDisabledState(extensions, disabledIds, enabledIds)
-  if (platform === PlatformType.Test || platform === PlatformType.Web) {
+  if (platform === PlatformType.Test) {
     return extensionsWithDisabledState
   }
-  const workspaceDisabledIds = await WorkspaceDisabledExtensionsStorage.readDisabledExtensionIdsSafe()
-  return withDisabledState(extensionsWithDisabledState, workspaceDisabledIds)
+  const { disabledIds: workspaceDisabledIds, enabledIds: workspaceEnabledIds } =
+    await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablementSafe()
+  return withDisabledState(extensionsWithDisabledState, workspaceDisabledIds, workspaceEnabledIds)
 }
 
 export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number) => {

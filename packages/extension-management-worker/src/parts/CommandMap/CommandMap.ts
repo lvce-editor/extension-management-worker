@@ -67,6 +67,7 @@ import { initialize } from '../Initialize/Initialize.ts'
 import { installExtension } from '../InstallExtension/InstallExtension.ts'
 import { invalidateExtensionsCache } from '../InvalidateExtensionsCache/InvalidateExtensionsCache.ts'
 import { getLanguages } from '../Languages/Languages.ts'
+import { handleLinkedExtensionChange } from '../LinkedExtensionHotReload/LinkedExtensionHotReload.ts'
 import {
   clearNotifications,
   dismissNotification,
@@ -178,6 +179,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.getViews': getViews,
   'Extensions.handleData': handleData,
   'Extensions.handleFileChanges': handleFileChanges,
+  'Extensions.handleLinkedExtensionChange': handleLinkedExtensionChange,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleUncaughtExtensionError': handleUncaughtExtensionError,
   'Extensions.handleViewContextChange': handleViewContextChange,

@@ -80,21 +80,17 @@ const hashWorkspaceUri = async (workspaceUri: string): Promise<string> => {
 }
 
 const getWorkspaceUri = async (): Promise<string> => {
-  let workspaceUri: unknown
+  let workspacePath: unknown
   try {
-    workspaceUri = await RendererWorker.invoke('Workspace.getUri')
+    workspacePath = await RendererWorker.invoke('Workspace.getPath')
   } catch {
-    try {
-      workspaceUri = await RendererWorker.invoke('Workspace.getPath')
-    } catch {
-      return ''
-    }
+    return ''
   }
-  return typeof workspaceUri === 'string' ? toWorkspaceUri(workspaceUri) : ''
+  return typeof workspacePath === 'string' ? toWorkspaceUri(workspacePath) : ''
 }
 
 const getConfigUri = async (): Promise<string> => {
-  const configUri = await RendererWorker.invoke('WebView.compatSharedProcessInvoke', 'PlatformPaths.getConfigUri')
+  const configUri = await RendererWorker.invoke('WebView.compatSharedProcessInvoke', 'Platform.getConfigUri')
   if (typeof configUri !== 'string' || configUri === '') {
     throw new Error('Config uri is not available')
   }

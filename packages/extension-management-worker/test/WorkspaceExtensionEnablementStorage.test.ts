@@ -65,12 +65,12 @@ const registerMocks = (mockFileSystem = createMockFileSystem(), getWorkspaceUri:
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'WebView.compatSharedProcessInvoke'(command: string) {
-      if (command !== 'PlatformPaths.getConfigUri') {
+      if (command !== 'Platform.getConfigUri') {
         throw new Error(`Unexpected shared process command: ${command}`)
       }
       return ConfigUri
     },
-    'Workspace.getUri'() {
+    'Workspace.getPath'() {
       return getWorkspaceUri()
     },
   })

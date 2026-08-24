@@ -3,8 +3,10 @@
 import { getOrigin } from '../GetOrigin/GetOrigin.ts'
 
 const allowedScriptSources = new Set([`'self'`, `'unsafe-eval'`])
+const allowedConnectSchemeSources = new Set(['https:', 'wss:'])
 const reservedDirectives = new Set(['child-src', 'connect-src', 'default-src', 'script-src', 'worker-src'])
 const nodeProcessType = 'node-process'
+const loopbackWildcardPortSourceRegex = /^(?:http|ws):\/\/(?:127\.0\.0\.1|localhost):\*$/
 
 interface RpcInfo {
   readonly type?: unknown
@@ -39,7 +41,10 @@ const hasNodeProcess = (rpcInfos: readonly unknown[] | undefined): boolean => {
 }
 
 const validateExternalConnectSource = (source: string, applicationOrigin: string): string => {
-  if (source.includes('*') || source === `'none'`) {
+  if (allowedConnectSchemeSources.has(source) || loopbackWildcardPortSourceRegex.test(source)) {
+    return source
+  }
+  if (source.includes('*') || source === `'none'` || source === 'http:' || source === 'ws:') {
     throw new Error(`invalid isolated extension connect source ${source}`)
   }
   let url: URL

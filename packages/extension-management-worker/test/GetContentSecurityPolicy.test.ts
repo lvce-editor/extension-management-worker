@@ -42,15 +42,26 @@ test('rejects directives containing newlines', () => {
   expect(() => getContentSecurityPolicy([`connect-src https://example.com\nscript-src 'self'`], workerUrl)).toThrow('cannot contain newlines')
 })
 
-test('reports the invalid value when a connect source is not an absolute URL', () => {
-  expect(() => getContentSecurityPolicy([`connect-src https:`], workerUrl)).toThrow(
-    'isolated extension connect source must be an absolute URL. Invalid value: "https:"',
+test('allows secure scheme sources', () => {
+  expect(getContentSecurityPolicy([`connect-src https: wss:`], workerUrl)).toContain('connect-src ws://localhost/websocket/capability')
+  expect(getContentSecurityPolicy([`connect-src https: wss:`], workerUrl)).toContain('https: wss:;')
+})
+
+test('allows insecure wildcard ports only on loopback hosts', () => {
+  expect(getContentSecurityPolicy([`connect-src http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*`], workerUrl)).toContain(
+    'http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*;',
   )
 })
 
-test.each([`connect-src *`, `connect-src ws://localhost/file-system-process`, `worker-src 'self'`, `default-src 'self'`])(
-  'rejects unsafe policy %s',
-  (directive) => {
-    expect(() => getContentSecurityPolicy([directive], workerUrl)).toThrow()
-  },
-)
+test.each([
+  `connect-src *`,
+  `connect-src http:`,
+  `connect-src ws:`,
+  `connect-src https://example.com:*`,
+  `connect-src http://example.com:*`,
+  `connect-src ws://localhost/file-system-process`,
+  `worker-src 'self'`,
+  `default-src 'self'`,
+])('rejects unsafe policy %s', (directive) => {
+  expect(() => getContentSecurityPolicy([directive], workerUrl)).toThrow()
+})

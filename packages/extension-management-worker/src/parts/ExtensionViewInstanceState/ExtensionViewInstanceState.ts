@@ -10,6 +10,8 @@ export interface SerializedError {
 
 export interface ReadyExtensionViewInstance {
   readonly context?: unknown
+  readonly disposeWorkerWhenLastViewCloses?: boolean
+  readonly extensionId?: string
   readonly rpc: Rpc
   readonly status: 'ready'
   readonly viewId: string

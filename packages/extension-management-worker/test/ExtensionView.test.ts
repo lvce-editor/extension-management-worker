@@ -38,12 +38,16 @@ const createRpc = (
     readonly focusSelector?: string
   } = {},
 ): {
+  readonly disposals: readonly unknown[]
   readonly invocations: readonly unknown[]
   readonly rpc: Rpc
 } => {
+  const disposals: unknown[] = []
   const invocations: unknown[] = []
   const rpc: Rpc = {
-    dispose: async () => {},
+    dispose: async () => {
+      disposals.push(undefined)
+    },
     invoke: async (method: string, ...params: readonly unknown[]): Promise<unknown> => {
       invocations.push([method, ...params])
       const error = options.errors?.[method]
@@ -115,6 +119,7 @@ const createRpc = (
     send: (): void => {},
   }
   return {
+    disposals,
     invocations,
     rpc,
   }
@@ -144,7 +149,7 @@ test('proxies virtual dom view lifecycle to isolated extension rpc', async () =>
   const mock = createRpc()
   const extensions = [
     {
-      activation: ['onView:sample.views.testing'],
+      activation: ['onView:sample.views.testing', 'onCommand:sample.refresh'],
       id: 'extension-one',
       isolated: true,
       views: [
@@ -180,6 +185,69 @@ test('proxies virtual dom view lifecycle to isolated extension rpc', async () =>
     ['ExtensionApi.dispatchViewEvent', 1, { type: 'click' }],
     ['ExtensionApi.disposeViewInstance', 1],
   ])
+  expect(mock.disposals).toHaveLength(1)
+  expect(IsolatedExtensionHostWorkerState.get('extension-one')).toBeUndefined()
+})
+
+test.each(['onDiagnostic:javascript', 'onSourceControl', 'onStatusBarItem'])(
+  'keeps an extension worker with the background activation %s',
+  async (backgroundActivation) => {
+    const mock = createRpc()
+    state.sharedProcess = SharedProcess.registerMockRpc({
+      'ExtensionManagement.getAllExtensions'() {
+        return [
+          {
+            activation: ['onView:sample.views.testing', 'onCommand:sample.refresh', backgroundActivation],
+            id: 'extension-one',
+            isolated: true,
+            views: [{ id: 'sample.views.testing' }],
+          },
+        ]
+      },
+    })
+    IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
+    await createViewInstance('sample.views.testing', 1, {}, '/assets', 2)
+
+    await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
+
+    expect(mock.disposals).toHaveLength(0)
+    expect(IsolatedExtensionHostWorkerState.get('extension-one')).toBe(mock.rpc)
+  },
+)
+
+test('keeps an extension worker while another contributed view instance is open', async () => {
+  const mock = createRpc()
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          activation: ['onView:sample.views.testing', 'onView:sample.views.other'],
+          id: 'extension-one',
+          isolated: true,
+          views: [{ id: 'sample.views.testing' }, { id: 'sample.views.other' }],
+        },
+      ]
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
+  await createViewInstance('sample.views.testing', 1, {}, '/assets', 2)
+  await createViewInstance('sample.views.other', 2, {}, '/assets', 2)
+
+  await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
+
+  expect(mock.disposals).toHaveLength(0)
+  expect(IsolatedExtensionHostWorkerState.get('extension-one')).toBe(mock.rpc)
+
+  await disposeViewInstance('sample.views.other', 2, '/assets', 2)
+
+  expect(mock.disposals).toHaveLength(1)
+  expect(IsolatedExtensionHostWorkerState.get('extension-one')).toBeUndefined()
+})
+
+test('disposeViewInstance does not activate a worker for a missing instance', async () => {
+  await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
+
+  expect(IsolatedExtensionHostWorkerState.getIds()).toEqual([])
 })
 
 test('createViewInstance resolves empty web context before loading a virtual dom view', async () => {

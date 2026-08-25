@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
+import { disposeIsolatedExtensionHostWorker } from '../DisposeIsolatedExtensionHostWorker/DisposeIsolatedExtensionHostWorker.ts'
 import * as ExtensionViewInstanceState from '../ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 import {
@@ -17,6 +18,7 @@ interface ManifestView {
 }
 
 interface ExtensionManifest extends RpcExtensionManifest {
+  readonly activation?: readonly string[]
   readonly views?: readonly ManifestView[]
 }
 
@@ -42,6 +44,12 @@ interface ViewRegistrySnapshot {
   readonly views?: readonly RegisteredView[]
 }
 
+interface ExtensionRpc {
+  readonly disposeWorkerWhenLastViewCloses: boolean
+  readonly extensionId: string
+  readonly rpc: Rpc
+}
+
 const serializeError = (error: unknown): ExtensionViewInstanceState.SerializedError => {
   if (error instanceof Error) {
     return {
@@ -64,6 +72,28 @@ const hasView = (extension: ExtensionManifest, viewId: string): boolean => {
   return Array.isArray(extension.views) && extension.views.some((view) => view.id === viewId)
 }
 
+const hasOnlyViewAndCommandActivations = (extension: ExtensionManifest): boolean => {
+  return (
+    Array.isArray(extension.activation) &&
+    extension.activation.length > 0 &&
+    extension.activation.every((event) => event.startsWith('onView:') || event.startsWith('onCommand:'))
+  )
+}
+
+const hasOtherViewInstances = (rpc: Rpc): boolean => {
+  return ExtensionViewInstanceState.getEntries().some((entry) => entry.instance.status === 'ready' && entry.instance.rpc === rpc)
+}
+
+const disposeViewOnlyExtensionWorker = async (extensionId: string, rpc: Rpc): Promise<void> => {
+  if (hasOtherViewInstances(rpc)) {
+    return
+  }
+  if (IsolatedExtensionHostWorkerState.get(extensionId) !== rpc) {
+    return
+  }
+  await disposeIsolatedExtensionHostWorker(extensionId)
+}
+
 const getExtensionForView = async (viewId: string, assetDir: string, platform: number): Promise<ExtensionManifest> => {
   const extensions = await GetExtensions.getAllExtensions(assetDir, platform)
   const extension = extensions.find((extension) => IsExtensionIsolated.isExtensionIsolated(extension) && hasView(extension, viewId))
@@ -73,18 +103,28 @@ const getExtensionForView = async (viewId: string, assetDir: string, platform: n
   return extension
 }
 
-const getRpcForView = async (viewId: string, assetDir: string, platform: number): Promise<Rpc> => {
+const getRpcForView = async (viewId: string, assetDir: string, platform: number): Promise<ExtensionRpc> => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   const extension = await getExtensionForView(viewId, resolvedAssetDir, resolvedPlatform)
-  const existingRpc = IsolatedExtensionHostWorkerState.get(getExtensionId(extension))
+  const extensionId = getExtensionId(extension)
+  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
   if (existingRpc) {
-    return existingRpc
+    return {
+      disposeWorkerWhenLastViewCloses: hasOnlyViewAndCommandActivations(extension),
+      extensionId,
+      rpc: existingRpc,
+    }
   }
   const activationResult = await ActivateByEvent.activateByEvent(`onView:${viewId}`, resolvedAssetDir, resolvedPlatform)
   if (activationResult.error) {
     throw activationResult.error
   }
-  return getRpc(extension, resolvedAssetDir, resolvedPlatform)
+  const rpc = await getRpc(extension, resolvedAssetDir, resolvedPlatform)
+  return {
+    disposeWorkerWhenLastViewCloses: hasOnlyViewAndCommandActivations(extension),
+    extensionId,
+    rpc,
+  }
 }
 
 const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<Rpc | undefined> => {
@@ -95,7 +135,8 @@ const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, 
     }
     return instance.rpc
   }
-  return getRpcForView(viewId, assetDir, platform)
+  const extensionRpc = await getRpcForView(viewId, assetDir, platform)
+  return extensionRpc.rpc
 }
 
 const getViewEventListeners = async (rpc: Rpc, viewId: string): Promise<readonly unknown[] | undefined> => {
@@ -115,11 +156,13 @@ export const createViewInstance = async (
   platform: number,
 ): Promise<CreateViewInstanceResult> => {
   try {
-    const rpc = await getRpcForView(viewId, assetDir, platform)
+    const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = await getRpcForView(viewId, assetDir, platform)
     const eventListeners = await getViewEventListeners(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {
       context,
+      disposeWorkerWhenLastViewCloses,
+      extensionId,
       rpc,
       status: 'ready',
       viewId,
@@ -219,14 +262,21 @@ export const renderViewInstance = async (viewId: string, uid: number, assetDir: 
   return instance.rpc.invoke('ExtensionApi.renderViewInstance', uid)
 }
 
-export const disposeViewInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<void> => {
-  const rpc = await getRpcForInstance(viewId, uid, assetDir, platform)
-  if (!rpc) {
+export const disposeViewInstance = async (_viewId: string, uid: number, _assetDir: string, _platform: number): Promise<void> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (!instance || instance.status === 'error') {
     ExtensionViewInstanceState.remove(uid)
     return
   }
-  await rpc.invoke('ExtensionApi.disposeViewInstance', uid)
-  ExtensionViewInstanceState.remove(uid)
+  const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = instance
+  try {
+    await rpc.invoke('ExtensionApi.disposeViewInstance', uid)
+  } finally {
+    ExtensionViewInstanceState.remove(uid)
+    if (disposeWorkerWhenLastViewCloses && extensionId) {
+      await disposeViewOnlyExtensionWorker(extensionId, rpc)
+    }
+  }
 }
 
 export const saveViewInstanceState = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<unknown> => {

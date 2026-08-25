@@ -135,7 +135,8 @@ const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, 
     }
     return instance.rpc
   }
-  return (await getRpcForView(viewId, assetDir, platform)).rpc
+  const extensionRpc = await getRpcForView(viewId, assetDir, platform)
+  return extensionRpc.rpc
 }
 
 const getViewEventListeners = async (rpc: Rpc, viewId: string): Promise<readonly unknown[] | undefined> => {

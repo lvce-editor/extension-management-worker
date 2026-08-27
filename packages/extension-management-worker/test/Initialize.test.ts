@@ -3,6 +3,7 @@ import { initialize } from '../src/parts/Initialize/Initialize.ts'
 
 const createDependencies = () => ({
   configureHotReload: jest.fn((_extensions: readonly { readonly path: string; readonly uri: string }[]) => {}),
+  initializeMainProcess: jest.fn(async (_platform: number) => {}),
   initializeSharedProcess: jest.fn(async (_platform: number) => {}),
   invokeRenderer: jest.fn(async (_method: string, ..._params: readonly unknown[]) => undefined),
 })
@@ -13,6 +14,7 @@ test('initialize - asks the renderer file-watcher adapter to watch linked extens
 
   await initialize(2, { extensions, hotReload: true }, dependencies)
 
+  expect(dependencies.initializeMainProcess).toHaveBeenCalledWith(2)
   expect(dependencies.initializeSharedProcess).toHaveBeenCalledWith(2)
   expect(dependencies.configureHotReload).toHaveBeenCalledWith(extensions)
   expect(dependencies.invokeRenderer).toHaveBeenCalledWith('ExtensionHotReload.watch', extensions)

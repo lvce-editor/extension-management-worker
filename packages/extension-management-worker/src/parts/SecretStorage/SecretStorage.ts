@@ -1,6 +1,6 @@
 import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { MainProcess } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 
 export const cacheName = 'ExtensionSecrets'
@@ -17,7 +17,7 @@ export const deleteSecret = async (extensionId: string, key: string): Promise<vo
   Assert.string(extensionId)
   Assert.string(key)
   if (isElectron()) {
-    await SharedProcess.invoke('SecretStorage.delete', extensionId, key)
+    await MainProcess.invoke('SecretStorage.delete', extensionId, key)
     return
   }
   const cache = await caches.open(cacheName)
@@ -28,7 +28,7 @@ export const getSecret = async (extensionId: string, key: string): Promise<strin
   Assert.string(extensionId)
   Assert.string(key)
   if (isElectron()) {
-    return SharedProcess.invoke('SecretStorage.get', extensionId, key)
+    return MainProcess.invoke('SecretStorage.get', extensionId, key)
   }
   const cache = await caches.open(cacheName)
   const response = await cache.match(getRequestUrl(extensionId, key))
@@ -40,7 +40,7 @@ export const storeSecret = async (extensionId: string, key: string, value: strin
   Assert.string(key)
   Assert.string(value)
   if (isElectron()) {
-    await SharedProcess.invoke('SecretStorage.store', extensionId, key, value)
+    await MainProcess.invoke('SecretStorage.store', extensionId, key, value)
     return
   }
   const cache = await caches.open(cacheName)

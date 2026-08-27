@@ -1,13 +1,13 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { MainProcess } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as SecretStorage from '../src/parts/SecretStorage/SecretStorage.ts'
 
 const originalCaches = Object.getOwnPropertyDescriptor(globalThis, 'caches')
-const state: { sharedProcess: DisposableMockRpc | undefined } = {
-  sharedProcess: undefined,
+const state: { mainProcess: DisposableMockRpc | undefined } = {
+  mainProcess: undefined,
 }
 
 beforeEach(() => {
@@ -15,8 +15,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  state.sharedProcess?.[Symbol.dispose]()
-  state.sharedProcess = undefined
+  state.mainProcess?.[Symbol.dispose]()
+  state.mainProcess = undefined
   if (originalCaches) {
     Object.defineProperty(globalThis, 'caches', originalCaches)
   } else {
@@ -24,9 +24,9 @@ afterEach(() => {
   }
 })
 
-test('electron secret storage delegates to the shared process', async () => {
+test('electron secret storage delegates directly to the main process', async () => {
   ExtensionsState.setPlatform(PlatformType.Electron)
-  state.sharedProcess = SharedProcess.registerMockRpc({
+  state.mainProcess = MainProcess.registerMockRpc({
     'SecretStorage.delete'() {},
     'SecretStorage.get'() {
       return 'stored-value'
@@ -38,7 +38,7 @@ test('electron secret storage delegates to the shared process', async () => {
   await SecretStorage.storeSecret('sample.extension', 'token', 'new-value')
   await SecretStorage.deleteSecret('sample.extension', 'token')
 
-  expect(state.sharedProcess.invocations).toEqual([
+  expect(state.mainProcess.invocations).toEqual([
     ['SecretStorage.get', 'sample.extension', 'token'],
     ['SecretStorage.store', 'sample.extension', 'token', 'new-value'],
     ['SecretStorage.delete', 'sample.extension', 'token'],

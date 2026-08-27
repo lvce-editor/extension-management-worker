@@ -1,5 +1,6 @@
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import { initializeMainProcess } from '../InitializeMainProcess/InitializeMainProcess.ts'
 import { initializeSharedProcess } from '../InitializeSharedProcess/InitializeSharedProcess.ts'
 import * as LinkedExtensionHotReload from '../LinkedExtensionHotReload/LinkedExtensionHotReload.ts'
 
@@ -10,19 +11,21 @@ interface DevelopmentConfig {
 
 interface InitializeDependencies {
   readonly configureHotReload: typeof LinkedExtensionHotReload.configure
+  readonly initializeMainProcess: typeof initializeMainProcess
   readonly initializeSharedProcess: typeof initializeSharedProcess
   readonly invokeRenderer: typeof RendererWorker.invoke
 }
 
 const defaultDependencies: InitializeDependencies = {
   configureHotReload: LinkedExtensionHotReload.configure,
+  initializeMainProcess,
   initializeSharedProcess,
   invokeRenderer: RendererWorker.invoke,
 }
 
 export const initialize = async (platform: number, developmentConfig: DevelopmentConfig = {}, dependencies = defaultDependencies) => {
   ExtensionsState.setPlatform(platform)
-  await dependencies.initializeSharedProcess(platform)
+  await Promise.all([dependencies.initializeMainProcess(platform), dependencies.initializeSharedProcess(platform)])
   const extensions = developmentConfig.extensions || []
   dependencies.configureHotReload(extensions)
   if (developmentConfig.hotReload && extensions.length > 0) {

@@ -52,13 +52,6 @@ const executeFileSystemProviderMethod = async (
   return { found: true, result }
 }
 
-export const executeFileSystemProviderGetPathSeparator = (
-  extensionsState: ExtensionsState,
-  providerId: string,
-): Promise<FileSystemProviderResult> => {
-  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderGetPathSeparator', providerId)
-}
-
 export const executeFileSystemProviderIsReadonly = (extensionsState: ExtensionsState, providerId: string): Promise<FileSystemProviderResult> => {
   return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderIsReadonly', providerId)
 }

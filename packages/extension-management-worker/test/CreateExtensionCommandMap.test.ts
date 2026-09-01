@@ -20,12 +20,12 @@ test('defers workspace switches until the isolated command has returned', async 
   commandMapRef['Extensions.executeCommand'] = executeRendererCommand
   const commandMap = createExtensionCommandMap('sample.extension')
 
-  expect(commandMap['Extensions.executeCommand']('Workspace.setUri', 'remote-ssh:///test-folder', '/')).toBeUndefined()
+  expect(commandMap['Extensions.executeCommand']('Workspace.setUri', 'remote-ssh:///test-folder')).toBeUndefined()
   expect(executeRendererCommand).not.toHaveBeenCalled()
 
   await jest.runAllTimersAsync()
 
-  expect(executeRendererCommand).toHaveBeenCalledWith('Workspace.setUri', 'remote-ssh:///test-folder', '/')
+  expect(executeRendererCommand).toHaveBeenCalledWith('Workspace.setUri', 'remote-ssh:///test-folder')
 })
 
 test('does not expose resolved node paths to extensions', async () => {

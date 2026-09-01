@@ -17,7 +17,6 @@ import { executeCommand, executeExtensionCommand } from '../ExecuteCommand/Execu
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import {
-  executeFileSystemProviderGetPathSeparator,
   executeFileSystemProviderIsReadonly,
   executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
@@ -137,7 +136,6 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
-  'Extensions.executeFileSystemProviderGetPathSeparator': wrapCommand(executeFileSystemProviderGetPathSeparator),
   'Extensions.executeFileSystemProviderIsReadonly': wrapCommand(executeFileSystemProviderIsReadonly),
   'Extensions.executeFileSystemProviderMkdir': wrapCommand(executeFileSystemProviderMkdir),
   'Extensions.executeFileSystemProviderReadDirWithFileTypes': wrapCommand(executeFileSystemProviderReadDirWithFileTypes),

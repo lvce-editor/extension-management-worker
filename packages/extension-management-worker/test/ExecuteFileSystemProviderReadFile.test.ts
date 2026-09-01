@@ -4,7 +4,6 @@ import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import {
-  executeFileSystemProviderGetPathSeparator,
   executeFileSystemProviderIsReadonly,
   executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
@@ -94,17 +93,12 @@ test('executes isolated file system provider metadata and directory operations',
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderReadDirWithFileTypes',
   })
-  await expect(executeFileSystemProviderGetPathSeparator(extensionsState, 'fetch')).resolves.toEqual({
-    found: true,
-    result: 'ExtensionApi.executeFileSystemProviderGetPathSeparator',
-  })
   await expect(executeFileSystemProviderIsReadonly(extensionsState, 'fetch')).resolves.toEqual({
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderIsReadonly',
   })
   expect(invocations).toEqual([
     ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
-    ['ExtensionApi.executeFileSystemProviderGetPathSeparator', 'fetch'],
     ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
   ])
 })

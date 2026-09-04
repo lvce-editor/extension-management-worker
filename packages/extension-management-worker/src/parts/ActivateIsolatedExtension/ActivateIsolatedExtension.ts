@@ -1,3 +1,4 @@
+import type { Rpc } from '@lvce-editor/rpc'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { getErrorMessage } from '../GetErrorMessage/GetErrorMessage.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
@@ -12,7 +13,7 @@ export const activateIsolatedExtension = async (
   contentSecurityPolicy: string,
   activationEvent: string,
   getOrCreate: GetOrCreate = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker,
-): Promise<void> => {
+): Promise<Rpc> => {
   const startTime = performance.now()
   ExtensionsState.updateRuntimeStatus(extensionId, {
     activationEvent,
@@ -20,13 +21,14 @@ export const activateIsolatedExtension = async (
     status: RuntimeStatusType.Activating,
   })
   try {
-    await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy)
+    const rpc = await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy)
     const endTime = performance.now()
     ExtensionsState.updateRuntimeStatus(extensionId, {
       activationEndTime: endTime,
       activationTime: endTime - startTime,
       status: RuntimeStatusType.Activated,
     })
+    return rpc
   } catch (error) {
     ExtensionsState.updateRuntimeStatus(extensionId, {
       error: getErrorMessage(error),

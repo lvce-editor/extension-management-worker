@@ -8,6 +8,7 @@ import {
   createViewInstance,
   dispatchViewEvent,
   disposeViewInstance,
+  getViewInstanceState,
   getViewActions,
   getViewActionsDom,
   getViewMenuEntries,
@@ -15,6 +16,7 @@ import {
   requestViewRerender,
   saveViewInstanceState,
   setViewInstanceActive,
+  setViewInstanceState,
   showViewContextMenu,
 } from '../src/parts/ExtensionView/ExtensionView.ts'
 import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
@@ -36,6 +38,7 @@ const createRpc = (
     readonly errors?: Readonly<Record<string, Error>>
     readonly eventListeners?: readonly unknown[]
     readonly focusSelector?: string
+    readonly stateful?: boolean
   } = {},
 ): {
   readonly disposals: readonly unknown[]
@@ -60,6 +63,7 @@ const createRpc = (
             {
               ...(options.eventListeners && { eventListeners: options.eventListeners }),
               id: 'sample.views.testing',
+              ...(options.stateful && { stateful: true }),
             },
           ],
         }
@@ -81,6 +85,15 @@ const createRpc = (
       if (method === 'ExtensionApi.renderViewInstance') {
         return {
           ...(options.focusSelector && { focusSelector: options.focusSelector }),
+          patches: [],
+          type: 'setPatches',
+        }
+      }
+      if (method === 'ExtensionApi.getViewInstanceState') {
+        return { count: 1 }
+      }
+      if (method === 'ExtensionApi.setViewInstanceState') {
+        return {
           patches: [],
           type: 'setPatches',
         }
@@ -536,6 +549,52 @@ test('renderViewInstance proxies to isolated extension rpc', async () => {
   })
 
   expect(mock.invocations).toEqual([['ExtensionApi.renderViewInstance', 1]])
+})
+
+test('createViewInstance exposes stateful view metadata', async () => {
+  const mock = createRpc({ stateful: true })
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [
+        {
+          activation: ['onView:sample.views.testing'],
+          id: 'extension-one',
+          isolated: true,
+          views: [{ id: 'sample.views.testing' }],
+        },
+      ]
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', mock.rpc)
+
+  await expect(createViewInstance('sample.views.testing', 1, {}, '/assets', 2)).resolves.toEqual({
+    ok: true,
+    result: {
+      dom: [],
+      type: 'setDom',
+    },
+    stateful: true,
+  })
+})
+
+test('gets and sets stateful view state through isolated extension rpc', async () => {
+  const mock = createRpc()
+  ExtensionViewInstanceState.set(1, {
+    rpc: mock.rpc,
+    status: 'ready',
+    viewId: 'sample.views.testing',
+  })
+
+  await expect(getViewInstanceState('sample.views.testing', 1, '', 2)).resolves.toEqual({ count: 1 })
+  await expect(setViewInstanceState('sample.views.testing', 1, { count: 2 }, '', 2)).resolves.toEqual({
+    patches: [],
+    type: 'setPatches',
+  })
+
+  expect(mock.invocations).toEqual([
+    ['ExtensionApi.getViewInstanceState', 1],
+    ['ExtensionApi.setViewInstanceState', 1, { count: 2 }],
+  ])
 })
 
 test('setViewInstanceActive proxies to isolated extension rpc', async () => {

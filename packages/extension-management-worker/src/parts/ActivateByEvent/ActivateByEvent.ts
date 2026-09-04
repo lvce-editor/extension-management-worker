@@ -1,9 +1,9 @@
-import { RendererWorker } from '@lvce-editor/rpc-registry'
 import { activateExtension3 } from '../ActivateExtension3/ActivateExtension3.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import { notifyRunningExtensionsChanged } from '../NotifyRunningExtensionsChanged/NotifyRunningExtensionsChanged.ts'
 
 export interface ActivateByEventResult {
   readonly error: Error | undefined
@@ -55,12 +55,6 @@ const getAbsolutePath = (extension: any, assetDir: string, platform: number): st
     platform,
     assetDir,
   )
-}
-
-const notifyRunningExtensionsChanged = (): void => {
-  setTimeout(() => {
-    void RendererWorker.invoke('Layout.handleExtensionsChanged')
-  }, 0)
 }
 
 const doActivateExtension = async (extension: any, absolutePath: string, event: string, platform: number): Promise<void> => {

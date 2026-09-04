@@ -75,7 +75,7 @@ const executeMatchingDiagnosticProvider = async (
   platform: number,
 ): Promise<readonly unknown[]> => {
   try {
-    const rpc = await getRpc(extension, assetDir, platform)
+    const rpc = await getRpc(extension, assetDir, platform, `onDiagnostic:${textDocument.languageId}`)
     return await executeExtensionDiagnosticProvider(rpc, extension, textDocument, args)
   } catch {
     return []

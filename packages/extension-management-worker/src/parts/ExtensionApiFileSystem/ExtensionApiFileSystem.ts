@@ -1,5 +1,5 @@
-import { FileSystemWorker } from '@lvce-editor/rpc-registry'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 
-export const readFile = (uri: string): Promise<string> => {
-  return FileSystemWorker.readFile(uri)
+export const readFile = async (uri: string): Promise<string> => {
+  return RendererWorker.invoke('FileSystem.readFile', uri)
 }

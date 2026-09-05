@@ -1,5 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { activateIsolatedExtension } from '../ActivateIsolatedExtension/ActivateIsolatedExtension.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { getContentSecurityPolicy } from '../GetContentSecurityPolicy/GetContentSecurityPolicy.ts'
 import { getExtensionAbsolutePath } from '../GetExtensionAbsolutePath/GetExtensionAbsolutePath.ts'
 import * as GetOrCreateIsolatedExtensionHostWorker from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
@@ -13,6 +14,8 @@ type GetOrCreate = typeof GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsol
 type NotifyRunningExtensionsChanged = typeof notifyRunningExtensionsChanged
 
 export interface ExtensionManifest {
+  readonly applicationGeneration?: number
+  readonly applicationId?: string
   readonly browser?: string
   readonly builtin?: boolean
   readonly contentSecurityPolicy?: readonly string[]
@@ -49,8 +52,11 @@ export const getRpc = async (
   getOrCreate: GetOrCreate = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker,
   notify: NotifyRunningExtensionsChanged = notifyRunningExtensionsChanged,
 ): Promise<Rpc> => {
+  if (extension.applicationId !== undefined) {
+    ExtensionsState.assertCurrentApplication(extension)
+  }
   const extensionId = getExtensionId(extension)
-  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
+  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId, extension.applicationId)
   if (existingRpc) {
     return existingRpc
   }
@@ -64,7 +70,12 @@ export const getRpc = async (
     contentSecurityPolicy,
     activationEvent,
     getOrCreate,
+    extension.applicationId,
   )
-  notify()
+  if (extension.applicationId === undefined) {
+    notify()
+  } else {
+    notify(extension.applicationId)
+  }
   return rpc
 }

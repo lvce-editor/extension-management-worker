@@ -6,6 +6,48 @@ import * as RuntimeStatusType from '../src/parts/RuntimeStatusType/RuntimeStatus
 
 afterEach(() => {
   ExtensionsState.reset()
+  ExtensionsState.removeApplication('preview')
+})
+
+test('records activation status only in the target application', async () => {
+  ExtensionsState.createApplication('preview', 1, [])
+  const worker = {} as Rpc
+  const create = jest.fn(async (..._args: readonly unknown[]) => worker)
+  expect(await activateIsolatedExtension('sample', '/main.js', '', '', 'onFileSystem:memfs', create, 'preview')).toBe(worker)
+  expect(create).toHaveBeenCalledWith('sample', '/main.js', '', '', undefined, 'preview')
+  expect(ExtensionsState.getRuntimeStatus('sample')).toBeUndefined()
+  expect(ExtensionsState.getRuntimeStatus('sample', 'preview')?.status).toBe(RuntimeStatusType.Activated)
+})
+
+test('records an application activation failure without touching default status', async () => {
+  ExtensionsState.createApplication('preview', 1, [])
+  await expect(
+    activateIsolatedExtension(
+      'sample',
+      '/main.js',
+      '',
+      '',
+      '',
+      async () => {
+        throw new Error('failed')
+      },
+      'preview',
+    ),
+  ).rejects.toThrow('failed')
+  expect(ExtensionsState.getRuntimeStatus('sample', 'preview')?.status).toBe(RuntimeStatusType.Error)
+  expect(ExtensionsState.getRuntimeStatus('sample')).toBeUndefined()
+})
+
+test('a replaced application cannot receive late activation status', async () => {
+  ExtensionsState.createApplication('preview', 1, [])
+  const gate = Promise.withResolvers<Rpc>()
+  const activating = activateIsolatedExtension('sample', '/main.js', '', '', '', async () => gate.promise, 'preview')
+  const result = Promise.allSettled([activating])
+  ExtensionsState.removeApplication('preview')
+  ExtensionsState.createApplication('preview', 1, [])
+  gate.resolve({} as Rpc)
+  expect(await result).toEqual([{ reason: expect.objectContaining({ message: 'Stale extension application: preview' }), status: 'rejected' }])
+  expect(ExtensionsState.getRuntimeStatus('sample', 'preview')).toBeUndefined()
 })
 
 test('records an isolated extension as activated', async () => {

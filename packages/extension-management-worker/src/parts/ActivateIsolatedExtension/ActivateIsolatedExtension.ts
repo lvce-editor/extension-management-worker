@@ -13,27 +13,45 @@ export const activateIsolatedExtension = async (
   contentSecurityPolicy: string,
   activationEvent: string,
   getOrCreate: GetOrCreate = GetOrCreateIsolatedExtensionHostWorker.getOrCreateIsolatedExtensionHostWorker,
+  applicationId?: string,
 ): Promise<Rpc> => {
+  const application = applicationId === undefined ? undefined : ExtensionsState.get(applicationId)
+  const updateStatus = (status: Parameters<typeof ExtensionsState.updateRuntimeStatus>[1]): void => {
+    if (applicationId === undefined) {
+      ExtensionsState.updateRuntimeStatus(extensionId, status)
+      return
+    }
+    const current = ExtensionsState.get(applicationId)
+    if (current.applicationGeneration !== application?.applicationGeneration) {
+      throw new Error(`Stale extension application: ${applicationId}`)
+    }
+    ExtensionsState.updateRuntimeStatus(extensionId, status, applicationId)
+  }
   const startTime = performance.now()
-  ExtensionsState.updateRuntimeStatus(extensionId, {
+  updateStatus({
     activationEvent,
     activationStartTime: startTime,
     status: RuntimeStatusType.Activating,
   })
   try {
-    const rpc = await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy)
+    const rpc =
+      applicationId === undefined
+        ? await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy)
+        : await getOrCreate(extensionId, absolutePath, workerName, contentSecurityPolicy, undefined, applicationId)
     const endTime = performance.now()
-    ExtensionsState.updateRuntimeStatus(extensionId, {
+    updateStatus({
       activationEndTime: endTime,
       activationTime: endTime - startTime,
       status: RuntimeStatusType.Activated,
     })
     return rpc
   } catch (error) {
-    ExtensionsState.updateRuntimeStatus(extensionId, {
-      error: getErrorMessage(error),
-      status: RuntimeStatusType.Error,
-    })
+    if (application === undefined || ExtensionsState.isCurrentApplication(application)) {
+      updateStatus({
+        error: getErrorMessage(error),
+        status: RuntimeStatusType.Error,
+      })
+    }
     throw error
   }
 }

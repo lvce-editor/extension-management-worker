@@ -3,6 +3,12 @@ import * as ExtensionHostRpcState from '../ExtensionHostRpcState/ExtensionHostRp
 import * as GetUrlPrefix from '../GetUrlPrefix/GetUrlPrefix.ts'
 
 export const handleRpcInfos = (extension: any, platform: any): void => {
+  if (extension?.applicationId !== undefined) {
+    if (Array.isArray(extension.rpc) && extension.rpc.length > 0) {
+      throw new Error('Declared RPCs do not support application context')
+    }
+    return
+  }
   try {
     if (!extension) {
       return

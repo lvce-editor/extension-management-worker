@@ -41,15 +41,22 @@ const getRpcForCommand = async (extensionsState: ExtensionsState, id: string, pl
     return undefined
   }
   const extensionId = getExtensionId(extension)
-  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
+  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId, extensionsState.applicationId)
   if (existingRpc) {
     return existingRpc
   }
-  await activateByEvent(`onCommand:${id}`, '', platform)
-  return IsolatedExtensionHostWorkerState.get(extensionId)
+  if (extensionsState.applicationId === undefined) {
+    await activateByEvent(`onCommand:${id}`, '', platform)
+  } else {
+    await activateByEvent(`onCommand:${id}`, '', platform, extensionsState)
+  }
+  return IsolatedExtensionHostWorkerState.get(extensionId, extensionsState.applicationId)
 }
 
-const executeRendererCommand = (id: string, args: readonly unknown[]): Promise<unknown> => {
+const executeRendererCommand = (id: string, args: readonly unknown[], applicationId?: string): Promise<unknown> => {
+  if (applicationId !== undefined) {
+    return RendererWorker.invoke('Application.execute', applicationId, id, ...args)
+  }
   return RendererWorker.invoke(id, ...args)
 }
 
@@ -58,7 +65,7 @@ export const executeCommand = async (extensionsState: ExtensionsState, id: strin
   if (wasFound) {
     return result
   }
-  return executeRendererCommand(id, args)
+  return executeRendererCommand(id, args, extensionsState.applicationId)
 }
 
 interface ExecuteCommandResult {

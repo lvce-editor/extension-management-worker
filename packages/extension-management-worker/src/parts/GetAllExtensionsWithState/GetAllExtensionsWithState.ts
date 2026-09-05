@@ -34,6 +34,14 @@ const withDisabledState = (extensions: readonly any[], disabledIds: readonly str
 }
 
 const getExtensionsWithState = async (extensions: readonly any[], extensionsState: ExtensionsState, platform: number): Promise<readonly any[]> => {
+  if (extensionsState.applicationId !== undefined) {
+    const byId = new Map(extensions.map((extension) => [extension.id, extension]))
+    return withDisabledState(byId.values().toArray(), extensionsState.disabledIds).map((extension) => ({
+      ...extension,
+      applicationGeneration: extensionsState.applicationGeneration,
+      applicationId: extensionsState.applicationId,
+    }))
+  }
   if (extensions.length === 0) {
     return extensions
   }

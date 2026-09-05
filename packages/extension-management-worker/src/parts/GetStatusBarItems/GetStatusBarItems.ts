@@ -4,8 +4,8 @@ const getItems = async (rpc: any): Promise<readonly any[]> => {
   return rpc.invoke('ExtensionApi.getStatusBarItems')
 }
 
-export const getStatusBarItems = async (): Promise<readonly any[]> => {
-  const rpcs = IsolatedExtensionHostWorkerState.getAll()
+export const getStatusBarItems = async (applicationId?: string): Promise<readonly any[]> => {
+  const rpcs = IsolatedExtensionHostWorkerState.getAll(applicationId)
   const results = await Promise.all(rpcs.map(getItems))
   return results.flat()
 }

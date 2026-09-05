@@ -56,3 +56,17 @@ test('rejects duplicate applications without clearing the existing state', () =>
   expect(() => ExtensionsState.createApplication('preview', 1, [])).toThrow('duplicate extension application')
   expect(ExtensionsState.get('preview').webExtensions).toEqual([{ id: 'sample' }])
 })
+
+test('runtime queries and removals tolerate an application with no worker registrations', () => {
+  expect(Rpcs.getIds('preview')).toEqual([])
+  expect(Rpcs.getAll('preview')).toEqual([])
+  expect(Rpcs.remove('sample', 'preview')).toBeUndefined()
+  expect(ExtensionsState.isCurrentApplication({})).toBe(true)
+})
+
+test('state updates cannot switch application identities', () => {
+  ExtensionsState.createApplication('source', 1, [])
+  expect(() => ExtensionsState.update({ applicationId: 'preview' } as any, 'source')).toThrow('Cannot change extension application identity')
+  expect(() => ExtensionsState.update({ applicationGeneration: 99 } as any, 'source')).toThrow('Cannot change extension application identity')
+  expect(ExtensionsState.get('source').webExtensions).toEqual([])
+})

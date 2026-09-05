@@ -17,7 +17,11 @@ const createRpc = (invoke: Rpc['invoke']): Rpc => {
 
 afterEach(() => {
   FileChangeHandlerRegistry.reset()
+  FileChangeHandlerRegistry.reset('source')
+  FileChangeHandlerRegistry.reset('preview')
   IsolatedExtensionHostWorkerState.clear()
+  IsolatedExtensionHostWorkerState.clear('source')
+  IsolatedExtensionHostWorkerState.clear('preview')
 })
 
 test('handleFileChanges invokes every registered extension worker with the same changes', async () => {
@@ -60,4 +64,26 @@ test('handleFileChanges removes registrations without a live worker', async () =
   await handleFileChanges()
 
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual([])
+})
+
+test('file saves only notify extensions in the owning application', async () => {
+  const source = jest.fn<Invoke>(async () => undefined)
+  const preview = jest.fn<Invoke>(async () => undefined)
+  const defaultWorker = jest.fn<Invoke>(async () => undefined)
+  IsolatedExtensionHostWorkerState.set('sample', createRpc(source), 'source')
+  IsolatedExtensionHostWorkerState.set('sample', createRpc(preview), 'preview')
+  IsolatedExtensionHostWorkerState.set('sample', createRpc(defaultWorker))
+  FileChangeHandlerRegistry.register('sample', 'source')
+  FileChangeHandlerRegistry.register('sample', 'preview')
+  FileChangeHandlerRegistry.register('missing', 'source')
+  FileChangeHandlerRegistry.register('sample')
+  const changes = { changed: ['memfs:///main.ts'] }
+  await handleFileChanges(changes, 'source')
+  expect(source).toHaveBeenCalledWith('ExtensionApi.handleFileChanges', changes)
+  expect(preview).not.toHaveBeenCalled()
+  expect(defaultWorker).not.toHaveBeenCalled()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds('source')).toEqual(['sample'])
+  FileChangeHandlerRegistry.unregister('sample', 'source')
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds('source')).toEqual([])
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds('preview')).toEqual(['sample'])
 })

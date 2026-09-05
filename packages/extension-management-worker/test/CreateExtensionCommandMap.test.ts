@@ -28,6 +28,32 @@ test('defers workspace switches until the isolated command has returned', async 
   expect(executeRendererCommand).toHaveBeenCalledWith('Workspace.setUri', 'remote-ssh:///test-folder')
 })
 
+test('application callbacks never invoke legacy commands or bypass privileged command checks', async () => {
+  const legacy = jest.fn()
+  Object.assign(CommandMapRef.commandMapRef, {
+    'Extensions.getPreference': legacy,
+    'Extensions.showNotification': legacy,
+  })
+  const scoped = jest.fn(async (..._args: readonly unknown[]) => 'scoped')
+  const commands = createExtensionCommandMap('sample', scoped)
+  expect(await commands['Extensions.showNotification']('info', 'hello')).toBe('scoped')
+  expect(await commands['Extensions.getPreference']('editor.tabSize')).toBe('scoped')
+  await commands['Extensions.registerFileChangeHandler']()
+  await commands['Extensions.unregisterFileChangeHandler']()
+  await commands['Extensions.executeCommand']('Main.openInput', 'memfs:///main.ts')
+  expect(scoped.mock.calls).toEqual([
+    ['Extensions.showNotification', 'info', 'hello'],
+    ['Extensions.getPreference', 'editor.tabSize'],
+    ['Extensions.registerFileChangeHandler'],
+    ['Extensions.unregisterFileChangeHandler'],
+    ['Extensions.executeCommand', 'Main.openInput', 'memfs:///main.ts'],
+  ])
+  expect(() => commands['Extensions.executeCommand']('FileSystem.readFile', '/etc/passwd')).toThrow('privileged command')
+  expect(legacy).not.toHaveBeenCalled()
+  expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual([])
+  expect(commands['Extensions.createNodeRpcConnection']).toBeUndefined()
+})
+
 test('does not expose resolved node paths to extensions', async () => {
   DeclaredRpcState.set({
     id: 'extension-one',

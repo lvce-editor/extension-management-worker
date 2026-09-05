@@ -10,6 +10,7 @@ import { disableExtension2 } from '../DisableExtension2/DisableExtension2.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { disableWorkspaceExtension } from '../DisableWorkspaceExtension/DisableWorkspaceExtension.ts'
 import { disposeAllExtensionRuntimes } from '../DisposeAllExtensionRuntimes/DisposeAllExtensionRuntimes.ts'
+import { disposeExtensionApplication } from '../DisposeExtensionApplication/DisposeExtensionApplication.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
@@ -44,6 +45,7 @@ import { clearOutputChannel, getOutputChannelProviders, readOutputChannel } from
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
 import { getAccessToken } from '../GetAccessToken/GetAccessToken.ts'
+import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/GetColorThemeCss.ts'
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
@@ -57,6 +59,7 @@ import { getRunningExtensions } from '../GetRunningExtensions/GetRunningExtensio
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
+import { getViewsFromExtensions } from '../GetViewsFromExtensions/GetViewsFromExtensions.ts'
 import { handleData } from '../HandleData/HandleData.ts'
 import { handleFileChanges } from '../HandleFileChanges/HandleFileChanges.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
@@ -76,6 +79,7 @@ import {
   createNotification,
 } from '../Notifications/Notifications.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
+import * as ApplicationRendererWorker from '../Rpc/Rpc.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
 import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
@@ -84,10 +88,11 @@ import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandle
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 import * as WebRtc from '../WebRtc/WebRtc.ts'
 
-const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any): ((...args: readonly any[]) => any) => {
-  return (...args: readonly any[]): any => {
+const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any) => {
+  const wrapped = (...args: readonly any[]): any => {
     return command(ExtensionsState.get(), ...args)
   }
+  return Object.assign(wrapped, { withState: command })
 }
 
 const wrapSourceControlProviderCommand = (methodName: string): ((providerId: string, ...args: readonly unknown[]) => Promise<unknown>) => {
@@ -96,7 +101,53 @@ const wrapSourceControlProviderCommand = (methodName: string): ((providerId: str
   })
 }
 
-export const commandMap: Record<string, (...args: readonly any[]) => any> = {
+type ScopedCommand = ((...args: readonly any[]) => any) & {
+  readonly withState?: (state: ExtensionState, ...args: readonly any[]) => any
+}
+
+const sharedApplicationCommands = new Set([
+  'Extensions.getColorThemeCss',
+  'Extensions.getColorThemeCssFromJson',
+  'Extensions.getColorThemeJson',
+  'Extensions.getColorThemeNames',
+  'Extensions.getPreference',
+  'Extensions.setPreference',
+])
+
+const invokeForApplication = async (applicationId: string, method: string, ...args: readonly any[]): Promise<any> => {
+  const application = ExtensionsState.get(applicationId)
+  const command: ScopedCommand | undefined = commandMap[method]
+  if (command?.withState) {
+    return command.withState(application, ...args)
+  }
+  if (command && sharedApplicationCommands.has(method)) {
+    return command(...args)
+  }
+  switch (method) {
+    case 'ExtensionApi.readFile':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'FileSystem.readFile', ...args)
+    case 'Extensions.activateByEvent':
+      return activateByEvent(args[0], args[1], args[2] ?? application.platform, application)
+    case 'Extensions.getAllExtensions':
+      return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform)
+    case 'Extensions.getDynamicWebExtensions':
+      return application.webExtensions
+    case 'Extensions.getRuntimeStatus':
+      return ExtensionsState.getRuntimeStatus(args[0], applicationId)
+    case 'Extensions.getStatusBarItems':
+      return getStatusBarItems(applicationId)
+    case 'Extensions.getViews': {
+      const extensions = await getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform)
+      return getViewsFromExtensions(extensions, args[0] || '', args[1] ?? application.platform)
+    }
+    case 'Extensions.handleFileChanges':
+      return handleFileChanges(args[0], applicationId)
+    default:
+      throw new Error(`Extension command does not support application context: ${method}`)
+  }
+}
+
+export const commandMap: Record<string, ScopedCommand> = {
   'ExtensionApi.readFile': readExtensionApiFile,
   'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
   'ExtensionHostQuickPick.showQuickInput': showQuickInput,
@@ -118,6 +169,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.addWebExtension': addWebExtension,
   'Extensions.clearNotifications': clearNotifications,
   'Extensions.clearOutputChannel': wrapCommand(clearOutputChannel),
+  'Extensions.createApplication': ExtensionsState.createApplication,
   'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
   'Extensions.createWebViewWorkerRpc2': createWebViewWorkerRpc2,
@@ -127,6 +179,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.dismissNotification': dismissNotification,
   'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
   'Extensions.disposeAllRuntimes': disposeAllExtensionRuntimes,
+  'Extensions.disposeApplication': disposeExtensionApplication,
   'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,
@@ -186,6 +239,7 @@ export const commandMap: Record<string, (...args: readonly any[]) => any> = {
   'Extensions.initialize': initialize,
   'Extensions.install': installExtension,
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
+  'Extensions.invokeForApplication': invokeForApplication,
   'Extensions.readOutputChannel': wrapCommand(readOutputChannel),
   'Extensions.renderViewInstance': ExtensionView.renderViewInstance,
   'Extensions.requestViewRerender': ExtensionView.requestViewRerender,

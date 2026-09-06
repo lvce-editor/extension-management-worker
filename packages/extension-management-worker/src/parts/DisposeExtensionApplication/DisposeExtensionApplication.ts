@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
 import { resetAllExtensionActivations } from '../ActivateByEvent/ActivateByEvent.ts'
+import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getPendingExtensionIds, getRuntimeId } from '../GetOrCreateIsolatedExtensionHostWorker/GetOrCreateIsolatedExtensionHostWorker.ts'
@@ -19,8 +20,9 @@ export const disposeExtensionApplication = async (applicationId: string): Promis
   Rpcs.clear(applicationId)
   resetAllExtensionActivations(application)
   FileChangeHandlerRegistry.reset(applicationId)
-  const results = await Promise.allSettled(
-    runtimes.map(async ({ id, rpc }) => {
+  const results = await Promise.allSettled([
+    ExtensionApplicationServices.dispose(application),
+    ...runtimes.map(async ({ id, rpc }) => {
       const runtimeId = getRuntimeId(id, application)
       const disposal = await Promise.allSettled([
         Promise.try(() => rpc?.dispose()),
@@ -31,7 +33,7 @@ export const disposeExtensionApplication = async (applicationId: string): Promis
         throw new AggregateError(errors, `Failed to dispose extension ${id}`)
       }
     }),
-  )
+  ])
   const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
   if (errors.length > 0) {
     throw new AggregateError(errors, `Failed to dispose extension application ${applicationId}`)

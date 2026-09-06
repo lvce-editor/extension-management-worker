@@ -86,7 +86,9 @@ export const createIsolatedExtensionHostWorker = async (
         }
   const commandMap = createExtensionCommandMap(runtimeId, invokeCommand)
   const rpc = await createRpc({
-    commandMap,
+    // PlainMessagePortRpc registers this map process-wide. Bind the restricted
+    // callbacks to this port below, never to the shared host command table.
+    commandMap: {},
     isMessagePortOpen: true,
     send(port: MessagePort) {
       return invokeAndTransfer(

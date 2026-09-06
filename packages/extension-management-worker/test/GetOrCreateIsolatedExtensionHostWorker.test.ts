@@ -25,8 +25,7 @@ test('createIsolatedExtensionHostWorker launches extension main entry', async ()
     readonly isMessagePortOpen: boolean
     readonly send: (port: MessagePort) => Promise<void>
   }): Promise<Rpc> => {
-    expect(options.commandMap['Extensions.createNodeRpcConnection']).toEqual(expect.any(Function))
-    expect(options.commandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
+    expect(options.commandMap).toEqual({})
     await options.send('port' as unknown as MessagePort)
     return rpc
   }
@@ -140,9 +139,7 @@ test('createIsolatedExtensionHostWorker exposes only the restricted node rpc fac
     createRpc,
     invokeAndTransferNoop,
   )
-  expect(globalCommandMap['Extensions.createNodeRpcConnection']).toEqual(expect.any(Function))
-  expect(globalCommandMap['Extensions.createNodeRpcMessagePort']).toEqual(expect.any(Function))
-  expect(globalCommandMap['Extensions.getNodeRpcInfo']).toBeUndefined()
+  expect(globalCommandMap).toEqual({})
 })
 
 test('getOrCreateIsolatedExtensionHostWorker returns an existing rpc with default worker name', async () => {

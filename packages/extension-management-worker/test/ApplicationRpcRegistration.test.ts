@@ -6,8 +6,8 @@ import { createIsolatedExtensionHostWorker } from '../src/parts/GetOrCreateIsola
 
 test('starting two application runtimes does not replace the host RPC command table', async () => {
   const hostCommands = {
-    'Host.ping': () => 'host',
     'Extensions.invokeForApplication': (id: string) => id,
+    'Host.ping': () => 'host',
   }
   Object.assign(CommandMapRef.commandMapRef, hostCommands)
   const { port1, port2 } = new MessageChannel()

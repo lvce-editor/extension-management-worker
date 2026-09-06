@@ -1,7 +1,6 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { RendererWorker, type DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import type { ExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as CommandMapRef from '../src/parts/CommandMapRef/CommandMapRef.ts'
 import { disposeExtensionApplication } from '../src/parts/DisposeExtensionApplication/DisposeExtensionApplication.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
@@ -42,9 +41,8 @@ afterEach(() => {
 test('worker callbacks retain the application generation and file-watcher ownership', async () => {
   const invokeApplication = jest.fn((...args: readonly unknown[]) => args)
   Object.assign(CommandMapRef.commandMapRef, { 'Extensions.getPreference': () => 'legacy', 'Extensions.invokeForApplication': invokeApplication })
-  const captured: { commands: ExtensionCommandMap } = { commands: {} }
   const send = jest.fn(async (..._args: readonly any[]) => {})
-  const rpc = { dispose: async () => {}, ipc: {} } as unknown as Rpc
+  const rpc = { dispose: async () => {}, ipc: { execute: (_method: string, ..._args: readonly any[]): any => undefined } }
   const application = ExtensionsState.get('preview')
   await createIsolatedExtensionHostWorker(
     'sample',
@@ -52,9 +50,9 @@ test('worker callbacks retain the application generation and file-watcher owners
     '',
     '',
     async (options) => {
-      captured.commands = options.commandMap
+      expect(options.commandMap).toEqual({})
       await options.send({} as MessagePort)
-      return rpc
+      return rpc as unknown as Rpc
     },
     send,
     application,
@@ -67,18 +65,18 @@ test('worker callbacks retain the application generation and file-watcher owners
     '',
     '',
   )
-  expect(captured.commands['Extensions.getPreference']('editor.tabSize')).toEqual(['preview', 'Extensions.getPreference', 'editor.tabSize'])
-  captured.commands['Extensions.registerFileChangeHandler']()
+  expect(rpc.ipc.execute('Extensions.getPreference', 'editor.tabSize')).toEqual(['preview', 'Extensions.getPreference', 'editor.tabSize'])
+  rpc.ipc.execute('Extensions.registerFileChangeHandler')
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds('preview')).toEqual(['sample'])
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual([])
-  captured.commands['Extensions.unregisterFileChangeHandler']()
+  rpc.ipc.execute('Extensions.unregisterFileChangeHandler')
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds('preview')).toEqual([])
   delete (CommandMapRef.commandMapRef as Record<string, unknown>)['Extensions.invokeForApplication']
-  expect(() => captured.commands['Extensions.getPreference']('test')).toThrow('routing is not initialized')
+  expect(() => rpc.ipc.execute('Extensions.getPreference', 'test')).toThrow('routing is not initialized')
   ExtensionsState.removeApplication('preview')
   ExtensionsState.createApplication('preview', 1, [])
-  expect(() => captured.commands['Extensions.getPreference']('test')).toThrow('Stale extension application')
-  expect(() => captured.commands['Extensions.registerFileChangeHandler']()).toThrow('Stale extension application')
+  expect(() => rpc.ipc.execute('Extensions.getPreference', 'test')).toThrow('Stale extension application')
+  expect(() => rpc.ipc.execute('Extensions.registerFileChangeHandler')).toThrow('Stale extension application')
 })
 
 test('application disposal terminates pending launches without waiting for worker activation', async () => {

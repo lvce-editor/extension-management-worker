@@ -63,7 +63,8 @@ test('application metadata and status calls stay within the requested session', 
 })
 
 test('application manifests cannot mutate global declared RPC registries', () => {
-  expect(() => handleRpcInfos({ applicationId: 'preview', rpc: [{ id: 'shared', type: 'node' }] }, 1)).toThrow('do not support application context')
+  const application = ExtensionsState.get('preview')
+  expect(() => handleRpcInfos({ ...application, path: '/preview', rpc: [{ id: 'shared', type: 'node' }] }, 1)).toThrow('only support web-worker')
   expect(() => handleRpcInfos({ applicationId: 'preview' }, 1)).not.toThrow()
 })
 

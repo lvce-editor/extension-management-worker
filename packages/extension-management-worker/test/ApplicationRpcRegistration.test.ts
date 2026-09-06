@@ -43,6 +43,6 @@ test('starting two application runtimes does not replace the host RPC command ta
     await Promise.all([host.dispose(), client.dispose(), ...runtimes.map((rpc) => rpc.dispose()), ...peers.map((rpc) => rpc.dispose())])
     for (const port of ports) port.close()
     for (const id of ['source', 'preview']) ExtensionsState.removeApplication(id)
-    for (const key of Object.keys(hostCommands)) delete CommandMapRef.commandMapRef[key]
+    for (const key of Object.keys(hostCommands)) delete (CommandMapRef.commandMapRef as Record<string, unknown>)[key]
   }
 })

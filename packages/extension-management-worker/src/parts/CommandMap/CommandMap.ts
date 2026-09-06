@@ -41,6 +41,7 @@ import {
   getEnabledSourceControlProviderIds,
 } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
+import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
 import { clearOutputChannel, getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
@@ -128,10 +129,16 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'FileSystem.readFile', ...args)
     case 'Extensions.activateByEvent':
       return activateByEvent(args[0], args[1], args[2] ?? application.platform, application)
+    case 'Extensions.createWebViewWorkerRpc':
+      return ExtensionApplicationServices.createWorker(application, args[0], args[1], true)
+    case 'Extensions.createWebViewWorkerRpc2':
+      return ExtensionApplicationServices.createWorker(application, args[0], args[1])
     case 'Extensions.getAllExtensions':
       return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform)
     case 'Extensions.getDynamicWebExtensions':
       return application.webExtensions
+    case 'Extensions.getRpcInfo':
+      return ExtensionApplicationServices.getRpcInfo(application, args[0])
     case 'Extensions.getRuntimeStatus':
       return ExtensionsState.getRuntimeStatus(args[0], applicationId)
     case 'Extensions.getStatusBarItems':
@@ -142,6 +149,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
     }
     case 'Extensions.handleFileChanges':
       return handleFileChanges(args[0], applicationId)
+    case 'Extensions.sendMessagePortToFileSystemWorker':
+      return ExtensionApplicationServices.createFileSystemPort(application, args[0])
     default:
       throw new Error(`Extension command does not support application context: ${method}`)
   }

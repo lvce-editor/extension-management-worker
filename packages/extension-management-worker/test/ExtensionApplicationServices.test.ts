@@ -92,3 +92,24 @@ test('child workers have distinct generation-owned ids and late launches are ter
   await Services.dispose(source)
   expect(terminate).toHaveBeenCalledWith(sourceId)
 })
+
+test('reloading one extension disposes only its child workers and declarations', async () => {
+  const application = ExtensionsState.get('preview')
+  const { port1, port2 } = new MessageChannel()
+  ports.push(port1, port2)
+  for (const id of ['sample', 'other']) {
+    Services.register({ ...application, id, path: '/preview', rpc: [{ id, type: 'web-worker', url: `${id}.js` }] }, 1)
+  }
+  await Services.createWorker(application, { url: '/sample.js' }, port1, false, 'sample')
+  await Services.createWorker(application, { url: '/other.js' }, port2, false, 'other')
+  const sampleId = String(launch.mock.calls[0][1])
+  const otherId = String(launch.mock.calls[1][1])
+  await Services.disposeExtension(application, 'sample')
+  expect(terminate).toHaveBeenCalledWith(sampleId)
+  expect(terminate).not.toHaveBeenCalledWith(otherId)
+  expect(() => Services.getRpcInfo(application, 'sample')).toThrow('Rpc not found')
+  expect(Services.getRpcInfo(application, 'other').url).toBe('/preview/other.js')
+  await Services.dispose(application)
+  expect(terminate).toHaveBeenCalledWith(otherId)
+  expect(terminate.mock.calls.filter(([id]) => id === sampleId)).toHaveLength(1)
+})

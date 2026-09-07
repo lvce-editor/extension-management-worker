@@ -8,10 +8,10 @@ import { getUrlPrefix } from '../GetUrlPrefix/GetUrlPrefix.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 
 interface Services {
-  readonly children: Set<string>
+  readonly children: Map<string, string | undefined>
   readonly declarations: Map<string, any>
   nextChild: number
-  readonly ports: Set<Rpc>
+  readonly ports: Map<Rpc, string | undefined>
 }
 
 interface PortRpc extends Rpc {
@@ -24,7 +24,7 @@ const getServices = (application: ExtensionsState.ExtensionsState): Services => 
   const generation = application.applicationGeneration!
   let services = applications.get(generation)
   if (!services) {
-    services = { children: new Set(), declarations: new Map(), nextChild: 0, ports: new Set() }
+    services = { children: new Map(), declarations: new Map(), nextChild: 0, ports: new Map() }
     applications.set(generation, services)
   }
   return services
@@ -40,7 +40,7 @@ export const register = (extension: any, platform: number): void => {
     if (info.type !== 'web-worker') {
       throw new Error('Application extensions only support web-worker RPCs')
     }
-    services.declarations.set(info.id, { ...info, url: `${prefix}/${info.url}` })
+    services.declarations.set(info.id, { ...info, extensionId: extension.id, url: `${prefix}/${info.url}` })
   }
 }
 
@@ -50,10 +50,16 @@ export const getRpcInfo = (application: ExtensionsState.ExtensionsState, id: str
   return info
 }
 
-export const createWorker = async (application: ExtensionsState.ExtensionsState, info: any, port: MessagePort, legacy = false): Promise<void> => {
+export const createWorker = async (
+  application: ExtensionsState.ExtensionsState,
+  info: any,
+  port: MessagePort,
+  legacy = false,
+  extensionId?: string,
+): Promise<void> => {
   const services = getServices(application)
   const id = JSON.stringify([application.applicationId, application.applicationGeneration, 'child', ++services.nextChild])
-  services.children.add(id)
+  services.children.set(id, extensionId)
   const url = legacy ? ExtensionHostSubWorkerUrl.extensionHostSubWorkerUrl : info.url
   try {
     const policy = getContentSecurityPolicy(info.contentSecurityPolicy || [], url)
@@ -66,6 +72,7 @@ export const createWorker = async (application: ExtensionsState.ExtensionsState,
       policy,
     )
     ExtensionsState.assertCurrentApplication(application)
+    if (!services.children.has(id)) throw new Error('Extension worker was disposed during launch')
   } catch (error) {
     services.children.delete(id)
     await RendererWorker.invoke('LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', id)
@@ -75,7 +82,7 @@ export const createWorker = async (application: ExtensionsState.ExtensionsState,
 
 const fileSystemMethods = new Set(['readFile', 'readDirWithFileTypes', 'stat', 'exists', 'writeFile', 'mkdir', 'remove', 'rename', 'copy', 'getBlob'])
 
-export const createFileSystemPort = async (application: ExtensionsState.ExtensionsState, port: MessagePort): Promise<void> => {
+export const createFileSystemPort = async (application: ExtensionsState.ExtensionsState, port: MessagePort, extensionId?: string): Promise<void> => {
   const services = getServices(application)
   const rpc = (await PlainMessagePortRpc.create({ commandMap: {}, messagePort: port })) as PortRpc
   // Bind only this connection: registering callbacks globally would let the
@@ -89,7 +96,7 @@ export const createFileSystemPort = async (application: ExtensionsState.Extensio
   }
   try {
     ExtensionsState.assertCurrentApplication(application)
-    services.ports.add(rpc)
+    services.ports.set(rpc, extensionId)
   } catch (error) {
     await rpc.dispose()
     throw error
@@ -101,12 +108,32 @@ export const dispose = async (application: ExtensionsState.ExtensionsState): Pro
   if (!services) return
   applications.delete(application.applicationGeneration!)
   const results = await Promise.allSettled([
-    ...Array.from(services.ports, (rpc) => Promise.try(() => rpc.dispose())),
-    ...Array.from(services.children, (id) => RendererWorker.invoke('LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', id)),
+    ...Array.from(services.ports.keys(), (rpc) => Promise.try(() => rpc.dispose())),
+    ...Array.from(services.children.keys(), (id) =>
+      RendererWorker.invoke('LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', id),
+    ),
   ])
   services.ports.clear()
   services.children.clear()
   services.declarations.clear()
   const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
   if (errors.length > 0) throw new AggregateError(errors, 'Failed to dispose application services')
+}
+
+export const disposeExtension = async (application: ExtensionsState.ExtensionsState, extensionId: string): Promise<void> => {
+  const services = applications.get(application.applicationGeneration!)
+  if (!services) return
+  const ports = [...services.ports].filter(([, owner]) => owner === extensionId).map(([rpc]) => rpc)
+  const children = [...services.children].filter(([, owner]) => owner === extensionId).map(([id]) => id)
+  for (const rpc of ports) services.ports.delete(rpc)
+  for (const id of children) services.children.delete(id)
+  for (const [id, info] of services.declarations) {
+    if (info.extensionId === extensionId) services.declarations.delete(id)
+  }
+  const results = await Promise.allSettled([
+    ...ports.map((rpc) => Promise.try(() => rpc.dispose())),
+    ...children.map((id) => RendererWorker.invoke('LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', id)),
+  ])
+  const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
+  if (errors.length > 0) throw new AggregateError(errors, `Failed to dispose extension services: ${extensionId}`)
 }

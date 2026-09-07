@@ -8,6 +8,7 @@ import {
   type ExtensionCommand,
   type ExtensionCommandMap,
 } from '../CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
+import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -77,6 +78,18 @@ export const createIsolatedExtensionHostWorker = async (
           }
           if (method === 'Extensions.unregisterFileChangeHandler') {
             return FileChangeHandlerRegistry.unregister(extensionId, application.applicationId)
+          }
+          if (method === 'Extensions.sendMessagePortToFileSystemWorker') {
+            return ExtensionApplicationServices.createFileSystemPort(application, args[0], extensionId)
+          }
+          if (method === 'Extensions.createWebViewWorkerRpc' || method === 'Extensions.createWebViewWorkerRpc2') {
+            return ExtensionApplicationServices.createWorker(
+              application,
+              args[0],
+              args[1],
+              method === 'Extensions.createWebViewWorkerRpc',
+              extensionId,
+            )
           }
           const invokeApplication = (CommandMapRef.commandMapRef as ExtensionCommandMap)['Extensions.invokeForApplication']
           if (!invokeApplication) {

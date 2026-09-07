@@ -80,6 +80,7 @@ import {
   createNotification,
 } from '../Notifications/Notifications.ts'
 import { getPreference, setPreference } from '../Preferences/Preferences.ts'
+import { reloadApplicationExtension } from '../ReloadApplicationExtension/ReloadApplicationExtension.ts'
 import * as ApplicationRendererWorker from '../Rpc/Rpc.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
@@ -250,6 +251,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.invalidateExtensionsCache': invalidateExtensionsCache,
   'Extensions.invokeForApplication': invokeForApplication,
   'Extensions.readOutputChannel': wrapCommand(readOutputChannel),
+  'Extensions.reloadApplicationExtension': reloadApplicationExtension,
   'Extensions.renderViewInstance': ExtensionView.renderViewInstance,
   'Extensions.requestViewRerender': ExtensionView.requestViewRerender,
   'Extensions.saveViewInstanceState': ExtensionView.saveViewInstanceState,

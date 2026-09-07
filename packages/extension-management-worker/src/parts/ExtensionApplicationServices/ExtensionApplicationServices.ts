@@ -10,6 +10,7 @@ import * as RendererWorker from '../Rpc/Rpc.ts'
 interface Services {
   readonly children: Map<string, string | undefined>
   readonly declarations: Map<string, any>
+  readonly extensionVersions: Map<string, number>
   nextChild: number
   readonly ports: Map<Rpc, string | undefined>
 }
@@ -24,7 +25,7 @@ const getServices = (application: ExtensionsState.ExtensionsState): Services => 
   const generation = application.applicationGeneration!
   let services = applications.get(generation)
   if (!services) {
-    services = { children: new Map(), declarations: new Map(), nextChild: 0, ports: new Map() }
+    services = { children: new Map(), declarations: new Map(), extensionVersions: new Map(), nextChild: 0, ports: new Map() }
     applications.set(generation, services)
   }
   return services
@@ -84,6 +85,7 @@ const fileSystemMethods = new Set(['readFile', 'readDirWithFileTypes', 'stat', '
 
 export const createFileSystemPort = async (application: ExtensionsState.ExtensionsState, port: MessagePort, extensionId?: string): Promise<void> => {
   const services = getServices(application)
+  const version = extensionId === undefined ? 0 : services.extensionVersions.get(extensionId) || 0
   const rpc = (await PlainMessagePortRpc.create({ commandMap: {}, messagePort: port })) as PortRpc
   // Bind only this connection: registering callbacks globally would let the
   // second IDE replace the first IDE's filesystem routing.
@@ -96,6 +98,9 @@ export const createFileSystemPort = async (application: ExtensionsState.Extensio
   }
   try {
     ExtensionsState.assertCurrentApplication(application)
+    if (extensionId !== undefined && (services.extensionVersions.get(extensionId) || 0) !== version) {
+      throw new Error('Extension was reloaded while opening its filesystem port')
+    }
     services.ports.set(rpc, extensionId)
   } catch (error) {
     await rpc.dispose()
@@ -123,6 +128,7 @@ export const dispose = async (application: ExtensionsState.ExtensionsState): Pro
 export const disposeExtension = async (application: ExtensionsState.ExtensionsState, extensionId: string): Promise<void> => {
   const services = applications.get(application.applicationGeneration!)
   if (!services) return
+  services.extensionVersions.set(extensionId, (services.extensionVersions.get(extensionId) || 0) + 1)
   const ports = [...services.ports].filter(([, owner]) => owner === extensionId).map(([rpc]) => rpc)
   const children = [...services.children].filter(([, owner]) => owner === extensionId).map(([id]) => id)
   for (const rpc of ports) services.ports.delete(rpc)

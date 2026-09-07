@@ -113,3 +113,14 @@ test('reloading one extension disposes only its child workers and declarations',
   expect(terminate).toHaveBeenCalledWith(otherId)
   expect(terminate).toHaveBeenCalledTimes(2)
 })
+
+test('a filesystem port opening during extension reload cannot register after disposal', async () => {
+  const application = ExtensionsState.get('preview')
+  const { port1, port2 } = new MessageChannel()
+  ports.push(port1, port2)
+  const pending = Services.createFileSystemPort(application, port1, 'sample')
+  const result = Promise.allSettled([pending])
+  await Services.disposeExtension(application, 'sample')
+  const results = await result
+  expect(results[0].status).toBe('rejected')
+})

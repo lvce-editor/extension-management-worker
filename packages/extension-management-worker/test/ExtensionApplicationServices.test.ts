@@ -111,5 +111,5 @@ test('reloading one extension disposes only its child workers and declarations',
   expect(Services.getRpcInfo(application, 'other').url).toBe('/preview/other.js')
   await Services.dispose(application)
   expect(terminate).toHaveBeenCalledWith(otherId)
-  expect(terminate.mock.calls.filter(([id]) => id === sampleId)).toHaveLength(1)
+  expect(terminate).toHaveBeenCalledTimes(2)
 })

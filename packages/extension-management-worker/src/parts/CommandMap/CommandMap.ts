@@ -126,6 +126,9 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
     return command(...args)
   }
   switch (method) {
+    case 'ExtensionHostQuickPick.showQuickPick':
+    case 'ExtensionHostQuickPick.showQuickInput':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, method, ...args)
     case 'ExtensionApi.readFile':
       return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'FileSystem.readFile', ...args)
     case 'Extensions.activateByEvent':

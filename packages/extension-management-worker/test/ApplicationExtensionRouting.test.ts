@@ -131,3 +131,14 @@ test('disposal still terminates the physical worker if RPC disposal throws synch
   expect(disposeWorker).toHaveBeenCalledTimes(1)
   expect(ExtensionsState.get('source').webExtensions).toEqual([manifest])
 })
+
+test.each(['ExtensionHostQuickPick.showQuickPick', 'ExtensionHostQuickPick.showQuickInput'])('%s keeps the calling application', async (method) => {
+  const options = { items: [], placeholder: 'Choose a sample' }
+  const invoke = commandMap['Extensions.invokeForApplication']
+  await invoke('preview', method, options)
+  await invoke('source', method, options)
+  expect(execute.mock.calls).toEqual([
+    ['preview', method, options],
+    ['source', method, options],
+  ])
+})

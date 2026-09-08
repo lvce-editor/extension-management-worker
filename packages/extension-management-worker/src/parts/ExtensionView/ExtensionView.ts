@@ -2,7 +2,9 @@ import type { Rpc } from '@lvce-editor/rpc'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
 import { disposeIsolatedExtensionHostWorker } from '../DisposeIsolatedExtensionHostWorker/DisposeIsolatedExtensionHostWorker.ts'
+import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionViewInstanceState from '../ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
+import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import * as GetExtensions from '../GetExtensions/GetExtensions.ts'
 import {
   getExtensionId,
@@ -96,8 +98,11 @@ const disposeViewOnlyExtensionWorker = async (extensionId: string, rpc: Rpc): Pr
   await disposeIsolatedExtensionHostWorker(extensionId)
 }
 
-const getExtensionForView = async (viewId: string, assetDir: string, platform: number): Promise<ExtensionManifest> => {
-  const extensions = await GetExtensions.getAllExtensions(assetDir, platform)
+const getExtensionForView = async (viewId: string, assetDir: string, platform: number, applicationId?: string): Promise<ExtensionManifest> => {
+  const extensions =
+    applicationId === undefined
+      ? await GetExtensions.getAllExtensions(assetDir, platform)
+      : await getAllExtensionsWithState(ExtensionsState.get(applicationId), assetDir, platform)
   const extension = extensions.find((extension) => IsExtensionIsolated.isExtensionIsolated(extension) && hasView(extension, viewId))
   if (!extension) {
     throw new Error(`view ${viewId} not found`)
@@ -105,25 +110,31 @@ const getExtensionForView = async (viewId: string, assetDir: string, platform: n
   return extension
 }
 
-const getRpcForView = async (viewId: string, assetDir: string, platform: number): Promise<ExtensionRpc> => {
+const getRpcForView = async (viewId: string, assetDir: string, platform: number, applicationId?: string): Promise<ExtensionRpc> => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
-  const extension = await getExtensionForView(viewId, resolvedAssetDir, resolvedPlatform)
+  const extension = await getExtensionForView(viewId, resolvedAssetDir, resolvedPlatform, applicationId)
   const extensionId = getExtensionId(extension)
-  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId)
+  const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId, applicationId)
+  // Application teardown and reload own application workers; global view-only disposal does not.
   if (existingRpc) {
     return {
-      disposeWorkerWhenLastViewCloses: hasOnlyViewAndCommandActivations(extension),
+      disposeWorkerWhenLastViewCloses: applicationId === undefined && hasOnlyViewAndCommandActivations(extension),
       extensionId,
       rpc: existingRpc,
     }
   }
-  const activationResult = await ActivateByEvent.activateByEvent(`onView:${viewId}`, resolvedAssetDir, resolvedPlatform)
+  const activationResult = await ActivateByEvent.activateByEvent(
+    `onView:${viewId}`,
+    resolvedAssetDir,
+    resolvedPlatform,
+    ExtensionsState.get(applicationId),
+  )
   if (activationResult.error) {
     throw activationResult.error
   }
   const rpc = await getRpc(extension, resolvedAssetDir, resolvedPlatform)
   return {
-    disposeWorkerWhenLastViewCloses: hasOnlyViewAndCommandActivations(extension),
+    disposeWorkerWhenLastViewCloses: applicationId === undefined && hasOnlyViewAndCommandActivations(extension),
     extensionId,
     rpc,
   }
@@ -164,9 +175,10 @@ export const createViewInstance = async (
   context: unknown,
   assetDir: string,
   platform: number,
+  applicationId?: string,
 ): Promise<CreateViewInstanceResult> => {
   try {
-    const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = await getRpcForView(viewId, assetDir, platform)
+    const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = await getRpcForView(viewId, assetDir, platform, applicationId)
     const { eventListeners, stateful } = await getViewMetadata(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {

@@ -18,6 +18,7 @@ interface ExtensionManifest {
   readonly id?: string
   readonly path?: string
   readonly uri?: string
+  readonly workspaceTransport?: { readonly command: string }
 }
 
 const getExtensionId = (extension: ExtensionManifest): string => {
@@ -39,6 +40,9 @@ const getRpcForCommand = async (extensionsState: ExtensionsState, id: string, pl
   const extension = await getContributingExtension(extensionsState, id, platform)
   if (!extension) {
     return undefined
+  }
+  if (extension.workspaceTransport?.command === id) {
+    throw new Error('Workspace transports can only be called by extension management')
   }
   const extensionId = getExtensionId(extension)
   const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId, extensionsState.applicationId)

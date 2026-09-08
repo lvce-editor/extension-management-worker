@@ -1,6 +1,6 @@
 import * as DeclaredRpcState from '../DeclaredRpcState/DeclaredRpcState.ts'
 
-export const validateNodeProcessRpc = (extensionId: string, rpcId: string): void => {
+export const validateNodeProcessRpc = (extensionId: string, rpcId: string): DeclaredRpcState.DeclaredRpc => {
   const extension = DeclaredRpcState.get(extensionId)
   if (!extension) {
     throw new Error(`Extension ${extensionId} has no declared rpcs`)
@@ -12,4 +12,5 @@ export const validateNodeProcessRpc = (extensionId: string, rpcId: string): void
   if (rpc.type !== 'node-process') {
     throw new Error(`Rpc ${rpcId} declared by extension ${extension.id} is not a node process`)
   }
+  return rpc
 }

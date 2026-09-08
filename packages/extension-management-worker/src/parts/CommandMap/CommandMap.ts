@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
+import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 import type { ExtensionsState as ExtensionState } from '../ExtensionsState/ExtensionsState.ts'
 import { activateByEvent } from '../ActivateByEvent/ActivateByEvent.ts'
 import { addExtension } from '../AddExtension/AddExtension.ts'
@@ -163,6 +164,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
 }
 
 export const commandMap: Record<string, ScopedCommand> = {
+  'Extensions.connectWorkspaceTerminal': WorkspaceTransport.connectTerminal,
+  'Extensions.getWorkspaceTransportUri': WorkspaceTransport.getWorkspaceTransportUri,
   'ExtensionApi.readFile': readExtensionApiFile,
   'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
   'ExtensionHostQuickPick.showQuickInput': showQuickInput,

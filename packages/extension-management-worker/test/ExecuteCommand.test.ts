@@ -76,3 +76,16 @@ test('executeCommand falls back to renderer worker for non-isolated commands', a
 
   expect(state.rendererWorker.invocations).toEqual([['Layout.getAssetDir'], ['About.showAbout']])
 })
+
+test('extensions cannot impersonate another extension by calling a workspace transport command', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({ 'Layout.getAssetDir': () => '/assets' })
+  const extensionsState = createExtensionsState([
+    {
+      commands: [{ id: 'ssh.connectToProcess' }],
+      id: 'ssh',
+      isolated: true,
+      workspaceTransport: { command: 'ssh.connectToProcess', scheme: 'ssh' },
+    },
+  ])
+  await expect(ExecuteCommand.executeCommand(extensionsState, 'ssh.connectToProcess')).rejects.toThrow('only be called by extension management')
+})

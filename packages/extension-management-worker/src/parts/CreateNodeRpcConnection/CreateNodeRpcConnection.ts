@@ -1,5 +1,6 @@
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
+import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { validateNodeProcessRpc } from '../ValidateNodeProcessRpc/ValidateNodeProcessRpc.ts'
 
@@ -44,7 +45,10 @@ const createElectronConnection = async (rpcId: string): Promise<unknown> => {
 }
 
 export const createNodeRpcConnection = async (extensionId: string, rpcId: string): Promise<unknown> => {
-  validateNodeProcessRpc(extensionId, rpcId)
+  const declaration = validateNodeProcessRpc(extensionId, rpcId)
+  if (declaration.onRemote === 'runOnRemote' && (await WorkspaceTransport.getRemoteWorkspaceUri())) {
+    return { type: 'message-port' }
+  }
   const { platform } = ExtensionsState.get()
   if (platform !== PlatformType.Remote && platform !== PlatformType.Electron) {
     throw new Error('Node rpc is not available on this platform')
@@ -56,6 +60,14 @@ export const createNodeRpcConnection = async (extensionId: string, rpcId: string
 }
 
 export const createNodeRpcMessagePort = async (extensionId: string, rpcId: string, port: MessagePort): Promise<void> => {
+  const declaration = validateNodeProcessRpc(extensionId, rpcId)
+  if (declaration.onRemote === 'runOnRemote') {
+    const workspaceUri = await WorkspaceTransport.getRemoteWorkspaceUri()
+    if (workspaceUri) {
+      await WorkspaceTransport.connect(workspaceUri, 'extension-node-process', port, { extensionId, rpcId })
+      return
+    }
+  }
   const { platform } = ExtensionsState.get()
   if (platform !== PlatformType.Electron) {
     throw new Error('Node rpc message ports are only available in Electron')

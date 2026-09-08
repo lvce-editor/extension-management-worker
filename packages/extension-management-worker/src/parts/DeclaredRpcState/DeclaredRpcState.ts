@@ -1,6 +1,7 @@
-interface DeclaredRpc {
+export interface DeclaredRpc {
   readonly id: string
   readonly name?: string
+  readonly onRemote?: 'runOnRemote'
   readonly type: string
   readonly url: string
 }

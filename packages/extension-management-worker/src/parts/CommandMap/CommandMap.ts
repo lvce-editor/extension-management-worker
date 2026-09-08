@@ -89,6 +89,7 @@ import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 import * as WebRtc from '../WebRtc/WebRtc.ts'
+import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 
 const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any) => {
   const wrapped = (...args: readonly any[]): any => {
@@ -184,6 +185,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.addWebExtension': addWebExtension,
   'Extensions.clearNotifications': clearNotifications,
   'Extensions.clearOutputChannel': wrapCommand(clearOutputChannel),
+  'Extensions.connectWorkspaceTerminal': WorkspaceTransport.connectTerminal,
   'Extensions.createApplication': ExtensionsState.createApplication,
   'Extensions.createViewInstance': ExtensionView.createViewInstance,
   'Extensions.createWebViewWorkerRpc': createWebViewWorkerRpc,
@@ -219,6 +221,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
   'Extensions.executeSignatureHelpProvider': wrapCommand(executeSignatureHelpProvider),
   'Extensions.executeSourceControlProvider': wrapCommand(executeSourceControlProvider),
+  'Extensions.executeWorkspaceRequest': WorkspaceTransport.request,
   'Extensions.getAccessToken': getAccessToken,
   'Extensions.getAllExtensions': getAllExtensions,
   'Extensions.getColorThemeCss': getColorThemeCss,
@@ -244,6 +247,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getViewInstanceState': ExtensionView.getViewInstanceState,
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
+  'Extensions.getWorkspaceTransportUri': WorkspaceTransport.getWorkspaceTransportUri,
   'Extensions.handleData': handleData,
   'Extensions.handleFileChanges': handleFileChanges,
   'Extensions.handleLinkedExtensionChange': handleLinkedExtensionChange,

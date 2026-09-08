@@ -171,6 +171,7 @@ test('rejects direct Electron ports for legacy node declarations', async () => {
 })
 
 test('rejects node rpc ports outside Electron', async () => {
+  declareRpc()
   ExtensionsState.setPlatform(PlatformType.Remote)
   const { port1, port2 } = new MessageChannel()
 

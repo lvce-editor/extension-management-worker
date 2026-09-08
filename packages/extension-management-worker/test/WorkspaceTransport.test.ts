@@ -28,8 +28,8 @@ afterEach(() => {
 test('only an opted-in node RPC uses a remote workspace port', async () => {
   ExtensionsState.setPlatform(PlatformType.Remote)
   using renderer = RendererWorker.registerMockRpc({
-    'Workspace.getUri': () => uri,
     'ExtensionNodeRpc.createConnection': () => ({ protocols: [], url: 'ws://local/node' }),
+    'Workspace.getUri': () => uri,
   })
   declareRpc()
   await expect(createNodeRpcConnection('builtin.git', 'git-client')).resolves.toMatchObject({ type: 'websocket', url: 'ws://local/node' })
@@ -42,9 +42,9 @@ test('an opted-in RPC stays local in a file workspace', async () => {
   ExtensionsState.setPlatform(PlatformType.Electron)
   declareRpc('runOnRemote')
   using renderer = RendererWorker.registerMockRpc({
-    'Workspace.getUri': () => 'file:///work',
-    'ExtensionNodeRpc.supportsDirectConnection': () => true,
     'ExtensionNodeRpc.createMessagePort': () => {},
+    'ExtensionNodeRpc.supportsDirectConnection': () => true,
+    'Workspace.getUri': () => 'file:///work',
   })
   const { port1, port2 } = new MessageChannel()
   try {
@@ -115,4 +115,17 @@ test('rejects a port transfer after switching workspaces', async () => {
     port1.close()
     port2.close()
   }
+})
+
+test('search requests run in the transport extension for the explicit workspace URI', async () => {
+  ExtensionsState.setPlatform(PlatformType.Test)
+  ExtensionsState.setWebExtensions([{ ...transport, workspaceTransport: { ...transport.workspaceTransport, requestCommand: 'remote-ssh.request' } }])
+  using _renderer = RendererWorker.registerMockRpc({ 'Layout.getAssetDir': () => '/assets' })
+  using _shared = SharedProcess.registerMockRpc({ 'ExtensionManagement.getAllExtensions': () => [] })
+  const invoke = jest.fn<Rpc['invoke']>(async () => ({ limitHit: true, results: [] }))
+  IsolatedExtensionHostWorkerState.set(transport.id, { dispose: async () => {}, invoke, invokeAndTransfer: async () => {}, send: () => {} })
+  await expect(WorkspaceTransport.request(uri, 'text-search', ['--json', 'query'])).resolves.toEqual({ limitHit: true, results: [] })
+  expect(invoke).toHaveBeenCalledWith('ExtensionApi.executeCommand', 'remote-ssh.request', uri, 'text-search', ['--json', 'query'])
+  await expect(WorkspaceTransport.request(uri, 'extension-node-process')).rejects.toThrow('Unsupported workspace request')
+  await expect(WorkspaceTransport.request('file:///work', 'text-search')).rejects.toThrow('Unsupported workspace request')
 })

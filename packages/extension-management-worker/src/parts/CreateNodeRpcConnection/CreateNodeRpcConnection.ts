@@ -1,8 +1,8 @@
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
-import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import { validateNodeProcessRpc } from '../ValidateNodeProcessRpc/ValidateNodeProcessRpc.ts'
+import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 
 const isMissingRendererCommand = (error: unknown, command: string): boolean => {
   const moduleName = command.slice(0, command.indexOf('.'))

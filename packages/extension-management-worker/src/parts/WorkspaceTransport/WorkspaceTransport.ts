@@ -11,6 +11,7 @@ interface TransportExtension extends ExtensionManifest {
   readonly workspaceTransport?: {
     readonly command: string
     readonly scheme: string
+    readonly requestCommand?: string
   }
 }
 
@@ -78,4 +79,17 @@ export const connect = async (
 
 export const connectTerminal = async (workspaceUri: string, port: MessagePort): Promise<void> => {
   await connect(workspaceUri, 'terminal-process', port)
+}
+
+export const request = async (workspaceUri: string, type: string, ...args: readonly unknown[]): Promise<unknown> => {
+  if (!isRemoteUri(workspaceUri) || !['text-search', 'file-search', 'terminal-options'].includes(type)) {
+    throw new Error('Unsupported workspace request')
+  }
+  const { assetDir, extension, platform } = await findTransport(workspaceUri)
+  const command = extension?.workspaceTransport?.requestCommand
+  if (!extension || !command) {
+    throw new Error('Workspace transport does not support requests')
+  }
+  const rpc = await getRpc(extension, assetDir, platform)
+  return rpc.invoke('ExtensionApi.executeCommand', command, workspaceUri, type, ...args)
 }

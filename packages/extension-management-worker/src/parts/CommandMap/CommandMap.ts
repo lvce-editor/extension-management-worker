@@ -155,6 +155,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return handleFileChanges(args[0], applicationId)
     case 'Extensions.sendMessagePortToFileSystemWorker':
       return ExtensionApplicationServices.createFileSystemPort(application, args[0])
+    case 'Extensions.showNotification':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Notification.create', ...args)
     default:
       throw new Error(`Extension command does not support application context: ${method}`)
   }

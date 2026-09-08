@@ -142,3 +142,16 @@ test.each(['ExtensionHostQuickPick.showQuickPick', 'ExtensionHostQuickPick.showQ
     ['source', method, options],
   ])
 })
+
+test('notification popups are routed only to the calling application', async () => {
+  const invoke = commandMap['Extensions.invokeForApplication']
+  await invoke('preview', 'Extensions.showNotification', 'info', 'Hello World!')
+  await invoke('source', 'Extensions.showNotification', 'warning', 'Source warning')
+  expect(execute.mock.calls).toEqual([
+    ['preview', 'Notification.create', 'info', 'Hello World!'],
+    ['source', 'Notification.create', 'warning', 'Source warning'],
+  ])
+  await disposeExtensionApplication('preview')
+  await expect(invoke('preview', 'Extensions.showNotification', 'info', 'Late message')).rejects.toThrow()
+  expect(execute).toHaveBeenCalledTimes(2)
+})

@@ -1,4 +1,4 @@
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
 import { disposeIsolatedExtensionHostWorker } from '../DisposeIsolatedExtensionHostWorker/DisposeIsolatedExtensionHostWorker.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
@@ -38,7 +38,8 @@ const disposeLanguageServers = async (extensionIds: readonly string[], disposeAl
 
 const getRetainedExtensionIds = async (getExtensions: GetAllExtensions): Promise<ReadonlySet<string>> => {
   try {
-    const extensions = await getExtensions('', 0)
+    const platform = await RendererWorker.invoke('Layout.getPlatform')
+    const extensions = await getExtensions('', platform)
     return new Set(
       extensions
         .filter((extension) => extension.preserveRuntimeOnWorkspaceChange === true)

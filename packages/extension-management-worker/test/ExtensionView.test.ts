@@ -801,3 +801,29 @@ test('renderViewInstance no-ops for disposed or failed instances', async () => {
 
   await expect(renderViewInstance('sample.views.testing', 1, '', 2)).resolves.toBeUndefined()
 })
+
+test('identical view contributions use separate application workers and leave them alive when closed', async () => {
+  const manifest = { activation: ['onView:sample.views.testing'], id: 'extension-one', isolated: true, views: [{ id: 'sample.views.testing' }] }
+  const source = createRpc()
+  const preview = createRpc()
+  ExtensionsState.createApplication('source', 1, [manifest])
+  ExtensionsState.createApplication('preview', 1, [manifest])
+  IsolatedExtensionHostWorkerState.set('extension-one', source.rpc, 'source')
+  IsolatedExtensionHostWorkerState.set('extension-one', preview.rpc, 'preview')
+  try {
+    expect(await createViewInstance('sample.views.testing', 101, {}, '/assets', 1, 'source')).toEqual(expect.objectContaining({ ok: true }))
+    expect(await createViewInstance('sample.views.testing', 102, {}, '/assets', 1, 'preview')).toEqual(expect.objectContaining({ ok: true }))
+    await dispatchViewEvent('sample.views.testing', 102, { type: 'click' }, '/assets', 1)
+    expect(preview.invocations).toContainEqual(['ExtensionApi.dispatchViewEvent', 102, { type: 'click' }])
+    expect(source.invocations).not.toContainEqual(['ExtensionApi.dispatchViewEvent', 102, { type: 'click' }])
+    await disposeViewInstance('sample.views.testing', 102, '/assets', 1)
+    expect(preview.disposals).toHaveLength(0)
+    expect(IsolatedExtensionHostWorkerState.get('extension-one', 'source')).toBe(source.rpc)
+    expect(IsolatedExtensionHostWorkerState.get('extension-one', 'preview')).toBe(preview.rpc)
+  } finally {
+    ExtensionsState.removeApplication('source')
+    ExtensionsState.removeApplication('preview')
+    IsolatedExtensionHostWorkerState.clear('source')
+    IsolatedExtensionHostWorkerState.clear('preview')
+  }
+})

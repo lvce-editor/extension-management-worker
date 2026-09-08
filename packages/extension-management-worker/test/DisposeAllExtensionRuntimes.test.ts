@@ -1,6 +1,6 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { PlatformType } from '@lvce-editor/constants'
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
+import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
 import { disposeAllExtensionRuntimes } from '../src/parts/DisposeAllExtensionRuntimes/DisposeAllExtensionRuntimes.ts'
@@ -25,10 +25,10 @@ beforeEach(() => {
   IsolatedExtensionHostWorkerState.set('sample.second', { dispose: disposeSecond } as any)
   ExtensionsState.updateRuntimeStatus('sample.failed', { status: 3 })
   state.rendererWorker = RendererWorker.registerMockRpc({
+    'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
     'Layout.getPlatform'() {
       return PlatformType.Remote
     },
-    'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
     'LanguageServer.dispose'() {},
@@ -112,18 +112,18 @@ test.each([PlatformType.Remote, PlatformType.Electron])(
     Object.defineProperty(globalThis, 'location', { configurable: true, value: { protocol: 'http:' } })
     state.rendererWorker?.[Symbol.dispose]()
     state.rendererWorker = RendererWorker.registerMockRpc({
+      'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
       'Layout.getAssetDir'() {
         return '/assets'
       },
       'Layout.getPlatform'() {
         return platform
       },
-      'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
     })
     state.sharedProcess?.[Symbol.dispose]()
     state.sharedProcess = SharedProcess.registerMockRpc({
       'ExtensionManagement.getAllExtensions'() {
-        return [{ id: 'sample.first', preserveRuntimeOnWorkspaceChange: true, compatibility: { web: false } }, { id: 'sample.second' }]
+        return [{ compatibility: { web: false }, id: 'sample.first', preserveRuntimeOnWorkspaceChange: true }, { id: 'sample.second' }]
       },
       'LanguageServer.dispose'() {},
       'LanguageServer.disposeAll'() {},
@@ -138,7 +138,7 @@ test.each([PlatformType.Remote, PlatformType.Electron])(
       if (previousLocation) {
         Object.defineProperty(globalThis, 'location', previousLocation)
       } else {
-        Reflect.deleteProperty(globalThis, 'location')
+        delete (globalThis as { location?: unknown }).location
       }
     }
   },

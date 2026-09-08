@@ -1,4 +1,5 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
+import { PlatformType } from '@lvce-editor/constants'
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
@@ -24,6 +25,9 @@ beforeEach(() => {
   IsolatedExtensionHostWorkerState.set('sample.second', { dispose: disposeSecond } as any)
   ExtensionsState.updateRuntimeStatus('sample.failed', { status: 3 })
   state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.getPlatform'() {
+      return PlatformType.Remote
+    },
     'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
   })
   state.sharedProcess = SharedProcess.registerMockRpc({
@@ -44,6 +48,7 @@ test('disposes all language servers and isolated extension hosts', async () => {
 
   expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.disposeAll']])
   expect(state.rendererWorker?.invocations).toEqual([
+    ['Layout.getPlatform'],
     ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.first'],
     ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.second'],
   ])
@@ -75,7 +80,10 @@ test('preserves workspace-independent extension runtimes', async () => {
   await disposeAllExtensionRuntimes(getExtensions as any)
 
   expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.dispose', 'sample.second']])
-  expect(state.rendererWorker?.invocations).toEqual([['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.second']])
+  expect(state.rendererWorker?.invocations).toEqual([
+    ['Layout.getPlatform'],
+    ['LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker', 'sample.second'],
+  ])
   expect(disposeFirst).not.toHaveBeenCalled()
   expect(disposeSecond).toHaveBeenCalledTimes(1)
   expect(IsolatedExtensionHostWorkerState.get('sample.first')).toBeDefined()
@@ -96,3 +104,42 @@ test('preserves runtimes when an older shared process cannot dispose one languag
 test('exposes the bulk disposal command', () => {
   expect(commandMap['Extensions.disposeAllRuntimes']).toBe(disposeAllExtensionRuntimes)
 })
+
+test.each([PlatformType.Remote, PlatformType.Electron])(
+  'preserves network extensions using the actual host platform %s over HTTP',
+  async (platform) => {
+    const previousLocation = Object.getOwnPropertyDescriptor(globalThis, 'location')
+    Object.defineProperty(globalThis, 'location', { configurable: true, value: { protocol: 'http:' } })
+    state.rendererWorker?.[Symbol.dispose]()
+    state.rendererWorker = RendererWorker.registerMockRpc({
+      'Layout.getAssetDir'() {
+        return '/assets'
+      },
+      'Layout.getPlatform'() {
+        return platform
+      },
+      'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker'() {},
+    })
+    state.sharedProcess?.[Symbol.dispose]()
+    state.sharedProcess = SharedProcess.registerMockRpc({
+      'ExtensionManagement.getAllExtensions'() {
+        return [{ id: 'sample.first', preserveRuntimeOnWorkspaceChange: true, compatibility: { web: false } }, { id: 'sample.second' }]
+      },
+      'LanguageServer.dispose'() {},
+      'LanguageServer.disposeAll'() {},
+    })
+    try {
+      await disposeAllExtensionRuntimes()
+      expect(disposeFirst).not.toHaveBeenCalled()
+      expect(disposeSecond).toHaveBeenCalledTimes(1)
+      expect(IsolatedExtensionHostWorkerState.get('sample.first')).toBeDefined()
+      expect(state.sharedProcess.invocations).toContainEqual(['ExtensionManagement.getAllExtensions'])
+    } finally {
+      if (previousLocation) {
+        Object.defineProperty(globalThis, 'location', previousLocation)
+      } else {
+        Reflect.deleteProperty(globalThis, 'location')
+      }
+    }
+  },
+)

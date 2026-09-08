@@ -68,6 +68,22 @@ test('real filesystem ports keep the same URI isolated and reject stale generati
   expect(await peers[0].invoke('FileSystem.readFile', 'memfs:///same.ts')).toBe('source')
 })
 
+test('batch file hashes use the owning application filesystem port', async () => {
+  const uris = ['memfs:///main.ts', 'memfs:///missing.ts']
+  const execute = jest.fn(async (id: string, _command: string, _uris: readonly string[]) => [`${id}-hash`, null])
+  state.renderer?.[Symbol.dispose]()
+  state.renderer = RendererWorker.registerMockRpc({ 'Application.execute': execute })
+  for (const id of ['source', 'preview']) {
+    const { port1, port2 } = new MessageChannel()
+    ports.push(port1, port2)
+    await Services.createFileSystemPort(ExtensionsState.get(id), port1)
+    const peer = await PlainMessagePortRpc.create({ commandMap: {}, messagePort: port2 })
+    peers.push(peer)
+    expect(await peer.invoke('FileSystem.getFileHashes', uris)).toEqual([`${id}-hash`, null])
+    expect(execute).toHaveBeenLastCalledWith(id, 'FileSystem.getFileHashes', uris)
+  }
+})
+
 test('child workers have distinct generation-owned ids and late launches are terminated', async () => {
   const source = ExtensionsState.get('source')
   const preview = ExtensionsState.get('preview')

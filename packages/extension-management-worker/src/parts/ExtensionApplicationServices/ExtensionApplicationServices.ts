@@ -81,7 +81,19 @@ export const createWorker = async (
   }
 }
 
-const fileSystemMethods = new Set(['readFile', 'readDirWithFileTypes', 'stat', 'exists', 'writeFile', 'mkdir', 'remove', 'rename', 'copy', 'getBlob'])
+const fileSystemMethods = new Set([
+  'readFile',
+  'readDirWithFileTypes',
+  'stat',
+  'exists',
+  'writeFile',
+  'mkdir',
+  'remove',
+  'rename',
+  'copy',
+  'getBlob',
+  'getFileHashes',
+])
 
 export const createFileSystemPort = async (application: ExtensionsState.ExtensionsState, port: MessagePort, extensionId?: string): Promise<void> => {
   const services = getServices(application)

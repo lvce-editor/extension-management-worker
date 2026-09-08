@@ -16,7 +16,7 @@ const transport = {
 }
 
 const declareRpc = (onRemote?: 'runOnRemote'): void => {
-  DeclaredRpcState.set({ id: 'builtin.git', rpc: [{ id: 'git-client', onRemote, type: 'node-process', url: 'client.js' }] })
+  DeclaredRpcState.set({ id: 'builtin.git', rpc: [{ id: 'git-client', ...(onRemote && { onRemote }), type: 'node-process', url: 'client.js' }] })
 }
 
 afterEach(() => {

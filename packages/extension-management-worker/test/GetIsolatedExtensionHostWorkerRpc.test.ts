@@ -66,7 +66,7 @@ test('getAbsolutePath supports builtin and web manifests with omitted entrypoint
       '/assets',
       PlatformType.Electron,
     ),
-  ).toBe('/assets/extensions/builtin.sample/main.js')
+  ).toBe('/assets/extensions/source/main.js')
   expect(
     GetIsolatedExtensionHostWorkerRpc.getAbsolutePath(
       {
@@ -150,4 +150,35 @@ test('getRpc records provider worker activation errors without announcing a runn
     }),
   )
   expect(notify).not.toHaveBeenCalled()
+})
+
+test.each([
+  '/usr/lib/lvce/resources/app/static/2d0c8e6/extensions/builtin.pull-request-github',
+  '/usr/lib/lvce/resources/app/static/2d0c8e6/extensions/builtin.pull-request-github/',
+  'C:\\Program Files\\LVCE\\resources\\app\\static\\2d0c8e6\\extensions\\builtin.pull-request-github',
+])('getRpc launches the bundled GitHub worker from its directory: %s', async (path) => {
+  const rpc = createRpc()
+  const getOrCreate = jest
+    .fn<(extensionId: string, absolutePath: string, workerName?: string, contentSecurityPolicy?: string) => Promise<Rpc>>()
+    .mockResolvedValue(rpc)
+  await GetIsolatedExtensionHostWorkerRpc.getRpc(
+    {
+      browser: 'dist/pullRequestWorkerMain.js',
+      builtin: true,
+      id: 'github.pull-requests',
+      path,
+    },
+    '/2d0c8e6',
+    PlatformType.Electron,
+    'onView:github.pullRequests',
+    getOrCreate,
+    jest.fn(),
+  )
+  expect(getOrCreate.mock.calls[0]?.[1]).toBe('/2d0c8e6/extensions/builtin.pull-request-github/dist/pullRequestWorkerMain.js')
+})
+
+test('getAbsolutePath falls back to the builtin id when the directory is omitted', () => {
+  expect(
+    GetIsolatedExtensionHostWorkerRpc.getAbsolutePath({ browser: 'main.js', builtin: true, id: 'builtin.sample' }, '/assets', PlatformType.Electron),
+  ).toBe('/assets/extensions/builtin.sample/main.js')
 })

@@ -125,7 +125,7 @@ test('getExtensionAbsolutePath resolves extension resource paths', () => {
     getExtensionAbsolutePath('sample.extension', false, false, 'extensions/sample', 'main.js', 'https://origin.test', PlatformType.Web, '/assets'),
   ).toBe('/extensions/sample/main.js')
   expect(getExtensionAbsolutePath('sample.extension', false, true, '/extensions/sample', 'main.js', 'https://origin.test', 0, '/assets')).toBe(
-    '/assets/extensions/sample.extension/main.js',
+    '/assets/extensions/sample/main.js',
   )
   expect(getExtensionAbsolutePath('sample.extension', false, false, '/extensions/sample', 'main.js', 'https://origin.test', 0, '/assets')).toBe(
     'https://origin.test/remote/extensions/sample/main.js',

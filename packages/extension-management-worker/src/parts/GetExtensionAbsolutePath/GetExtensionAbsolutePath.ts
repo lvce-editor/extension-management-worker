@@ -26,7 +26,7 @@ export const getExtensionAbsolutePath = (
     return path + '/' + relativePath
   }
   if (isBuiltin) {
-    const folderName = path.split(/[/\\]/).filter(Boolean).at(-1) || id
+    const folderName = path.split(/[/\\]/).findLast(Boolean) || id
     return `${assetDir}/extensions/${folderName}/${relativePath}`
   }
   return new URL('/remote' + path + '/' + relativePath, origin).href

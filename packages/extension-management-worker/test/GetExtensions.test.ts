@@ -10,7 +10,7 @@ beforeEach(() => {
 
 test('projects source control actions before returning the RPC response', async () => {
   const actions = { stage: { command: 'git.stage' } }
-  const manifest = { id: 'git', description: 'Large unrelated metadata', 'source-control-actions': actions }
+  const manifest = { description: 'Large unrelated metadata', id: 'git', 'source-control-actions': actions }
   using rpc = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions': async () => [manifest, { id: 'theme' }],
   })
@@ -26,10 +26,10 @@ test('projects source control actions before returning the RPC response', async 
 test('projects resolved enablement state and dynamic extension metadata', async () => {
   ExtensionsState.set({ ...ExtensionsState.get(), disabledIds: ['git'], webExtensions: [{ id: 'dynamic', name: 'Dynamic' }] })
   using rpc = SharedProcess.registerMockRpc({
-    'ExtensionManagement.getAllExtensions': async () => [{ id: 'git', disabled: false }],
+    'ExtensionManagement.getAllExtensions': async () => [{ disabled: false, id: 'git' }],
   })
   expect(await commandMap['Extensions.getAllExtensions']('/assets', PlatformType.Test, ['id', 'disabled'])).toEqual([
-    { id: 'git', disabled: true },
+    { disabled: true, id: 'git' },
     { id: 'dynamic' },
   ])
   expect(rpc.invocations).toHaveLength(1)

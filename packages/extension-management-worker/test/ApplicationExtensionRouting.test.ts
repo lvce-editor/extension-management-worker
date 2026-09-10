@@ -159,7 +159,7 @@ test('notification popups are routed only to the calling application', async () 
 test('application extension queries return only requested fields without changing stored manifests', async () => {
   const invoke = commandMap['Extensions.invokeForApplication']
   expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1, ['id', 'applicationId'])).toEqual([
-    { id: 'sample', applicationId: 'source' },
+    { applicationId: 'source', id: 'sample' },
   ])
   expect(await invoke('preview', 'Extensions.getAllExtensions', '/assets', 1, [])).toEqual([{}])
   expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1, ['missing', 'toString'])).toEqual([{}])

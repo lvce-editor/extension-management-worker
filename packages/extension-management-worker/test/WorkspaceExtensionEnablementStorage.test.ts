@@ -272,7 +272,7 @@ test('getExtension reports globally enabled state when there is no override', as
   registerSharedProcess([{ id: 'sample.extension' }])
 
   await expect(getExtension('sample.extension', '/assets', PlatformType.Electron)).resolves.toEqual({
-    enablementState: 'enabledGlobally',
+    enablementState: 3,
     hasWorkspace: true,
     id: 'sample.extension',
   })
@@ -284,7 +284,31 @@ test('getExtension reports workspace disabled state', async () => {
 
   await expect(getExtension('sample.extension', '/assets', PlatformType.Electron)).resolves.toEqual({
     disabled: true,
-    enablementState: 'disabledWorkspace',
+    enablementState: 2,
+    hasWorkspace: true,
+    id: 'sample.extension',
+  })
+})
+
+test('getExtension reports numeric globally disabled state', async () => {
+  registerMocks()
+  registerSharedProcess([{ disabled: true, id: 'sample.extension' }])
+
+  await expect(getExtension('sample.extension', '/assets', PlatformType.Electron)).resolves.toEqual({
+    disabled: true,
+    enablementState: 1,
+    hasWorkspace: true,
+    id: 'sample.extension',
+  })
+})
+
+test('getExtension reports numeric workspace enabled state', async () => {
+  registerMocks(createMockFileSystem([[DefaultStorageUri, '{"enabledExtensions":["sample.extension"]}']]))
+  registerSharedProcess([{ disabled: true, id: 'sample.extension' }])
+
+  await expect(getExtension('sample.extension', '/assets', PlatformType.Electron)).resolves.toEqual({
+    disabled: false,
+    enablementState: 4,
     hasWorkspace: true,
     id: 'sample.extension',
   })

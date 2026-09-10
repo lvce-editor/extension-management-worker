@@ -55,16 +55,30 @@ const getExtensionsWithState = async (extensions: readonly any[], extensionsStat
   return withDisabledState(extensionsWithDisabledState, workspaceDisabledIds, workspaceEnabledIds)
 }
 
-export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number) => {
+export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number, fields?: readonly string[]) => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   Assert.string(resolvedAssetDir)
   Assert.number(resolvedPlatform)
+  if (fields !== undefined) {
+    Assert.array(fields)
+    for (const field of fields) {
+      Assert.string(field)
+    }
+  }
   const meta = extensionsState.webExtensions
+  let extensions: readonly any[]
   if (resolvedPlatform === PlatformType.Web) {
     const webExtensions = await getWebExtensions(resolvedAssetDir)
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
-    return getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
+    extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
+  } else {
+    const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
+    extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
   }
-  const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
-  return getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
+  if (fields === undefined) {
+    return extensions
+  }
+  return extensions.map((extension) =>
+    Object.fromEntries(fields.filter((field) => Object.hasOwn(extension, field)).map((field) => [field, extension[field]])),
+  )
 }

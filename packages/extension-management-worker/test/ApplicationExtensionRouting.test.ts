@@ -155,3 +155,16 @@ test('notification popups are routed only to the calling application', async () 
   await expect(invoke('preview', 'Extensions.showNotification', 'info', 'Late message')).rejects.toThrow()
   expect(execute).toHaveBeenCalledTimes(2)
 })
+
+test('application extension queries return only requested fields without changing stored manifests', async () => {
+  const invoke = commandMap['Extensions.invokeForApplication']
+  expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1, ['id', 'applicationId'])).toEqual([
+    { id: 'sample', applicationId: 'source' },
+  ])
+  expect(await invoke('preview', 'Extensions.getAllExtensions', '/assets', 1, [])).toEqual([{}])
+  expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1, ['missing', 'toString'])).toEqual([{}])
+  expect(await invoke('source', 'Extensions.getDynamicWebExtensions')).toEqual([manifest])
+  expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1)).toEqual([
+    expect.objectContaining({ ...manifest, applicationId: 'source' }),
+  ])
+})

@@ -139,7 +139,7 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
     case 'Extensions.createWebViewWorkerRpc2':
       return ExtensionApplicationServices.createWorker(application, args[0], args[1])
     case 'Extensions.getAllExtensions':
-      return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform)
+      return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform, args[2])
     case 'Extensions.getDynamicWebExtensions':
       return application.webExtensions
     case 'Extensions.getRpcInfo':

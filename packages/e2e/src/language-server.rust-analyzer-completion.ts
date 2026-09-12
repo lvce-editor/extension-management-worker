@@ -21,9 +21,9 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
   const expectedCompletion = 'native_language_server_completion'
   const completionPrefix = expectedCompletion.slice(0, -5)
   const offset = rustSource.lastIndexOf(completionPrefix) + completionPrefix.length
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  const deadline = Date.now() + 5000
-  while (Date.now() < deadline) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'rust',
@@ -32,9 +32,11 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 5000
     if (lastCompletionItems.some((item) => item.label?.startsWith(expectedCompletion))) {
       return
     }
-  }
+  } while (Date.now() < deadline)
   throw new Error(`Expected Rust Analyzer completion, got ${JSON.stringify(lastCompletionItems)}`)
 }

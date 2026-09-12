@@ -21,9 +21,9 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
   const completionPrefix = expectedCompletionName.slice(0, -5)
   const offset = source.lastIndexOf(completionPrefix) + completionPrefix.length
   const expectedCompletion = `${expectedCompletionName}/0`
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  const deadline = Date.now() + 10_000
-  while (Date.now() < deadline) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'erlang',
@@ -32,10 +32,12 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 10_000
     if (lastCompletionItems.some((item) => item.label === expectedCompletion)) {
       break
     }
-  }
+  } while (Date.now() < deadline)
   if (lastCompletionItems.every((item) => item.label !== expectedCompletion)) {
     throw new Error(`Expected Erlang Language Platform completion, got ${JSON.stringify(lastCompletionItems)}`)
   }

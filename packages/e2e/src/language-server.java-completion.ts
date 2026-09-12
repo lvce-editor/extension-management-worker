@@ -24,9 +24,9 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
   const expectedCompletion = 'nativeLanguageServerCompletion'
   const completionPrefix = expectedCompletion.slice(0, -5)
   const offset = javaSource.lastIndexOf(completionPrefix) + completionPrefix.length
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  const deadline = Date.now() + 10_000
-  while (Date.now() < deadline) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'java',
@@ -35,10 +35,12 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 10_000
     if (lastCompletionItems.some((item) => item.label?.startsWith(expectedCompletion))) {
       break
     }
-  }
+  } while (Date.now() < deadline)
   if (lastCompletionItems.every((item) => !item.label?.startsWith(expectedCompletion))) {
     throw new Error(`Expected vscode-java completion, got ${JSON.stringify(lastCompletionItems)}`)
   }

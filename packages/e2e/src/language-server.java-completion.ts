@@ -2,12 +2,6 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.java-completion'
 
-const wait = (duration: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, duration)
-  })
-}
-
 export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/java-language-server')
   await Extension.addWebExtension(extensionUri)
@@ -30,8 +24,9 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
   const expectedCompletion = 'nativeLanguageServerCompletion'
   const completionPrefix = expectedCompletion.slice(0, -5)
   const offset = javaSource.lastIndexOf(completionPrefix) + completionPrefix.length
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  for (let attempt = 0; attempt < 40; attempt++) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'java',
@@ -40,11 +35,12 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 10_000
     if (lastCompletionItems.some((item) => item.label?.startsWith(expectedCompletion))) {
       break
     }
-    await wait(250)
-  }
+  } while (Date.now() < deadline)
   if (lastCompletionItems.every((item) => !item.label?.startsWith(expectedCompletion))) {
     throw new Error(`Expected vscode-java completion, got ${JSON.stringify(lastCompletionItems)}`)
   }

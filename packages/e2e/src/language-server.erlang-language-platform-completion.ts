@@ -2,12 +2,6 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.erlang-language-platform-completion'
 
-const wait = (duration: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, duration)
-  })
-}
-
 export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locator, Main, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/erlang-language-platform')
   await Extension.addWebExtension(extensionUri)
@@ -27,8 +21,9 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
   const completionPrefix = expectedCompletionName.slice(0, -5)
   const offset = source.lastIndexOf(completionPrefix) + completionPrefix.length
   const expectedCompletion = `${expectedCompletionName}/0`
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  for (let attempt = 0; attempt < 40; attempt++) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'erlang',
@@ -37,11 +32,12 @@ export const test: Test = async ({ Editor, expect, Extension, FileSystem, Locato
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 10_000
     if (lastCompletionItems.some((item) => item.label === expectedCompletion)) {
       break
     }
-    await wait(250)
-  }
+  } while (Date.now() < deadline)
   if (lastCompletionItems.every((item) => item.label !== expectedCompletion)) {
     throw new Error(`Expected Erlang Language Platform completion, got ${JSON.stringify(lastCompletionItems)}`)
   }

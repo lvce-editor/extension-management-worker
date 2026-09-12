@@ -2,12 +2,6 @@ import type { Test } from '@lvce-editor/test-with-playwright'
 
 export const name = 'language-server.rust-analyzer-completion'
 
-const wait = (duration: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, duration)
-  })
-}
-
 export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/rust-analyzer-language-server')
   await Extension.addWebExtension(extensionUri)
@@ -27,8 +21,9 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
   const expectedCompletion = 'native_language_server_completion'
   const completionPrefix = expectedCompletion.slice(0, -5)
   const offset = rustSource.lastIndexOf(completionPrefix) + completionPrefix.length
-  let lastCompletionItems: readonly { readonly label?: string }[] = []
-  for (let attempt = 0; attempt < 20; attempt++) {
+  let lastCompletionItems: readonly { readonly label?: string }[]
+  let deadline: number | undefined
+  do {
     lastCompletionItems = await Extension.executeCompletionProvider(
       {
         languageId: 'rust',
@@ -37,10 +32,11 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
       },
       offset,
     )
+    // Server startup precedes the bounded wait for indexed completion results.
+    deadline ??= Date.now() + 5000
     if (lastCompletionItems.some((item) => item.label?.startsWith(expectedCompletion))) {
       return
     }
-    await wait(250)
-  }
+  } while (Date.now() < deadline)
   throw new Error(`Expected Rust Analyzer completion, got ${JSON.stringify(lastCompletionItems)}`)
 }

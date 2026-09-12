@@ -4,12 +4,6 @@ export const name = 'language-server.erlang-language-platform-diagnostics'
 
 const expectedMessage = 'Syntax Error'
 
-const wait = (duration: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, duration)
-  })
-}
-
 export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
   const extensionUri = import.meta.resolve('../.tmp/erlang-language-platform')
   await Extension.addWebExtension(extensionUri)
@@ -38,7 +32,6 @@ export const test: Test = async ({ Extension, FileSystem, Workspace }) => {
     if (lastDiagnostics.some((diagnostic) => diagnostic.message?.includes(expectedMessage))) {
       break
     }
-    await wait(250)
   }
   if (lastDiagnostics.every((diagnostic) => !diagnostic.message?.includes(expectedMessage))) {
     throw new Error(`Expected Erlang Language Platform diagnostics, got ${JSON.stringify(lastDiagnostics)}`)

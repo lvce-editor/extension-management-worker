@@ -21,6 +21,6 @@
     "@lvce-editor/test-with-playwright": "^22.20.0",
     "e2e-language-server-helpers": "0.0.0-dev",
     "esbuild": "^0.28.1",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }

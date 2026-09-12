@@ -28,8 +28,8 @@
     "printWidth": 150
   },
   "devDependencies": {
-    "@lvce-editor/eslint-config": "^18.4.0",
-    "eslint": "^10.8.1",
+    "@lvce-editor/eslint-config": "^18.12.0",
+    "eslint": "10.9.1",
     "knip": "^6.31.0",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3"

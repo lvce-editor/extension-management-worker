@@ -180,6 +180,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'ExtensionHostSourceControl.getFileDecorations': wrapSourceControlProviderCommand('executeSourceControlGetFileDecorations'),
   'ExtensionHostSourceControl.getGroups': wrapSourceControlProviderCommand('executeSourceControlGetGroups'),
   'ExtensionHostSourceControl.getIconDefinitions': async (): Promise<readonly string[]> => [],
+  'ExtensionHostSourceControl.getProgress': wrapSourceControlProviderCommand('executeSourceControlGetProgress'),
   'Extensions.activateByEvent': activateByEvent,
   'Extensions.addExtension': addExtension,
   'Extensions.addWebExtension': addWebExtension,

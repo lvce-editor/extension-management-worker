@@ -10,6 +10,7 @@ import {
   executeFileSystemProviderReadFile,
   executeFileSystemProviderRemove,
   executeFileSystemProviderRename,
+  executeFileSystemProviderStat,
   executeFileSystemProviderWriteFile,
 } from '../src/parts/ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -97,9 +98,14 @@ test('executes isolated file system provider metadata and directory operations',
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderIsReadonly',
   })
+  await expect(executeFileSystemProviderStat(extensionsState, 'fetch', 'fetch:///workspace/link')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderStat',
+  })
   expect(invocations).toEqual([
     ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
     ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
+    ['ExtensionApi.executeFileSystemProviderStat', 'fetch', 'fetch:///workspace/link'],
   ])
 })
 

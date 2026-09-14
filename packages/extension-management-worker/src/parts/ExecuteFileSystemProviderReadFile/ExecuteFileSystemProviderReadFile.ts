@@ -80,6 +80,14 @@ export const executeFileSystemProviderReadFile = (
   return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderReadFile', providerId, uri)
 }
 
+export const executeFileSystemProviderStat = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  uri: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderStat', providerId, uri)
+}
+
 export const executeFileSystemProviderRemove = (
   extensionsState: ExtensionsState,
   providerId: string,

@@ -24,6 +24,7 @@ import {
   executeFileSystemProviderReadFile,
   executeFileSystemProviderRemove,
   executeFileSystemProviderRename,
+  executeFileSystemProviderStat,
   executeFileSystemProviderWriteFile,
 } from '../ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
 import { executeFormattingProvider } from '../ExecuteFormattingProvider/ExecuteFormattingProvider.ts'
@@ -213,6 +214,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeFileSystemProviderReadFile': wrapCommand(executeFileSystemProviderReadFile),
   'Extensions.executeFileSystemProviderRemove': wrapCommand(executeFileSystemProviderRemove),
   'Extensions.executeFileSystemProviderRename': wrapCommand(executeFileSystemProviderRename),
+  'Extensions.executeFileSystemProviderStat': wrapCommand(executeFileSystemProviderStat),
   'Extensions.executeFileSystemProviderWriteFile': wrapCommand(executeFileSystemProviderWriteFile),
   'Extensions.executeFormattingProvider': wrapCommand(executeFormattingProvider),
   'Extensions.executeHoverProvider': wrapCommand(executeHoverProvider),

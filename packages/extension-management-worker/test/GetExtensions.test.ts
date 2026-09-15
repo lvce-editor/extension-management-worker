@@ -1,8 +1,18 @@
-import { beforeEach, expect, test } from '@jest/globals'
+import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
 import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+
+const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
+
+afterEach(() => {
+  if (originalFetch) {
+    Object.defineProperty(globalThis, 'fetch', originalFetch)
+  } else {
+    delete (globalThis as any).fetch
+  }
+})
 
 beforeEach(() => {
   ExtensionsState.reset()
@@ -39,4 +49,25 @@ test('rejects invalid field selectors', async () => {
   const query = commandMap['Extensions.getAllExtensions']
   await expect(query('/assets', PlatformType.Test, 'id' as any)).rejects.toThrow()
   await expect(query('/assets', PlatformType.Test, [1] as any)).rejects.toThrow()
+})
+
+test('reuses the static manifest while refreshing dynamic extension metadata', async () => {
+  let fetchCount = 0
+  Object.defineProperty(globalThis, 'fetch', {
+    configurable: true,
+    value: async (): Promise<Response> => {
+      fetchCount++
+      return {
+        json: async () => [{ id: 'static' }],
+        ok: true,
+      } as Response
+    },
+  })
+  const query = commandMap['Extensions.getAllExtensions']
+
+  await expect(query('/dynamic-state-assets', PlatformType.Web)).resolves.toEqual([{ id: 'static' }])
+  ExtensionsState.addExtension({ id: 'dynamic' })
+  await expect(query('/dynamic-state-assets', PlatformType.Web)).resolves.toEqual([{ id: 'static' }, { id: 'dynamic' }])
+
+  expect(fetchCount).toBe(1)
 })

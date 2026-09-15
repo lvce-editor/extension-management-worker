@@ -47,6 +47,14 @@ const state = {
 }
 
 const applications = new Map<string, ExtensionsState>()
+const webExtensionsCaches = new WeakMap<object, Map<string, Promise<readonly any[]>>>()
+
+const transferWebExtensionsCache = (current: ExtensionsState, next: ExtensionsState): void => {
+  const cache = webExtensionsCaches.get(current)
+  if (cache) {
+    webExtensionsCaches.set(next, cache)
+  }
+}
 
 export const createApplication = (applicationId: string, platform: number, webExtensions: readonly any[]): void => {
   if (!applicationId || applications.has(applicationId)) {
@@ -96,9 +104,11 @@ export const set = (newState: ExtensionsState): void => {
     if (newState.applicationGeneration !== currentState.applicationGeneration) {
       throw new Error(`Stale extension application state: ${newState.applicationId}`)
     }
+    transferWebExtensionsCache(currentState, newState)
     applications.set(newState.applicationId, newState)
     return
   }
+  transferWebExtensionsCache(state.extensionsState, newState)
   state.extensionsState = newState
 }
 
@@ -156,6 +166,16 @@ export const removeWebExtension = (id: string, applicationId?: string): boolean 
 
 export const clearCachedExtensions = (applicationId?: string): void => {
   update({ cachedExtensions: undefined }, applicationId)
+}
+
+export const getOrCreateWebExtensionsCache = (extensionsState: ExtensionsState): Map<string, Promise<readonly any[]>> => {
+  const existing = webExtensionsCaches.get(extensionsState)
+  if (existing) {
+    return existing
+  }
+  const cache = new Map<string, Promise<readonly any[]>>()
+  webExtensionsCaches.set(extensionsState, cache)
+  return cache
 }
 
 export const setRuntimeStatus = (status: RuntimeStatus, applicationId?: string): void => {

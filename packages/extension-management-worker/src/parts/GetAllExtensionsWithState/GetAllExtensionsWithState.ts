@@ -4,6 +4,7 @@ import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
 import { SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import * as ExtensionsStateModule from '../ExtensionsState/ExtensionsState.ts'
 import { getExtensionEnablement } from '../GetExtensionEnablement/GetExtensionEnablement.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
@@ -68,7 +69,8 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
   const meta = extensionsState.webExtensions
   let extensions: readonly any[]
   if (resolvedPlatform === PlatformType.Web) {
-    const webExtensions = await getWebExtensions(resolvedAssetDir)
+    const cache = ExtensionsStateModule.getOrCreateWebExtensionsCache(extensionsState)
+    const webExtensions = await getWebExtensions(resolvedAssetDir, cache)
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
     extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
   } else {

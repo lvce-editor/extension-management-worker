@@ -101,6 +101,15 @@ test('getRemoteUrl handles http, https, absolute, and relative urls', () => {
   expect(getRemoteUrl('extensions/file')).toBe('/remote/extensions/file')
 })
 
+test('getRemoteUrl normalizes Windows paths and file urls', () => {
+  expect(getRemoteUrl(String.raw`C:\Program Files\LVCE\extensions\sample\media\icon.png`)).toBe(
+    '/remote/C:/Program Files/LVCE/extensions/sample/media/icon.png',
+  )
+  expect(getRemoteUrl('file:///C:/Program Files/LVCE/extensions/sample/media/icon.png')).toBe(
+    '/remote/C:/Program Files/LVCE/extensions/sample/media/icon.png',
+  )
+})
+
 test('getRemoteUrlForWebView requires a registered webview', async () => {
   await expect(getRemoteUrlForWebView('/extensions/file')).rejects.toThrow('webview undefined not found')
 })

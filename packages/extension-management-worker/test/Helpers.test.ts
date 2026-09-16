@@ -13,6 +13,18 @@ test('getUrlPrefix returns remote-aware extension prefixes', () => {
   expect(getUrlPrefix(PlatformType.Electron, 'extensions/sample')).toBe('/remote/extensions/sample')
 })
 
+test('getUrlPrefix normalizes Windows extension paths', () => {
+  expect(getUrlPrefix(PlatformType.Electron, String.raw`C:\Program Files\LVCE\extensions\sample`)).toBe(
+    '/remote/C:/Program Files/LVCE/extensions/sample',
+  )
+})
+
+test('getUrlPrefix normalizes Windows file urls', () => {
+  expect(getUrlPrefix(PlatformType.Electron, 'file:///C:/Program Files/LVCE/extensions/sample')).toBe(
+    '/remote/C:/Program Files/LVCE/extensions/sample',
+  )
+})
+
 test('getExtensionHostSubWorkerUrl resolves source and bundled worker layouts', () => {
   expect(
     getExtensionHostSubWorkerUrl(
@@ -130,4 +142,19 @@ test('getExtensionAbsolutePath resolves extension resource paths', () => {
   expect(getExtensionAbsolutePath('sample.extension', false, false, '/extensions/sample', 'main.js', 'https://origin.test', 0, '/assets')).toBe(
     'https://origin.test/remote/extensions/sample/main.js',
   )
+})
+
+test('getExtensionAbsolutePath resolves Windows file urls for local extensions', () => {
+  expect(
+    getExtensionAbsolutePath(
+      'sample.extension',
+      false,
+      false,
+      'file:///C:/Program Files/LVCE/extensions/sample',
+      'main.js',
+      'https://origin.test',
+      PlatformType.Electron,
+      '/assets',
+    ),
+  ).toBe('https://origin.test/remote/C:/Program%20Files/LVCE/extensions/sample/main.js')
 })

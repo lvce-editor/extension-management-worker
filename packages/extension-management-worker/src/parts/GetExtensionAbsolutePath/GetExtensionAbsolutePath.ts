@@ -16,6 +16,11 @@ export const getExtensionAbsolutePath = (
     }
     return new URL(relativePath, path + '/').href
   }
+  if (path.startsWith('file://')) {
+    const baseUrl = path.endsWith('/') ? path : `${path}/`
+    const absolutePath = new URL(relativePath, baseUrl).pathname
+    return new URL('/remote' + absolutePath, origin).href
+  }
   if (!path.startsWith('/')) {
     path = '/' + path
   }

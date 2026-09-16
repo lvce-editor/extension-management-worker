@@ -7,8 +7,10 @@ export const getUrlPrefix = (platform: any, extensionPath: string) => {
   if (platform === PlatformType.Web) {
     return extensionPath
   }
-  if (extensionPath.startsWith('/')) {
-    return `/remote${extensionPath}`
+  const withoutPrefix = extensionPath.startsWith('file://') ? extensionPath.slice('file://'.length) : extensionPath
+  const normalized = withoutPrefix.replaceAll('\\', '/')
+  if (normalized.startsWith('/')) {
+    return `/remote${normalized}`
   }
-  return `/remote/${extensionPath}`
+  return `/remote/${normalized}`
 }

@@ -234,3 +234,5 @@ export const resetRuntimeState = (applicationId?: string): void => {
     applicationId,
   )
 }
+
+export const getApplicationIds = (): readonly string[] => applications.keys().toArray()

@@ -9,7 +9,7 @@ import { createWebViewWorkerRpc } from '../CreateWebViewRpc/CreateWebViewRpc.ts'
 import { disableExtension2 } from '../DisableExtension2/DisableExtension2.ts'
 import { disableExtension } from '../DisableExtension/DisableExtension.ts'
 import { disableWorkspaceExtension } from '../DisableWorkspaceExtension/DisableWorkspaceExtension.ts'
-import { disposeAllExtensionRuntimes } from '../DisposeAllExtensionRuntimes/DisposeAllExtensionRuntimes.ts'
+import { disposeAllExtensionRuntimes, disposeForHotReload } from '../DisposeAllExtensionRuntimes/DisposeAllExtensionRuntimes.ts'
 import { disposeExtensionApplication } from '../DisposeExtensionApplication/DisposeExtensionApplication.ts'
 import { enableExtension2 } from '../EnableExtension2/EnableExtension2.ts'
 import { enableExtension } from '../EnableExtension/EnableExtension.ts'
@@ -200,6 +200,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.dispatchViewEvent': ExtensionView.dispatchViewEvent,
   'Extensions.disposeAllRuntimes': disposeAllExtensionRuntimes,
   'Extensions.disposeApplication': disposeExtensionApplication,
+  'Extensions.disposeForHotReload': disposeForHotReload,
   'Extensions.disposeViewInstance': ExtensionView.disposeViewInstance,
   'Extensions.enable': enableExtension,
   'Extensions.enable2': enableExtension2,

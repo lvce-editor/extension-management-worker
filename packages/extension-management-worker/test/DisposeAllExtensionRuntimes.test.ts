@@ -143,3 +143,12 @@ test.each([PlatformType.Remote, PlatformType.Electron])(
     }
   },
 )
+
+test('hot reload disposes runtimes even when extensions opt out of workspace-change disposal', async () => {
+  ExtensionsState.setWebExtensions([{ id: 'sample.first', preserveRuntimeOnWorkspaceChange: true }])
+  await commandMap['Extensions.disposeForHotReload']()
+  expect(disposeFirst).toHaveBeenCalledTimes(1)
+  expect(disposeSecond).toHaveBeenCalledTimes(1)
+  expect(IsolatedExtensionHostWorkerState.getIds()).toEqual([])
+  expect(state.sharedProcess?.invocations).toEqual([['LanguageServer.disposeAll']])
+})

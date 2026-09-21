@@ -1,5 +1,6 @@
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
+import { disposeExtensionApplication } from '../DisposeExtensionApplication/DisposeExtensionApplication.ts'
 import { disposeIsolatedExtensionHostWorker } from '../DisposeIsolatedExtensionHostWorker/DisposeIsolatedExtensionHostWorker.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
@@ -62,4 +63,10 @@ export const disposeAllExtensionRuntimes = async (getExtensions: GetAllExtension
   if (retainedExtensionIds.size === 0) {
     FileChangeHandlerRegistry.reset()
   }
+}
+
+// Unlike a workspace change, hot reload must retire even workspace-independent runtimes.
+export const disposeForHotReload = async (): Promise<void> => {
+  await Promise.all(ExtensionsState.getApplicationIds().map(disposeExtensionApplication))
+  await disposeAllExtensionRuntimes(async () => [])
 }

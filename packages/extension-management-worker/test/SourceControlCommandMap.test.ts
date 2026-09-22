@@ -60,6 +60,7 @@ test.each([
   ['ExtensionHostSourceControl.getBadgeCount', 'executeSourceControlGetBadgeCount', []],
   ['ExtensionHostSourceControl.getChangedFiles', 'executeSourceControlGetChangedFiles', []],
   ['ExtensionHostSourceControl.getCurrentBranch', 'executeSourceControlGetCurrentBranch', ['/workspace']],
+  ['ExtensionHostSourceControl.getDefaultCommitMessage', 'executeSourceControlGetDefaultCommitMessage', ['/workspace']],
   ['ExtensionHostSourceControl.getProgress', 'executeSourceControlGetProgress', []],
   ['ExtensionHostSourceControl.getFeatures', 'executeSourceControlGetFeatures', []],
   ['ExtensionHostSourceControl.getFileBefore', 'executeSourceControlGetFileBefore', ['/workspace/file.txt']],

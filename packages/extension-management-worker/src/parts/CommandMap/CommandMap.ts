@@ -176,6 +176,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'ExtensionHostSourceControl.getBadgeCount': wrapSourceControlProviderCommand('executeSourceControlGetBadgeCount'),
   'ExtensionHostSourceControl.getChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
   'ExtensionHostSourceControl.getCurrentBranch': wrapSourceControlProviderCommand('executeSourceControlGetCurrentBranch'),
+  'ExtensionHostSourceControl.getDefaultCommitMessage': wrapSourceControlProviderCommand('executeSourceControlGetDefaultCommitMessage'),
   'ExtensionHostSourceControl.getEnabledProviderIds': wrapCommand(getEnabledSourceControlProviderIds),
   'ExtensionHostSourceControl.getFeatures': wrapSourceControlProviderCommand('executeSourceControlGetFeatures'),
   'ExtensionHostSourceControl.getFileBefore': wrapSourceControlProviderCommand('executeSourceControlGetFileBefore'),

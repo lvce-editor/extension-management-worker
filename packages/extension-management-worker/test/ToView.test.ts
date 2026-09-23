@@ -64,3 +64,22 @@ test('toView preserves the secondary preview location', () => {
 
   expect(result.preferredLocation).toBe('secondaryPreview')
 })
+
+test('toView returns a short asset url for builtin view icons', () => {
+  const result = toView(
+    {
+      builtin: true,
+      id: 'sample.extension',
+      path: 'file:///app/resources/extensions/sample-extension',
+    },
+    {
+      icon: 'media/icon.svg',
+      id: 'sample.views.chat',
+      title: 'Chat',
+    },
+    '/assets',
+    PlatformType.Electron,
+  )
+
+  expect(result.icon).toBe('/assets/extensions/sample-extension/media/icon.svg')
+})

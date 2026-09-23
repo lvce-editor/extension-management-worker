@@ -59,7 +59,7 @@ import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlFo
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRunningExtensions } from '../GetRunningExtensions/GetRunningExtensions.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
-import { getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
+import { getStatusBarItemContextMenuItems, getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
 import { getViewsFromExtensions } from '../GetViewsFromExtensions/GetViewsFromExtensions.ts'
 import { handleData } from '../HandleData/HandleData.ts'
@@ -147,6 +147,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return ExtensionApplicationServices.getRpcInfo(application, args[0])
     case 'Extensions.getRuntimeStatus':
       return ExtensionsState.getRuntimeStatus(args[0], applicationId)
+    case 'Extensions.getStatusBarItemContextMenuItems':
+      return getStatusBarItemContextMenuItems(args[0], args[1], applicationId)
     case 'Extensions.getStatusBarItems':
       return getStatusBarItems(applicationId)
     case 'Extensions.getViews': {
@@ -247,6 +249,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRunningExtensions': getRunningExtensions,
   'Extensions.getRuntimeStatus': getRuntimeStatus,
+  'Extensions.getStatusBarItemContextMenuItems': getStatusBarItemContextMenuItems,
   'Extensions.getStatusBarItems': getStatusBarItems,
   'Extensions.getViewActions': ExtensionView.getViewActions,
   'Extensions.getViewActionsDom': ExtensionView.getViewActionsDom,

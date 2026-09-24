@@ -5,6 +5,7 @@ import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import {
   executeFileSystemProviderIsReadonly,
+  executeFileSystemProviderGetOpenExternalPath,
   executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
   executeFileSystemProviderReadFile,
@@ -102,10 +103,15 @@ test('executes isolated file system provider metadata and directory operations',
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderStat',
   })
+  await expect(executeFileSystemProviderGetOpenExternalPath(extensionsState, 'fetch', 'fetch:///workspace')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderGetOpenExternalPath',
+  })
   expect(invocations).toEqual([
     ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
     ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
     ['ExtensionApi.executeFileSystemProviderStat', 'fetch', 'fetch:///workspace/link'],
+    ['ExtensionApi.executeFileSystemProviderGetOpenExternalPath', 'fetch', 'fetch:///workspace'],
   ])
 })
 

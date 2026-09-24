@@ -19,6 +19,7 @@ import { executeCompletionProvider, executeResolveCompletionItemProvider } from 
 import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import {
   executeFileSystemProviderIsReadonly,
+  executeFileSystemProviderGetOpenExternalPath,
   executeFileSystemProviderMkdir,
   executeFileSystemProviderReadDirWithFileTypes,
   executeFileSystemProviderReadFile,
@@ -213,6 +214,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
+  'Extensions.executeFileSystemProviderGetOpenExternalPath': wrapCommand(executeFileSystemProviderGetOpenExternalPath),
   'Extensions.executeFileSystemProviderIsReadonly': wrapCommand(executeFileSystemProviderIsReadonly),
   'Extensions.executeFileSystemProviderMkdir': wrapCommand(executeFileSystemProviderMkdir),
   'Extensions.executeFileSystemProviderReadDirWithFileTypes': wrapCommand(executeFileSystemProviderReadDirWithFileTypes),

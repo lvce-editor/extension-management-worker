@@ -9,6 +9,7 @@ export interface SerializedError {
 }
 
 export interface ReadyExtensionViewInstance {
+  readonly applicationId?: string
   readonly context?: unknown
   readonly disposeWorkerWhenLastViewCloses?: boolean
   readonly extensionId?: string

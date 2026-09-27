@@ -158,6 +158,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
     }
     case 'Extensions.handleFileChanges':
       return handleFileChanges(args[0], applicationId)
+    case 'Extensions.requestViewRerender':
+      return ExtensionView.requestViewRerender(args[0], applicationId)
     case 'Extensions.sendMessagePortToFileSystemWorker':
       return ExtensionApplicationServices.createFileSystemPort(application, args[0])
     case 'Extensions.showNotification':

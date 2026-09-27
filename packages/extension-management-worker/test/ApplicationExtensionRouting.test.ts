@@ -6,6 +6,7 @@ import * as ActivateByEvent from '../src/parts/ActivateByEvent/ActivateByEvent.t
 import { commandMap } from '../src/parts/CommandMap/CommandMap.ts'
 import { disposeExtensionApplication } from '../src/parts/DisposeExtensionApplication/DisposeExtensionApplication.ts'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
+import * as ExtensionViewInstanceState from '../src/parts/ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as FileChangeHandlerRegistry from '../src/parts/FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { handleRpcInfos } from '../src/parts/HandleRpcInfos/HandleRpcInfos.ts'
 import * as Rpcs from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -13,12 +14,14 @@ import * as Rpcs from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExt
 const state: { renderer: DisposableMockRpc | undefined } = { renderer: undefined }
 const disposeWorker = jest.fn(async (_id: string) => {})
 const execute = jest.fn(async (...args: readonly unknown[]) => args)
+const rerender = jest.fn(async (...args: readonly unknown[]) => args)
 const manifest = { fileSystemProviders: [{ id: 'memfs' }], id: 'sample', isolated: true }
 
 beforeEach(() => {
   jest.useFakeTimers()
   disposeWorker.mockClear()
   execute.mockClear()
+  rerender.mockClear()
   ExtensionsState.createApplication('source', 1, [manifest])
   ExtensionsState.createApplication('preview', 1, [manifest])
   state.renderer = RendererWorker.registerMockRpc({
@@ -26,6 +29,7 @@ beforeEach(() => {
     'Extensions.getPreference': () => 4,
     'LaunchIsolatedExtensionHostWorker.disposeIsolatedExtensionHostWorker': disposeWorker,
     'Layout.getAssetDir': () => '/assets',
+    'Viewlet.executeViewletCommand': rerender,
   })
 })
 
@@ -42,6 +46,7 @@ afterEach(() => {
     Rpcs.clear(id)
     FileChangeHandlerRegistry.reset(id)
   }
+  ExtensionViewInstanceState.clear()
   state.renderer?.[Symbol.dispose]()
 })
 
@@ -158,8 +163,16 @@ test('notification popups are routed only to the calling application', async () 
 
 test('view rerender requests are routed to the calling application renderer', async () => {
   const invoke = commandMap['Extensions.invokeForApplication']
+  ExtensionViewInstanceState.set(42, {
+    applicationId: 'preview',
+    rpc: rpc('preview'),
+    status: 'ready',
+    viewId: 'sample.view',
+  })
   await invoke('preview', 'Extensions.requestViewRerender', 42)
-  expect(execute).toHaveBeenCalledWith('preview', 'Viewlet.executeViewletCommand', 42, 'rerender')
+  expect(rerender).toHaveBeenCalledWith(42, 'rerender')
+  await expect(invoke('source', 'Extensions.requestViewRerender', 42)).rejects.toThrow('does not belong to application source')
+  expect(rerender).toHaveBeenCalledTimes(1)
 })
 
 test('application extension queries return only requested fields without changing stored manifests', async () => {

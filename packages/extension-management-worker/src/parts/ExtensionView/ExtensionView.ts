@@ -182,6 +182,7 @@ export const createViewInstance = async (
     const { eventListeners, stateful } = await getViewMetadata(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {
+      ...(applicationId && { applicationId }),
       context,
       disposeWorkerWhenLastViewCloses,
       extensionId,
@@ -269,7 +270,11 @@ export const setViewInstanceActive = async (viewId: string, uid: number, active:
   }
 }
 
-export const requestViewRerender = async (uid: number): Promise<void> => {
+export const requestViewRerender = async (uid: number, applicationId?: string): Promise<void> => {
+  const instance = ExtensionViewInstanceState.get(uid)
+  if (applicationId !== undefined && (instance?.status !== 'ready' || instance.applicationId !== applicationId)) {
+    throw new Error(`view instance ${uid} does not belong to application ${applicationId}`)
+  }
   await RendererWorker.invoke('Viewlet.executeViewletCommand', uid, 'rerender')
 }
 

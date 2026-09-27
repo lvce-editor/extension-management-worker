@@ -156,6 +156,12 @@ test('notification popups are routed only to the calling application', async () 
   expect(execute).toHaveBeenCalledTimes(2)
 })
 
+test('view rerender requests are routed to the calling application renderer', async () => {
+  const invoke = commandMap['Extensions.invokeForApplication']
+  await invoke('preview', 'Extensions.requestViewRerender', 42)
+  expect(execute).toHaveBeenCalledWith('preview', 'Viewlet.executeViewletCommand', 42, 'rerender')
+})
+
 test('application extension queries return only requested fields without changing stored manifests', async () => {
   const invoke = commandMap['Extensions.invokeForApplication']
   expect(await invoke('source', 'Extensions.getAllExtensions', '/assets', 1, ['id', 'applicationId'])).toEqual([

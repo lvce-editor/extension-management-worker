@@ -207,3 +207,18 @@ export const executeOrganizeImportsProvider = async (
   const result = await rpc.invoke('ExtensionApi.executeOrganizeImportsProvider', textDocument)
   return { found: true, result }
 }
+
+export const executeSourceActionProvider = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  kind: string,
+): Promise<LanguageProviderResult> => {
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
+  const extensions = await getMatchingExtensions(extensionsState, 'code action', textDocument, assetDir, platform)
+  if (extensions.length === 0) {
+    return { found: false }
+  }
+  const rpc = await getRpc(extensions[0], assetDir, platform)
+  const result = await rpc.invoke('ExtensionApi.executeSourceActionProvider', textDocument, kind)
+  return { found: true, result }
+}

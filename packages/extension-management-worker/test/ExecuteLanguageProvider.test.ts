@@ -495,3 +495,31 @@ test('rejects an invalid code action provider result', async () => {
     'Code action provider result must be an array',
   )
 })
+
+test('executes the requested source action in the matching isolated provider', async () => {
+  const invocations: unknown[] = []
+  const edits = [{ inserted: "import { a } from './a'" }]
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return edits
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('typescript', rpc)
+  const extensionsState = createExtensionsState([{ activation: ['onCodeAction:typescript'], id: 'typescript', isolated: true }])
+  const textDocument = { languageId: 'typescript', text: 'a', uri: '/c.ts' }
+  await expect(ExecuteLanguageProvider.executeSourceActionProvider(extensionsState, textDocument, 'source.addMissingImports')).resolves.toEqual({
+    found: true,
+    result: edits,
+  })
+  expect(invocations).toEqual([['ExtensionApi.executeSourceActionProvider', textDocument, 'source.addMissingImports']])
+})
+
+test('reports when no source action provider matches the document', async () => {
+  await expect(
+    ExecuteLanguageProvider.executeSourceActionProvider(createExtensionsState([]), { languageId: 'typescript' }, 'source.addMissingImports'),
+  ).resolves.toEqual({ found: false })
+})

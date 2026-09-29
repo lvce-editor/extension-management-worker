@@ -34,6 +34,7 @@ import {
   executeCodeActionProviders,
   executeLanguageProvider,
   executeOrganizeImportsProvider,
+  executeSourceActionProvider,
 } from '../ExecuteLanguageProvider/ExecuteLanguageProvider.ts'
 import { executeProvidersByEvent } from '../ExecuteProvidersByEvent/ExecuteProvidersByEvent.ts'
 import { executeSignatureHelpProvider } from '../ExecuteSignatureHelpProvider/ExecuteSignatureHelpProvider.ts'
@@ -232,6 +233,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeProvidersByEvent': wrapCommand(executeProvidersByEvent),
   'Extensions.executeResolveCompletionItemProvider': wrapCommand(executeResolveCompletionItemProvider),
   'Extensions.executeSignatureHelpProvider': wrapCommand(executeSignatureHelpProvider),
+  'Extensions.executeSourceActionProvider': wrapCommand(executeSourceActionProvider),
   'Extensions.executeSourceControlProvider': wrapCommand(executeSourceControlProvider),
   'Extensions.executeWorkspaceRequest': WorkspaceTransport.request,
   'Extensions.getAccessToken': getAccessToken,

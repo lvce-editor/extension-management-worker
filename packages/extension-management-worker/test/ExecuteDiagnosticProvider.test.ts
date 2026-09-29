@@ -157,20 +157,24 @@ test('streamDiagnosticProvider delivers each provider result before slower provi
   const { promise: slowProviderPromise, resolve: resolveSlowProvider } = Promise.withResolvers<readonly unknown[]>()
   const slowRpc: Rpc = {
     ...createRpc([]).rpc,
-    invoke: async (method: string, ...params: readonly unknown[]): Promise<readonly unknown[]> => {
-      slowRpcInvocations.push([method, ...params])
+    invoke: async (): Promise<readonly unknown[]> => {
       return slowProviderPromise
     },
   }
-  const slowRpcInvocations: unknown[][] = []
   IsolatedExtensionHostWorkerState.set('fast-provider', fastRpc.rpc)
   IsolatedExtensionHostWorkerState.set('slow-provider', slowRpc)
   const channel = new MessageChannel()
-  const receivedMessages: unknown[] = []
+  const receivedMessages: {
+    readonly diagnostics?: readonly unknown[]
+    readonly providerId?: string
+    readonly providerIndex?: number
+    readonly type?: string
+  }[] = []
   const firstResult = Promise.withResolvers<void>()
-  channel.port1.onmessage = (event: MessageEvent): void => {
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- MessagePort provides a DOM event.
+  channel.port1.onmessage = (event: MessageEvent<(typeof receivedMessages)[number]>): void => {
     receivedMessages.push(event.data)
-    if ((event.data as any).type === 'result' && (event.data as any).providerId === 'fast-provider') {
+    if (event.data.type === 'result' && event.data.providerId === 'fast-provider') {
       firstResult.resolve()
     }
   }
@@ -191,11 +195,11 @@ test('streamDiagnosticProvider delivers each provider result before slower provi
   await completion
   await new Promise<void>((resolve) => {
     channel.port1.addEventListener('message', () => {
-      if (receivedMessages.some((message: any) => message.type === 'done')) {
+      if (receivedMessages.some((message) => message.type === 'done')) {
         resolve()
       }
     })
-    if (receivedMessages.some((message: any) => (message as any).type === 'done')) {
+    if (receivedMessages.some((message) => message.type === 'done')) {
       resolve()
     }
   })

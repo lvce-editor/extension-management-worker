@@ -1,0 +1,4 @@
+{
+  "artifacts": [[".tmp/dist", "packages/renderer-worker/node_modules/@lvce-editor/extension-management-worker"]],
+  "scripts": []
+}

@@ -16,7 +16,7 @@ import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
 import { executeCommand, executeExtensionCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
-import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
+import { executeDiagnosticProvider, streamDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import {
   executeFileSystemProviderIsReadonly,
   executeFileSystemProviderGetOpenExternalPath,
@@ -216,6 +216,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeCommand': wrapCommand(executeCommand),
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
+  'Extensions.streamDiagnosticProvider': wrapCommand(streamDiagnosticProvider),
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
   'Extensions.executeFileSystemProviderGetOpenExternalPath': wrapCommand(executeFileSystemProviderGetOpenExternalPath),
   'Extensions.executeFileSystemProviderIsReadonly': wrapCommand(executeFileSystemProviderIsReadonly),

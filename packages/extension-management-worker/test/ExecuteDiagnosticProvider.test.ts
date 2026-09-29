@@ -133,6 +133,87 @@ test('executeDiagnosticProvider asks matching isolated diagnostic providers and 
   expect(secondRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
 })
 
+test('streamDiagnosticProvider delivers each provider result before slower providers finish', async () => {
+  const textDocument = {
+    languageId: 'javascript',
+    text: 'const value=1',
+    uri: 'file:///test.js',
+  }
+  const extensionsState = createExtensionsState([
+    {
+      diagnosticProviders: [{ languageId: 'javascript' }],
+      id: 'fast-provider',
+      isolated: true,
+    },
+    {
+      diagnosticProviders: [{ languageId: 'javascript' }],
+      id: 'slow-provider',
+      isolated: true,
+    },
+  ])
+  const fastResult = [{ message: 'fast', uri: textDocument.uri }]
+  const slowResult = [{ message: 'slow', uri: textDocument.uri }]
+  const fastRpc = createRpc(fastResult)
+  const { promise: slowProviderPromise, resolve: resolveSlowProvider } = Promise.withResolvers<readonly unknown[]>()
+  const slowRpc: Rpc = {
+    ...createRpc([]).rpc,
+    invoke: async (): Promise<readonly unknown[]> => {
+      return slowProviderPromise
+    },
+  }
+  IsolatedExtensionHostWorkerState.set('fast-provider', fastRpc.rpc)
+  IsolatedExtensionHostWorkerState.set('slow-provider', slowRpc)
+  const channel = new MessageChannel()
+  const receivedMessages: {
+    readonly diagnostics?: readonly unknown[]
+    readonly providerId?: string
+    readonly providerIndex?: number
+    readonly type?: string
+  }[] = []
+  const firstResult = Promise.withResolvers<void>()
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- MessagePort provides a DOM event.
+  channel.port1.onmessage = (event: MessageEvent<(typeof receivedMessages)[number]>): void => {
+    receivedMessages.push(event.data)
+    if (event.data.type === 'result' && event.data.providerId === 'fast-provider') {
+      firstResult.resolve()
+    }
+  }
+  channel.port1.start()
+
+  const completion = ExecuteDiagnosticProvider.streamDiagnosticProvider(extensionsState, textDocument, channel.port2)
+  await firstResult.promise
+
+  expect(receivedMessages).toContainEqual({
+    diagnostics: fastResult,
+    providerId: 'fast-provider',
+    providerIndex: 0,
+    type: 'result',
+  })
+  expect(receivedMessages).not.toContainEqual({ type: 'done' })
+
+  resolveSlowProvider(slowResult)
+  await completion
+  await new Promise<void>((resolve) => {
+    channel.port1.addEventListener('message', () => {
+      if (receivedMessages.some((message) => message.type === 'done')) {
+        resolve()
+      }
+    })
+    if (receivedMessages.some((message) => message.type === 'done')) {
+      resolve()
+    }
+  })
+
+  expect(receivedMessages).toContainEqual({
+    diagnostics: slowResult,
+    providerId: 'slow-provider',
+    providerIndex: 1,
+    type: 'result',
+  })
+  expect(receivedMessages.at(-1)).toEqual({ type: 'done' })
+  channel.port1.close()
+})
+
 test('executeDiagnosticProvider returns empty diagnostics when no matching isolated diagnostic provider exists', async () => {
   const extensionsState = createExtensionsState([
     {

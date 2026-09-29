@@ -28,6 +28,10 @@ interface TextDocument {
   readonly languageId: string
 }
 
+interface DiagnosticProviderResultPort {
+  postMessage(message: unknown): void
+}
+
 const contributesDiagnosticProvider = (extension: ExtensionManifest, languageId: string): boolean => {
   return Array.isArray(extension.diagnosticProviders) && extension.diagnosticProviders.some((provider) => provider.languageId === languageId)
 }
@@ -73,13 +77,41 @@ const executeMatchingDiagnosticProvider = async (
   args: readonly unknown[],
   assetDir: string,
   platform: number,
+  resultPort: DiagnosticProviderResultPort | undefined,
+  providerIndex: number,
 ): Promise<readonly unknown[]> => {
+  const providerId = extension.id ?? extension.uri ?? extension.path ?? String(providerIndex)
+  let diagnostics: readonly unknown[] = []
   try {
     const rpc = await getRpc(extension, assetDir, platform, `onDiagnostic:${textDocument.languageId}`)
-    return await executeExtensionDiagnosticProvider(rpc, extension, textDocument, args)
+    diagnostics = await executeExtensionDiagnosticProvider(rpc, extension, textDocument, args)
   } catch {
-    return []
+    // A failing provider should not prevent results from other providers from being delivered.
   }
+  resultPort?.postMessage({ diagnostics, providerId, providerIndex, type: 'result' })
+  return diagnostics
+}
+
+const executeDiagnosticProviders = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  resultPort?: DiagnosticProviderResultPort,
+  ...args: readonly unknown[]
+): Promise<readonly unknown[]> => {
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
+  const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
+  resultPort?.postMessage({
+    providerCount: extensions.length,
+    providerIds: extensions.map((extension, index) => extension.id ?? extension.uri ?? extension.path ?? String(index)),
+    type: 'providers',
+  })
+  const results = await Promise.all(
+    extensions.map((extension, providerIndex) =>
+      executeMatchingDiagnosticProvider(extension, textDocument, args, assetDir, platform, resultPort, providerIndex),
+    ),
+  )
+  resultPort?.postMessage({ type: 'done' })
+  return results.flat()
 }
 
 export const executeDiagnosticProvider = async (
@@ -87,10 +119,14 @@ export const executeDiagnosticProvider = async (
   textDocument: TextDocument,
   ...args: readonly unknown[]
 ): Promise<readonly unknown[]> => {
-  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
-  const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
-  const results = await Promise.all(
-    extensions.map((extension) => executeMatchingDiagnosticProvider(extension, textDocument, args, assetDir, platform)),
-  )
-  return results.flat()
+  return executeDiagnosticProviders(extensionsState, textDocument, undefined, ...args)
+}
+
+export const streamDiagnosticProvider = async (
+  extensionsState: ExtensionsState,
+  textDocument: TextDocument,
+  resultPort: DiagnosticProviderResultPort,
+  ...args: readonly unknown[]
+): Promise<void> => {
+  await executeDiagnosticProviders(extensionsState, textDocument, resultPort, ...args)
 }

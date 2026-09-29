@@ -16,7 +16,7 @@ import { enableExtension } from '../EnableExtension/EnableExtension.ts'
 import { enableWorkspaceExtension } from '../EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
 import { executeCommand, executeExtensionCommand } from '../ExecuteCommand/ExecuteCommand.ts'
 import { executeCompletionProvider, executeResolveCompletionItemProvider } from '../ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
-import { executeDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
+import { executeDiagnosticProvider, streamDiagnosticProvider } from '../ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
 import {
   executeFileSystemProviderIsReadonly,
   executeFileSystemProviderGetOpenExternalPath,
@@ -286,6 +286,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.setViewInstanceState': ExtensionView.setViewInstanceState,
   'Extensions.showNotification': (type: string, message: string): Promise<void> => createNotification('unknown.extension', type, message),
   'Extensions.showViewContextMenu': ExtensionView.showViewContextMenu,
+  'Extensions.streamDiagnosticProvider': wrapCommand(streamDiagnosticProvider),
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
   'WebRtc.readMicLevels': WebRtc.readMicLevels,

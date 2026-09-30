@@ -62,7 +62,7 @@ test('getOutputChannelProviders returns registered contributions from isolated e
       id: 'extension.one',
       isolated: true,
       outputChannels: [
-        { id: 'first-output', label: 'First Output' },
+        { id: 'first-output', label: 'First Output', linkify: false },
         { id: 'not-created', label: 'Not Created' },
       ],
     },
@@ -100,6 +100,7 @@ test('getOutputChannelProviders returns registered contributions from isolated e
     {
       id: 'first-output',
       label: 'First Output',
+      linkify: false,
       uri: 'extension-output://extension.one/first-output',
     },
     {

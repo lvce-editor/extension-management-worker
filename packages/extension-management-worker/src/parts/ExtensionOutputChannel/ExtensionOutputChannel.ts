@@ -13,7 +13,7 @@ const outputChannelRegistrySnapshotCommand = 'ExtensionApi.getOutputChannelRegis
 interface OutputChannelContribution {
   readonly id?: string
   readonly label?: string
-  readonly linkify?: boolean
+  readonly parseLinks?: boolean
 }
 
 interface ExtensionManifest {
@@ -34,7 +34,7 @@ interface OutputChannelRegistrySnapshot {
 export interface OutputChannelProvider {
   readonly id: string
   readonly label: string
-  readonly linkify?: boolean
+  readonly parseLinks?: boolean
   readonly uri: string
 }
 
@@ -88,7 +88,7 @@ const getExtensionOutputChannelProviders = async (
     .map((outputChannel) => ({
       id: outputChannel.id,
       label: outputChannel.label,
-      ...(typeof outputChannel.linkify === 'boolean' && { linkify: outputChannel.linkify }),
+      ...(typeof outputChannel.parseLinks === 'boolean' && { parseLinks: outputChannel.parseLinks }),
       uri: getOutputChannelUri(extensionId, outputChannel.id),
     }))
 }

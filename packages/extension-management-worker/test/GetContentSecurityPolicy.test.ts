@@ -65,3 +65,10 @@ test.each([
 ])('rejects unsafe policy %s', (directive) => {
   expect(() => getContentSecurityPolicy([directive], workerUrl)).toThrow()
 })
+
+test('allows desktop workers to read only their own asset directory', () => {
+  const url = 'lvce://-/remote/extensions/builtin.language-features-typescript/typescriptWorkerMain.js'
+  expect(getContentSecurityPolicy([`connect-src 'self'`], url, [{ type: 'node-process' }])).toBe(
+    `default-src 'none'; script-src 'self'; worker-src 'none'; child-src 'none'; connect-src lvce://-/remote/extensions/builtin.language-features-typescript/;`,
+  )
+})

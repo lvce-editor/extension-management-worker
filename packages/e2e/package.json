@@ -18,7 +18,7 @@
   "devDependencies": {
     "@lvce-editor/api": "^8.83.1",
     "@lvce-editor/rpc-registry": "^9.47.0",
-    "@lvce-editor/test-with-playwright": "^22.20.0",
+    "@lvce-editor/test-with-playwright": "^22.40.0",
     "e2e-language-server-helpers": "0.0.0-dev",
     "esbuild": "^0.28.1",
     "typescript": "^6.0.3"

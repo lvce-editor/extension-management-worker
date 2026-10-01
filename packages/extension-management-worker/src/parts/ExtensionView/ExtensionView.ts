@@ -84,12 +84,14 @@ const hasOnlyViewAndCommandActivations = (extension: ExtensionManifest): boolean
   )
 }
 
+const pendingViewCreations = new WeakMap<Rpc, number>()
+
 const hasOtherViewInstances = (rpc: Rpc): boolean => {
   return ExtensionViewInstanceState.getEntries().some((entry) => entry.instance.status === 'ready' && entry.instance.rpc === rpc)
 }
 
 const disposeViewOnlyExtensionWorker = async (extensionId: string, rpc: Rpc): Promise<void> => {
-  if (hasOtherViewInstances(rpc)) {
+  if (pendingViewCreations.has(rpc) || hasOtherViewInstances(rpc)) {
     return
   }
   if (IsolatedExtensionHostWorkerState.get(extensionId) !== rpc) {
@@ -110,18 +112,26 @@ const getExtensionForView = async (viewId: string, assetDir: string, platform: n
   return extension
 }
 
-const getRpcForView = async (viewId: string, assetDir: string, platform: number, applicationId?: string): Promise<ExtensionRpc> => {
+const getRpcForView = async (
+  viewId: string,
+  assetDir: string,
+  platform: number,
+  applicationId?: string,
+  retain?: (worker: ExtensionRpc) => void,
+): Promise<ExtensionRpc> => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   const extension = await getExtensionForView(viewId, resolvedAssetDir, resolvedPlatform, applicationId)
   const extensionId = getExtensionId(extension)
   const existingRpc = IsolatedExtensionHostWorkerState.get(extensionId, applicationId)
   // Application teardown and reload own application workers; global view-only disposal does not.
   if (existingRpc) {
-    return {
+    const worker = {
       disposeWorkerWhenLastViewCloses: applicationId === undefined && hasOnlyViewAndCommandActivations(extension),
       extensionId,
       rpc: existingRpc,
     }
+    retain?.(worker)
+    return worker
   }
   const activationResult = await ActivateByEvent.activateByEvent(
     `onView:${viewId}`,
@@ -133,11 +143,13 @@ const getRpcForView = async (viewId: string, assetDir: string, platform: number,
     throw activationResult.error
   }
   const rpc = await getRpc(extension, resolvedAssetDir, resolvedPlatform)
-  return {
+  const worker = {
     disposeWorkerWhenLastViewCloses: applicationId === undefined && hasOnlyViewAndCommandActivations(extension),
     extensionId,
     rpc,
   }
+  retain?.(worker)
+  return worker
 }
 
 const getRpcForInstance = async (viewId: string, uid: number, assetDir: string, platform: number): Promise<Rpc | undefined> => {
@@ -177,8 +189,14 @@ export const createViewInstance = async (
   platform: number,
   applicationId?: string,
 ): Promise<CreateViewInstanceResult> => {
+  let retainedWorker: ExtensionRpc | undefined
+  const retain = (worker: ExtensionRpc): void => {
+    retainedWorker = worker
+    pendingViewCreations.set(worker.rpc, (pendingViewCreations.get(worker.rpc) || 0) + 1)
+  }
   try {
-    const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = await getRpcForView(viewId, assetDir, platform, applicationId)
+    // Retain at selection time, before yielding the RPC to the caller.
+    const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = await getRpcForView(viewId, assetDir, platform, applicationId, retain)
     const { eventListeners, stateful } = await getViewMetadata(rpc, viewId)
     const result = await rpc.invoke('ExtensionApi.createViewInstance', viewId, uid, context)
     ExtensionViewInstanceState.set(uid, {
@@ -206,6 +224,20 @@ export const createViewInstance = async (
     return {
       error: serializedError,
       ok: false,
+    }
+  } finally {
+    if (retainedWorker) {
+      const { disposeWorkerWhenLastViewCloses, extensionId, rpc } = retainedWorker
+      const remaining = (pendingViewCreations.get(rpc) || 1) - 1
+      if (remaining) {
+        pendingViewCreations.set(rpc, remaining)
+      } else {
+        pendingViewCreations.delete(rpc)
+      }
+      // Failed creations must also release a worker kept alive by an overlapping close.
+      if (disposeWorkerWhenLastViewCloses) {
+        await disposeViewOnlyExtensionWorker(extensionId, rpc)
+      }
     }
   }
 }

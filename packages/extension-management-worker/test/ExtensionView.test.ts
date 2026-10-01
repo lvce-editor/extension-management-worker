@@ -827,3 +827,44 @@ test('identical view contributions use separate application workers and leave th
     IsolatedExtensionHostWorkerState.clear('preview')
   }
 })
+
+test.each([
+  ['ExtensionApi.getViewRegistrySnapshot', false],
+  ['ExtensionApi.createViewInstance', false],
+  ['ExtensionApi.getViewRegistrySnapshot', true],
+  ['ExtensionApi.createViewInstance', true],
+])('retains a replacement waiting for %s and releases it after failure=%s', async (blockedMethod, fail) => {
+  const mock = createRpc()
+  const entered = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  let block = false
+  const rpc = {
+    ...mock.rpc,
+    async invoke(method: string, ...params: readonly unknown[]): Promise<unknown> {
+      if (block && method === blockedMethod) {
+        entered.resolve()
+        await resume.promise
+        if (fail) throw new Error('replacement failed')
+      }
+      return mock.rpc.invoke(method, ...params)
+    },
+  } as Rpc
+  state.sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions'() {
+      return [{ activation: ['onView:sample.views.testing'], id: 'extension-one', isolated: true, views: [{ id: 'sample.views.testing' }] }]
+    },
+  })
+  IsolatedExtensionHostWorkerState.set('extension-one', rpc)
+  await createViewInstance('sample.views.testing', 1, {}, '/assets', 2)
+  block = true
+  const opening = createViewInstance('sample.views.testing', 2, {}, '/assets', 2)
+  await entered.promise
+  await disposeViewInstance('sample.views.testing', 1, '/assets', 2)
+  const disposalsWhileOpening = mock.disposals.length
+  resume.resolve()
+  await expect(opening).resolves.toEqual(expect.objectContaining({ ok: !fail }))
+  expect(disposalsWhileOpening).toBe(0)
+  expect(IsolatedExtensionHostWorkerState.get('extension-one')).toBe(fail ? undefined : rpc)
+  await disposeViewInstance('sample.views.testing', 2, '/assets', 2)
+  expect(mock.disposals).toHaveLength(1)
+})

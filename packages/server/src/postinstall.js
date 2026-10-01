@@ -28,7 +28,7 @@ for (const candidate of serverStaticPathCandidates) {
     serverStaticPath = candidate
     break
   } catch (error) {
-    if (error.code !== 'ENOENT') {
+    if (typeof error !== 'object' || error === null || !('code' in error) || error.code !== 'ENOENT') {
       throw error
     }
   }

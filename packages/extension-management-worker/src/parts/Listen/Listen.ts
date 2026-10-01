@@ -1,6 +1,7 @@
 import * as CommandMap from '../CommandMap/CommandMap.ts'
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { initializeAuthWorker } from '../InitializeAuthWorker/InitializeAuthWorker.ts'
+import { initializeCacheWorker } from '../InitializeCacheWorker/InitializeCacheWorker.ts'
 import { initializeErrorWorker } from '../InitializeErrorWorker/InitializeErrorWorker.ts'
 import { initializeFileSystemWorker } from '../InitializeFileSystemWorker/InitializeFileSystemWorker.ts'
 import { initializeIframeWorker } from '../InitializeIframeWorker/InitializeIframeWorker.ts'
@@ -11,6 +12,7 @@ export const listen = async (): Promise<void> => {
   await Promise.all([
     initializeRendererWorker(),
     initializeAuthWorker(),
+    initializeCacheWorker(),
     initializeErrorWorker(),
     initializeFileSystemWorker(),
     initializeIframeWorker(),

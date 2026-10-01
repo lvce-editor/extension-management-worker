@@ -1,20 +1,21 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
-import { FileSystemWorker, RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
+import { CacheWorker, FileSystemWorker, RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRuntimeContext } from '../src/parts/GetRuntimeContext/GetRuntimeContext.ts'
 
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location')
-const originalCaches = Object.getOwnPropertyDescriptor(globalThis, 'caches')
 
 const state: {
+  cacheWorker: DisposableMockRpc | undefined
   fileSystemWorker: DisposableMockRpc | undefined
   rendererWorker: DisposableMockRpc | undefined
   sharedProcess: DisposableMockRpc | undefined
 } = {
+  cacheWorker: undefined,
   fileSystemWorker: undefined,
   rendererWorker: undefined,
   sharedProcess: undefined,
@@ -51,6 +52,7 @@ const restoreLocation = (): void => {
 }
 
 afterEach(() => {
+  state.cacheWorker?.[Symbol.dispose]()
   state.fileSystemWorker?.[Symbol.dispose]()
   state.rendererWorker?.[Symbol.dispose]()
   state.sharedProcess?.[Symbol.dispose]()
@@ -61,11 +63,6 @@ afterEach(() => {
     Object.defineProperty(globalThis, 'fetch', originalFetch)
   } else {
     delete (globalThis as any).fetch
-  }
-  if (originalCaches) {
-    Object.defineProperty(globalThis, 'caches', originalCaches)
-  } else {
-    delete (globalThis as any).caches
   }
   restoreLocation()
 })
@@ -194,17 +191,17 @@ test('getAllExtensionsWithState reads static web extensions for the web platform
 
 test('getAllExtensionsWithState applies an explicit web enable to an extension disabled by default', async () => {
   setLocation('https:')
-  Object.defineProperties(globalThis, {
-    caches: {
-      configurable: true,
-      value: {
-        async match(): Promise<Response> {
-          return {
-            json: async () => ({ enabledExtensions: ['builtin.gpt-voice'] }),
-          } as Response
-        },
-      },
+  state.cacheWorker = CacheWorker.registerMockRpc({
+    'Cache.getCacheStorageItem'() {
+      return {
+        body: new TextEncoder().encode('{"enabledExtensions":["builtin.gpt-voice"]}').buffer,
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+        statusText: 'OK',
+      }
     },
+  })
+  Object.defineProperties(globalThis, {
     fetch: {
       configurable: true,
       value: async (): Promise<Response> => {
@@ -272,3 +269,4 @@ test('getAllExtensionsWithState reads remote extensions when served over http', 
     },
   ])
 })
+state.cacheWorker = undefined

@@ -1,6 +1,6 @@
 import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
-import { MainProcess } from '@lvce-editor/rpc-registry'
+import { CacheWorker, MainProcess } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 
 export const cacheName = 'ExtensionSecrets'
@@ -20,8 +20,7 @@ export const deleteSecret = async (extensionId: string, key: string): Promise<vo
     await MainProcess.invoke('SecretStorage.delete', extensionId, key)
     return
   }
-  const cache = await caches.open(cacheName)
-  await cache.delete(getRequestUrl(extensionId, key))
+  await CacheWorker.removeCacheStorageItem(getRequestUrl(extensionId, key), cacheName)
 }
 
 export const getSecret = async (extensionId: string, key: string): Promise<string | undefined> => {
@@ -30,9 +29,12 @@ export const getSecret = async (extensionId: string, key: string): Promise<strin
   if (isElectron()) {
     return MainProcess.invoke('SecretStorage.get', extensionId, key)
   }
-  const cache = await caches.open(cacheName)
-  const response = await cache.match(getRequestUrl(extensionId, key))
-  return response?.text()
+  const item = await CacheWorker.getCacheStorageItem(getRequestUrl(extensionId, key), cacheName)
+  if (!item) {
+    return undefined
+  }
+  const body = item.body as string | ArrayBuffer
+  return typeof body === 'string' ? body : new TextDecoder().decode(body)
 }
 
 export const storeSecret = async (extensionId: string, key: string, value: string): Promise<void> => {
@@ -43,6 +45,8 @@ export const storeSecret = async (extensionId: string, key: string, value: strin
     await MainProcess.invoke('SecretStorage.store', extensionId, key, value)
     return
   }
-  const cache = await caches.open(cacheName)
-  await cache.put(getRequestUrl(extensionId, key), new Response(value))
+  const result = await CacheWorker.setCacheStorageItem(getRequestUrl(extensionId, key), value, cacheName)
+  if (!result.success) {
+    throw new Error(result.errorMessage)
+  }
 }

@@ -15,7 +15,28 @@ const nodeModulesPath = join(root, 'node_modules')
 
 const workerPath = join(root, '.tmp', 'dist', 'dist', 'extensionManagementWorkerMain.js')
 
-const serverStaticPath = join(nodeModulesPath, '@lvce-editor', 'static-server', 'static')
+const serverStaticPathCandidates = [
+  join(nodeModulesPath, '@lvce-editor', 'static-server', 'static'),
+  join(root, 'packages', 'server', 'node_modules', '@lvce-editor', 'static-server', 'static'),
+  join(root, 'packages', 'server', 'node_modules', '@lvce-editor', 'server', 'node_modules', '@lvce-editor', 'static-server', 'static'),
+]
+
+let serverStaticPath = ''
+for (const candidate of serverStaticPathCandidates) {
+  try {
+    await readdir(candidate)
+    serverStaticPath = candidate
+    break
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error
+    }
+  }
+}
+
+if (!serverStaticPath) {
+  throw new Error('static server files not found')
+}
 
 const RE_COMMIT_HASH = /^[a-z\d]+$/
 const isCommitHash = (dirent) => {

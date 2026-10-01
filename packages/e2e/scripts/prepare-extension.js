@@ -69,3 +69,12 @@ await Promise.all([
     'globalThis.__ZIG_LANGUAGE_SERVER_URI__': JSON.stringify(languageServers.zigLanguageServerUri),
   }),
 ])
+
+await build({
+  bundle: true,
+  entryPoints: [join(packageRoot, '../extension-management-worker/test-fixtures/storage-persistence.js')],
+  external: ['electron', 'node:*'],
+  format: 'esm',
+  outfile: join(temporaryDirectory, 'storage-persistence.js'),
+  platform: 'browser',
+})

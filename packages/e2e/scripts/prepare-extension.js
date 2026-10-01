@@ -55,6 +55,8 @@ await Promise.all([
     'globalThis.__ERLANG_LANGUAGE_PLATFORM_URI__': JSON.stringify(languageServers.erlangLanguagePlatformUri),
   }),
   prepareFixtureExtension('extension-with-rpc-command-map'),
+  prepareFixtureExtension('extension-storage-a'),
+  prepareFixtureExtension('extension-storage-b'),
   prepareFixtureExtension('extension-no-rpc-command-map'),
   prepareFixtureExtension('java-language-server', {
     'globalThis.__JAVA_LANGUAGE_SERVER_ARGV__': JSON.stringify(languageServers.javaLanguageServer.argv),

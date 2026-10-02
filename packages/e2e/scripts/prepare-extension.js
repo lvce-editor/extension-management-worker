@@ -55,6 +55,8 @@ await Promise.all([
     'globalThis.__ERLANG_LANGUAGE_PLATFORM_URI__': JSON.stringify(languageServers.erlangLanguagePlatformUri),
   }),
   prepareFixtureExtension('extension-with-rpc-command-map'),
+  prepareFixtureExtension('extension-storage-a'),
+  prepareFixtureExtension('extension-storage-b'),
   prepareFixtureExtension('extension-no-rpc-command-map'),
   prepareFixtureExtension('java-language-server', {
     'globalThis.__JAVA_LANGUAGE_SERVER_ARGV__': JSON.stringify(languageServers.javaLanguageServer.argv),
@@ -67,3 +69,12 @@ await Promise.all([
     'globalThis.__ZIG_LANGUAGE_SERVER_URI__': JSON.stringify(languageServers.zigLanguageServerUri),
   }),
 ])
+
+await build({
+  bundle: true,
+  entryPoints: [join(packageRoot, '../extension-management-worker/test-fixtures/storage-persistence.js')],
+  external: ['electron', 'node:*'],
+  format: 'esm',
+  outfile: join(temporaryDirectory, 'storage-persistence.js'),
+  platform: 'browser',
+})

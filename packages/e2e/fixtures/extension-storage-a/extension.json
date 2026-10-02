@@ -1,0 +1,13 @@
+{
+  "id": "test.extension-storage-a",
+  "name": "Extension Storage",
+  "browser": "main.js",
+  "isolated": true,
+  "activation": ["onFormatting:extension-storage-a"],
+  "formattingProviders": [
+    {
+      "id": "extension-storage-a",
+      "languageId": "extension-storage-a"
+    }
+  ]
+}

@@ -1,12 +1,12 @@
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { CacheWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExtensionStorage from '../src/parts/ExtensionStorage/ExtensionStorage.ts'
 
-const originalCaches = Object.getOwnPropertyDescriptor(globalThis, 'caches')
-const state: { sharedProcess: DisposableMockRpc | undefined } = {
+const state: { cacheWorker: DisposableMockRpc | undefined; sharedProcess: DisposableMockRpc | undefined } = {
+  cacheWorker: undefined,
   sharedProcess: undefined,
 }
 
@@ -15,35 +15,24 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  state.cacheWorker?.[Symbol.dispose]()
+  state.cacheWorker = undefined
   state.sharedProcess?.[Symbol.dispose]()
   state.sharedProcess = undefined
-  if (originalCaches) {
-    Object.defineProperty(globalThis, 'caches', originalCaches)
-  } else {
-    delete (globalThis as any).caches
-  }
 })
 
-const mockCaches = (initialData?: unknown): { readonly getData: () => unknown } => {
+const mockCacheWorker = (initialData?: unknown): { readonly getData: () => unknown } => {
   let data = initialData
-  Object.defineProperty(globalThis, 'caches', {
-    configurable: true,
-    value: {
-      async match(): Promise<Response | undefined> {
-        if (data === undefined) {
-          return undefined
-        }
-        return {
-          json: async () => data,
-        } as Response
-      },
-      async open(): Promise<unknown> {
-        return {
-          async put(_key: string, response: Response): Promise<void> {
-            data = await response.json()
-          },
-        }
-      },
+  state.cacheWorker = CacheWorker.registerMockRpc({
+    'Cache.getCacheStorageItem'() {
+      if (data === undefined) {
+        return null
+      }
+      return { body: new TextEncoder().encode(JSON.stringify(data)).buffer, headers: {}, status: 200, statusText: 'OK' }
+    },
+    'Cache.setCacheStorageItem'(_key: Readonly<string>, value: Readonly<ArrayBuffer>) {
+      data = JSON.parse(new TextDecoder().decode(value))
+      return { success: true }
     },
   })
   return {
@@ -62,7 +51,7 @@ test('updates disabled extension state for test platform', async () => {
 })
 
 test('web platform creates and updates cached disabled extensions', async () => {
-  const cache = mockCaches()
+  const cache = mockCacheWorker()
 
   await ExtensionStorage.disableExtension2('sample.extension', PlatformType.Web)
   expect(cache.getData()).toEqual({ disabledExtensions: ['sample.extension'], enabledExtensions: [] })
@@ -78,7 +67,7 @@ test('web platform creates and updates cached disabled extensions', async () => 
 })
 
 test('web platform handles cached data without disabled extensions', async () => {
-  const cache = mockCaches({})
+  const cache = mockCacheWorker({})
 
   await ExtensionStorage.enableExtension2('sample.extension', PlatformType.Web)
 

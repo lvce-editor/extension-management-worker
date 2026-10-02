@@ -15,7 +15,28 @@ const nodeModulesPath = join(root, 'node_modules')
 
 const workerPath = join(root, '.tmp', 'dist', 'dist', 'extensionManagementWorkerMain.js')
 
-const serverStaticPath = join(nodeModulesPath, '@lvce-editor', 'static-server', 'static')
+const serverStaticPathCandidates = [
+  join(nodeModulesPath, '@lvce-editor', 'static-server', 'static'),
+  join(root, 'packages', 'server', 'node_modules', '@lvce-editor', 'static-server', 'static'),
+  join(root, 'packages', 'server', 'node_modules', '@lvce-editor', 'server', 'node_modules', '@lvce-editor', 'static-server', 'static'),
+]
+
+let serverStaticPath = ''
+for (const candidate of serverStaticPathCandidates) {
+  try {
+    await readdir(candidate)
+    serverStaticPath = candidate
+    break
+  } catch (error) {
+    if (typeof error !== 'object' || error === null || !('code' in error) || error.code !== 'ENOENT') {
+      throw error
+    }
+  }
+}
+
+if (!serverStaticPath) {
+  throw new Error('static server files not found')
+}
 
 const RE_COMMIT_HASH = /^[a-z\d]+$/
 const isCommitHash = (dirent) => {
@@ -40,41 +61,31 @@ const extensionManagementWorkerUrl = \`${remoteUrl}\``
 }
 
 const testWorkerContent = await readFile(testWorkerMainPath, 'utf-8')
-const extensionOccurrence = `const activateByEvent = async (event, assetDir, platform) => {
-  await invoke$3('Extensions.activateByEvent', event, assetDir, platform);
-};
+const extensionObjectStart = testWorkerContent.indexOf('const Extension = {')
+const extensionObjectEnd = testWorkerContent.indexOf('\n};', extensionObjectStart)
 
-const Extension = {
-  activateByEvent,
-  addNodeExtension,
-  addWebExtension,
-  disableWorkspace: disableWorkspace$1,
-  enableWorkspace,
-  executeCompletionProvider,
-  executeFormattingProvider
-};`
-const extensionReplacement = `const activateByEvent = async (event, assetDir, platform) => {
-  await invoke$3('Extensions.activateByEvent', event, assetDir, platform);
-};
-const uninstallExtensionForTest = async id => {
-  await invoke$3('Extensions.uninstall', id);
-};
-
-const Extension = {
-  activateByEvent,
-  addNodeExtension,
-  addWebExtension,
-  disableWorkspace: disableWorkspace$1,
-  enableWorkspace,
-  executeCompletionProvider,
-  executeFormattingProvider,
-  uninstall: uninstallExtensionForTest
-};`
-
-if (!testWorkerContent.includes(extensionOccurrence) && !testWorkerContent.includes(extensionReplacement)) {
+if (extensionObjectStart === -1 || extensionObjectEnd === -1) {
   throw new Error('test worker extension occurrence not found')
 }
 
-if (testWorkerContent.includes(extensionOccurrence)) {
-  await writeFile(testWorkerMainPath, testWorkerContent.replace(extensionOccurrence, extensionReplacement))
+const extensionObject = testWorkerContent.slice(extensionObjectStart, extensionObjectEnd + 3)
+const activateByEventFunction = testWorkerContent.match(
+  /const activateByEvent = async \(event, assetDir, platform\) => \{\n  await (invoke\$\d+)\('Extensions\.activateByEvent'/,
+)
+
+if (!extensionObject.includes('activateByEvent') || !activateByEventFunction) {
+  throw new Error('test worker activateByEvent export not found')
+}
+
+if (!extensionObject.includes('uninstall:')) {
+  const extensionReplacement = `const uninstallExtensionForTest = async id => {
+  await ${activateByEventFunction[1]}('Extensions.uninstall', id);
+};
+
+${extensionObject.slice(0, -3)},
+  uninstall: uninstallExtensionForTest
+};`
+  const newTestWorkerContent =
+    testWorkerContent.slice(0, extensionObjectStart) + extensionReplacement + testWorkerContent.slice(extensionObjectEnd + 3)
+  await writeFile(testWorkerMainPath, newTestWorkerContent)
 }

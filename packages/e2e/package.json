@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "e2e": "npm run e2e:prepare && test-with-playwright --only-extension=./.tmp/extension --test-path=.",
-    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc && npm run e2e:headless:reference-provider && npm run e2e:headless:extension-uninstall",
+    "e2e:headless": "npm run e2e:prepare && npm run e2e:headless:language-server && npm run e2e:headless:color-theme && npm run e2e:headless:isolated-rpc && npm run e2e:headless:reference-provider && npm run e2e:headless:extension-uninstall && npm run e2e:headless:extension-storage",
     "e2e:headless:color-theme": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=color-theme-quick-pick --headless",
+    "e2e:headless:extension-storage": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=extension-storage --headless",
     "e2e:headless:extension-uninstall": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=extension.uninstall-dynamic-web-extension --headless",
     "e2e:headless:isolated-rpc": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=isolated-rpc --headless",
     "e2e:headless:language-server": "test-with-playwright --only-extension=./.tmp/extension --test-path=. --filter=language-server --headless --timeout=60000",
@@ -18,7 +19,7 @@
   "devDependencies": {
     "@lvce-editor/api": "^8.83.1",
     "@lvce-editor/rpc-registry": "^9.47.0",
-    "@lvce-editor/test-with-playwright": "^22.20.0",
+    "@lvce-editor/test-with-playwright": "^22.40.0",
     "e2e-language-server-helpers": "0.0.0-dev",
     "esbuild": "^0.28.1",
     "typescript": "^6.0.3"

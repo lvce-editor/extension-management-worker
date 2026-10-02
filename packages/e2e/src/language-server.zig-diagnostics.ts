@@ -17,15 +17,26 @@ export const test: Test = async ({ Editor, Extension, FileSystem, Main, Settings
   await Settings.update({ 'editor.diagnostics': true })
   await Main.openUri(`${workspaceUri}/${relativePath}`)
 
-  await Editor.shouldHaveDiagnostics([
-    {
-      columnIndex: 8,
-      endColumnIndex: 20,
-      endRowIndex: 1,
-      message: "use of undeclared identifier 'unknown_name'",
-      rowIndex: 1,
-      source: 'zls',
-      type: 'error',
-    },
-  ])
+  // Native diagnostics arrive asynchronously after the editor opens.
+  const deadline = Date.now() + 5000
+  while (true) {
+    try {
+      await Editor.shouldHaveDiagnostics([
+        {
+          columnIndex: 8,
+          endColumnIndex: 20,
+          endRowIndex: 1,
+          message: "use of undeclared identifier 'unknown_name'",
+          rowIndex: 1,
+          source: 'zls',
+          type: 'error',
+        },
+      ])
+      return
+    } catch (error) {
+      if (Date.now() >= deadline) {
+        throw error
+      }
+    }
+  }
 }

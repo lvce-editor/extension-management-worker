@@ -387,3 +387,25 @@ test('executeDiagnosticProvider continues when one isolated diagnostic provider 
   expect(failingRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
   expect(workingRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', textDocument]])
 })
+
+test('streamDiagnosticProvider distinguishes a failed provider from a successful empty result', async () => {
+  const extensionsState = createExtensionsState([
+    { diagnosticProviders: [{ languageId: 'javascript' }], id: 'failed', isolated: true },
+    { diagnosticProviders: [{ languageId: 'javascript' }], id: 'empty', isolated: true },
+  ])
+  IsolatedExtensionHostWorkerState.set('failed', createRpc([], new Error('provider unavailable')).rpc)
+  IsolatedExtensionHostWorkerState.set('empty', createRpc([]).rpc)
+  const messages: unknown[] = []
+  await ExecuteDiagnosticProvider.streamDiagnosticProvider(
+    extensionsState,
+    { languageId: 'javascript' },
+    {
+      postMessage(message: unknown): void {
+        messages.push(message)
+      },
+    },
+  )
+  expect(messages).toContainEqual({ diagnostics: [], error: 'provider unavailable', providerId: 'failed', providerIndex: 0, type: 'result' })
+  expect(messages).toContainEqual({ diagnostics: [], providerId: 'empty', providerIndex: 1, type: 'result' })
+  expect(messages.at(-1)).toEqual({ type: 'done' })
+})

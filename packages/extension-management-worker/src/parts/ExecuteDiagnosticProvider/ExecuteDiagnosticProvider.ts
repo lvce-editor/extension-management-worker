@@ -82,13 +82,16 @@ const executeMatchingDiagnosticProvider = async (
 ): Promise<readonly unknown[]> => {
   const providerId = extension.id ?? extension.uri ?? extension.path ?? String(providerIndex)
   let diagnostics: readonly unknown[] = []
+  let providerError: string | undefined
   try {
     const rpc = await getRpc(extension, assetDir, platform, `onDiagnostic:${textDocument.languageId}`)
     diagnostics = await executeExtensionDiagnosticProvider(rpc, extension, textDocument, args)
-  } catch {
-    // A failing provider should not prevent results from other providers from being delivered.
+  } catch (error) {
+    // Preserve failure information for callers waiting for a successful diagnostics pass.
+    // Other providers still deliver their results.
+    providerError = error instanceof Error ? error.message : String(error)
   }
-  resultPort?.postMessage({ diagnostics, providerId, providerIndex, type: 'result' })
+  resultPort?.postMessage({ diagnostics, ...(providerError !== undefined && { error: providerError }), providerId, providerIndex, type: 'result' })
   return diagnostics
 }
 

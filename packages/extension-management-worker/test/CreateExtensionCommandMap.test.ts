@@ -1,4 +1,5 @@
 import { afterEach, expect, jest, test } from '@jest/globals'
+import { CacheWorker } from '@lvce-editor/rpc-registry'
 import * as CommandMapRef from '../src/parts/CommandMapRef/CommandMapRef.ts'
 import { createExtensionCommandExecutor, createExtensionCommandMap } from '../src/parts/CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as DeclaredRpcState from '../src/parts/DeclaredRpcState/DeclaredRpcState.ts'
@@ -52,6 +53,23 @@ test('application callbacks never invoke legacy commands or bypass privileged co
   expect(legacy).not.toHaveBeenCalled()
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual([])
   expect(commands['Extensions.createNodeRpcConnection']).toBeUndefined()
+})
+
+test('direct cache-worker ports use the trusted extension identity', async () => {
+  using rpc = CacheWorker.registerMockRpc({ 'CacheWorker.handleExtensionMessagePort': () => undefined })
+  const commandMap = createExtensionCommandMap('sample.extension')
+  await commandMap['Extensions.sendMessagePortToCacheWorker']('extension-port')
+  expect(rpc.invocations).toEqual([['CacheWorker.handleExtensionMessagePort', 'extension-port', 'sample.extension']])
+})
+
+test('application cache-worker ports are passed through the scoped callback without an owner argument', async () => {
+  const calls: (readonly unknown[])[] = []
+  const commandMap = createExtensionCommandMap('runtime-id', (...args: readonly unknown[]) => {
+    calls.push(args)
+    return undefined
+  })
+  await commandMap['Extensions.sendMessagePortToCacheWorker']('extension-port')
+  expect(calls).toEqual([['Extensions.sendMessagePortToCacheWorker', 'extension-port']])
 })
 
 test('does not expose resolved node paths to extensions', async () => {

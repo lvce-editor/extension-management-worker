@@ -44,8 +44,11 @@ test('storage errors reach callers so they can use uncached reads', async () => 
   expect(rpc.invocations).toHaveLength(1)
 })
 
-test('application workers retain the extension namespace across generations and reject stale calls', async () => {
-  using cache = CacheWorker.registerMockRpc({ 'Opfs.getCacheFileHandle': () => ({ kind: 'file' }) })
+test('application workers retain extension namespaces across generations and reject stale calls', async () => {
+  using cache = CacheWorker.registerMockRpc({
+    'CacheWorker.handleExtensionMessagePort': () => undefined,
+    'Opfs.getCacheFileHandle': () => ({ kind: 'file' }),
+  })
   const launch = async () => {
     const rpc = { ipc: { execute: (_method: string, ..._args: readonly any[]): any => undefined } }
     await createIsolatedExtensionHostWorker(
@@ -68,8 +71,10 @@ test('application workers retain the extension namespace across generations and 
     expect(() => first.ipc.execute('Extensions.getCacheFileHandle', 'files-v1')).toThrow('Stale extension application')
     const second = await launch()
     await second.ipc.execute('Extensions.getCacheFileHandle', 'files-v1')
-    expect(cache.invocations).toHaveLength(2)
+    await second.ipc.execute('Extensions.sendMessagePortToCacheWorker', 'extension-port')
+    expect(cache.invocations).toHaveLength(3)
     expect(cache.invocations[0]).toEqual(cache.invocations[1])
+    expect(cache.invocations[2]).toEqual(['CacheWorker.handleExtensionMessagePort', 'extension-port', 'sample.extension'])
   } finally {
     ExtensionsState.removeApplication('cache-test')
   }

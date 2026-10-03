@@ -14,6 +14,7 @@ import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileCha
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
+import { sendMessagePortToCacheWorker } from '../SendMessagePortToCacheWorker/SendMessagePortToCacheWorker.ts'
 
 interface RpcWithIpc extends Rpc {
   readonly ipc?: {
@@ -85,6 +86,9 @@ export const createIsolatedExtensionHostWorker = async (
           }
           if (method === 'Extensions.sendMessagePortToFileSystemWorker') {
             return ExtensionApplicationServices.createFileSystemPort(application, args[0], extensionId)
+          }
+          if (method === 'Extensions.sendMessagePortToCacheWorker') {
+            return sendMessagePortToCacheWorker(extensionId, args[0])
           }
           if (method === 'Extensions.createWebViewWorkerRpc' || method === 'Extensions.createWebViewWorkerRpc2') {
             return ExtensionApplicationServices.createWorker(

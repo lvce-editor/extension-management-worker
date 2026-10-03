@@ -5,6 +5,7 @@ import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import { createNotification } from '../Notifications/Notifications.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
+import { sendMessagePortToCacheWorker } from '../SendMessagePortToCacheWorker/SendMessagePortToCacheWorker.ts'
 
 export type ExtensionCommand = (...args: readonly any[]) => any
 export type ExtensionCommandMap = Readonly<Record<string, ExtensionCommand>>
@@ -88,6 +89,7 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
       'Extensions.executeCommand': (id: string, ...args: readonly any[]) => executeCommand(invokeCommand, id, ...args),
       'Extensions.getCacheFileHandle': (name: string) => invokeCommand('Extensions.getCacheFileHandle', name),
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),
+      'Extensions.sendMessagePortToCacheWorker': (port: MessagePort) => invokeCommand('Extensions.sendMessagePortToCacheWorker', port),
       'Extensions.unregisterFileChangeHandler': () => invokeCommand('Extensions.unregisterFileChangeHandler'),
     }
   }
@@ -113,6 +115,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     },
     'Extensions.registerFileChangeHandler'() {
       FileChangeHandlerRegistry.register(extensionId)
+    },
+    'Extensions.sendMessagePortToCacheWorker'(port: MessagePort) {
+      return sendMessagePortToCacheWorker(extensionId, port)
     },
     'Extensions.sendMessagePortToElectron'(port: MessagePort, initialCommand: string) {
       if (initialCommand !== allowedElectronPortCommand) {

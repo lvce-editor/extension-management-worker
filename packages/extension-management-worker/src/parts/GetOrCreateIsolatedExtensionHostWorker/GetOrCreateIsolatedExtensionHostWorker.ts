@@ -11,6 +11,7 @@ import {
 import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
+import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 
@@ -73,6 +74,9 @@ export const createIsolatedExtensionHostWorker = async (
       ? undefined
       : (method: string, ...args: readonly any[]) => {
           ExtensionsState.assertCurrentApplication(application)
+          if (method === 'Extensions.getCacheFileHandle') {
+            return getCacheFileHandle(extensionId, args[0])
+          }
           if (method === 'Extensions.registerFileChangeHandler') {
             return FileChangeHandlerRegistry.register(extensionId, application.applicationId)
           }

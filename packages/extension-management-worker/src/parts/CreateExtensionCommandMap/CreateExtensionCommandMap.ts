@@ -1,6 +1,7 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNodeRpcConnection/CreateNodeRpcConnection.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
+import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
 import { createNotification } from '../Notifications/Notifications.ts'
 import { deleteSecret, getSecret, storeSecret } from '../SecretStorage/SecretStorage.ts'
@@ -85,6 +86,7 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     return {
       ...inheritedCommands,
       'Extensions.executeCommand': (id: string, ...args: readonly any[]) => executeCommand(invokeCommand, id, ...args),
+      'Extensions.getCacheFileHandle': (name: string) => invokeCommand('Extensions.getCacheFileHandle', name),
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),
       'Extensions.unregisterFileChangeHandler': () => invokeCommand('Extensions.unregisterFileChangeHandler'),
     }
@@ -102,6 +104,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     },
     'Extensions.executeCommand'(id: string, ...args: readonly any[]) {
       return executeCommand(invokeCommand, id, ...args)
+    },
+    'Extensions.getCacheFileHandle'(name: string) {
+      return getCacheFileHandle(extensionId, name)
     },
     'Extensions.getSecret'(key: string) {
       return getSecret(extensionId, key)

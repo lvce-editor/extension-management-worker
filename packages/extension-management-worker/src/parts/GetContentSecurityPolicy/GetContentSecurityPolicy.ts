@@ -24,7 +24,7 @@ const getWorkerUrls = (
 ): { readonly assetSource?: string; readonly capabilitySource?: string; readonly nodeProcessSource?: string; readonly origin: string } => {
   const applicationUrl = new URL(getOrigin())
   const workerUrl = new URL(absolutePath, applicationUrl)
-  if (workerUrl.protocol === 'lvce:') {
+  if (workerUrl.protocol === 'lvce:' || workerUrl.protocol === 'lvce-oss:') {
     return { assetSource: new URL('./', workerUrl).href, origin: applicationUrl.origin }
   }
   if (workerUrl.protocol !== 'http:' && workerUrl.protocol !== 'https:') {

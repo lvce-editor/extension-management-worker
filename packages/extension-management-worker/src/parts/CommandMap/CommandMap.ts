@@ -62,9 +62,9 @@ import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRunningExtensions } from '../GetRunningExtensions/GetRunningExtensions.ts'
 import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItemContextMenuItems, getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
-import { getWorkspaceProgressData } from '../GetWorkspaceProgressData/GetWorkspaceProgressData.ts'
 import { getViews } from '../GetViews/GetViews.ts'
 import { getViewsFromExtensions } from '../GetViewsFromExtensions/GetViewsFromExtensions.ts'
+import { getWorkspaceProgressData } from '../GetWorkspaceProgressData/GetWorkspaceProgressData.ts'
 import { handleData } from '../HandleData/HandleData.ts'
 import { handleFileChanges } from '../HandleFileChanges/HandleFileChanges.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
@@ -91,9 +91,9 @@ import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSyste
 import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
 import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
-import * as WorkspaceProgressHandleChange from '../WorkspaceProgressHandleChange/WorkspaceProgressHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 import * as WebRtc from '../WebRtc/WebRtc.ts'
+import * as WorkspaceProgressHandleChange from '../WorkspaceProgressHandleChange/WorkspaceProgressHandleChange.ts'
 import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 
 const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any) => {
@@ -259,12 +259,12 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getRuntimeStatus': getRuntimeStatus,
   'Extensions.getStatusBarItemContextMenuItems': getStatusBarItemContextMenuItems,
   'Extensions.getStatusBarItems': getStatusBarItems,
-  'Extensions.getWorkspaceProgressData': wrapCommand((extensionsState) => getWorkspaceProgressData(extensionsState.applicationId)),
   'Extensions.getViewActions': ExtensionView.getViewActions,
   'Extensions.getViewActionsDom': ExtensionView.getViewActionsDom,
   'Extensions.getViewInstanceState': ExtensionView.getViewInstanceState,
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
+  'Extensions.getWorkspaceProgressData': wrapCommand((extensionsState) => getWorkspaceProgressData(extensionsState.applicationId)),
   'Extensions.getWorkspaceTransportUri': WorkspaceTransport.getWorkspaceTransportUri,
   'Extensions.handleData': handleData,
   'Extensions.handleFileChanges': handleFileChanges,
@@ -292,9 +292,9 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.streamDiagnosticProvider': wrapCommand(streamDiagnosticProvider),
   'Extensions.uninstall': uninstallExtension,
   'StatusBar.handleChange': StatusBarHandleChange.handleChange,
-  'WorkspaceProgress.handleChange': WorkspaceProgressHandleChange.handleChange,
   'WebRtc.readMicLevels': WebRtc.readMicLevels,
   'WebRtc.setRemoteDescription': WebRtc.setRemoteDescription,
   'WebRtc.startWebRtcAudioStream': WebRtc.startWebRtcAudioStream,
   'WebRtc.stopWebRtcAudioStream': WebRtc.stopWebRtcAudioStream,
+  'WorkspaceProgress.handleChange': WorkspaceProgressHandleChange.handleChange,
 }

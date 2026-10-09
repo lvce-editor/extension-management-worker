@@ -57,6 +57,43 @@ test('getLanguagesFromExtension preserves remote web extension tokenizer urls', 
   ])
 })
 
+test('getLanguagesFromExtension uses commit-scoped urls for packaged builtin tokenizers', () => {
+  const extension = {
+    id: 'builtin.language-basics-json',
+    languages: [
+      {
+        id: 'json',
+        tokenize: 'src/tokenizeJson.js',
+      },
+    ],
+    path: '/usr/lib/lvce/resources/app/static/e2b6056/extensions/builtin.language-basics-json',
+  }
+
+  expect(getLanguagesFromExtension(extension, PlatformType.Remote)).toEqual([
+    {
+      extensionPath: extension.path,
+      id: 'json',
+      tokenize: '/e2b6056/extensions/builtin.language-basics-json/src/tokenizeJson.js',
+    },
+  ])
+})
+
+test('getLanguagesFromExtension keeps installed extension tokenizer urls remote-aware', () => {
+  const extension = {
+    id: 'sample.extension',
+    languages: [{ id: 'sample', tokenize: 'src/tokenize.js' }],
+    path: '/home/user/.local/share/lvce/extensions/sample.extension',
+  }
+
+  expect(getLanguagesFromExtension(extension, PlatformType.Remote)).toEqual([
+    {
+      extensionPath: extension.path,
+      id: 'sample',
+      tokenize: '/remote/home/user/.local/share/lvce/extensions/sample.extension/src/tokenize.js',
+    },
+  ])
+})
+
 test('getLanguagesFromExtension handles missing and malformed language contributions', () => {
   expect(getLanguagesFromExtension(undefined, PlatformType.Web)).toEqual([])
   expect(getLanguagesFromExtension({}, PlatformType.Web)).toEqual([])

@@ -48,17 +48,28 @@ const commitHash = dirents.find(isCommitHash) || ''
 const rendererWorkerMainPath = join(serverStaticPath, commitHash, 'packages', 'renderer-worker', 'dist', 'rendererWorkerMain.js')
 const testWorkerMainPath = join(serverStaticPath, commitHash, 'packages', 'test-worker', 'dist', 'testWorkerMain.js')
 
-const content = await readFile(rendererWorkerMainPath, 'utf-8')
+const replace = async (path, occurrence, replacement) => {
+  const content = await readFile(path, 'utf8')
+  if (content.includes(replacement)) {
+    return
+  }
+  if (!content.includes(occurrence)) {
+    throw new Error(`Could not find expected extension worker URL in ${path}`)
+  }
+  await writeFile(path, content.replace(occurrence, replacement))
+}
 
 const remoteUrl = getRemoteUrl(workerPath)
-if (!content.includes('// const extensionManagementWorkerUrl = ')) {
-  const occurrence = `const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\``
-  const replacement = `// const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\`
-const extensionManagementWorkerUrl = \`${remoteUrl}\``
-
-  const newContent = content.replace(occurrence, replacement)
-  await writeFile(rendererWorkerMainPath, newContent)
-}
+await replace(
+  rendererWorkerMainPath,
+  '`${assetDir}/packages/renderer-worker/node_modules/@lvce-editor/extension-management-worker/dist/extensionManagementWorkerMain.js`',
+  `\`${remoteUrl}\``,
+)
+await replace(
+  join(serverStaticPath, 'index.html'),
+  `"develop.extensionManagementWorkerPath": "/${commitHash}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js"`,
+  `"develop.extensionManagementWorkerPath": "${remoteUrl}"`,
+)
 
 const testWorkerContent = await readFile(testWorkerMainPath, 'utf-8')
 const extensionObjectStart = testWorkerContent.indexOf('const Extension = {')

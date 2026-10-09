@@ -28,13 +28,21 @@ const content = await readFile(rendererWorkerPath, 'utf8')
 const workerPath = join(root, '.tmp/dist/dist/extensionManagementWorkerMain.js')
 const remoteUrl = getRemoteUrl(workerPath)
 
-const occurrence = `// const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\`
-const extensionManagementWorkerUrl = \`${remoteUrl}\``
-const replacement = `const extensionManagementWorkerUrl = \`\${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js\``
+const occurrence = `\`${remoteUrl}\``
+const replacement = '`${assetDir}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js`'
 if (!content.includes(occurrence)) {
-  throw new Error('occurrence not found')
+  throw new Error('Could not find development extension worker URL in static renderer')
 }
-const newContent = content.replace(occurrence, replacement)
-await writeFile(rendererWorkerPath, newContent)
+await writeFile(rendererWorkerPath, content.replace(occurrence, replacement))
+
+const indexPath = join(root, 'dist', 'index.html')
+const indexContent = await readFile(indexPath, 'utf8')
+const indexOccurrence = `"develop.extensionManagementWorkerPath": "${remoteUrl}"`
+const indexReplacement = `"develop.extensionManagementWorkerPath": "/extension-management-worker/${commitHash}/packages/extension-management-worker/dist/extensionManagementWorkerMain.js"`
+if (!indexContent.includes(indexOccurrence)) {
+  throw new Error('Could not find development extension worker URL in static configuration')
+}
+await writeFile(indexPath, indexContent.replace(indexOccurrence, indexReplacement))
+await cp(workerPath, join(root, 'dist', commitHash, 'packages', 'extension-management-worker', 'dist', 'extensionManagementWorkerMain.js'))
 
 await cp(join(root, 'dist'), join(root, '.tmp', 'static'), { recursive: true })

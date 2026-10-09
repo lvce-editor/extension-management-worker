@@ -1,6 +1,20 @@
 import { PlatformType } from '@lvce-editor/constants'
 import * as GetRemoteUrl from '../GetRemoteUrl/GetRemoteUrl.ts'
 
+const builtinStaticPathRegex = /(?:^|\/)static\/([a-f\d]{7,40})\/extensions\/([^/]+)$/i
+
+const getBuiltinTokenizerUrl = (extension: any, tokenizePath: string): string => {
+  if (typeof extension.id !== 'string' || !extension.id.startsWith('builtin.') || typeof extension.path !== 'string') {
+    return ''
+  }
+  const match = extension.path.match(builtinStaticPathRegex)
+  if (!match || match[2] !== extension.id) {
+    return ''
+  }
+  const [, commitHash, extensionId] = match
+  return `/${commitHash}/extensions/${extensionId}/${tokenizePath}`
+}
+
 export const getLanguagesFromExtension = (extension: any, platform: number): readonly any[] => {
   // TODO what if extension is null? should not crash process, handle error gracefully
   // TODO what if extension languages is not of type array?
@@ -23,7 +37,8 @@ export const getLanguagesFromExtension = (extension: any, platform: number): rea
         }
       }
       const relativePath = `${extensionPath}/${language.tokenize}`
-      const absolutePath = platform === PlatformType.Web ? relativePath : GetRemoteUrl.getRemoteUrl(relativePath)
+      const builtinTokenizerUrl = getBuiltinTokenizerUrl(extension, language.tokenize)
+      const absolutePath = builtinTokenizerUrl || (platform === PlatformType.Web ? relativePath : GetRemoteUrl.getRemoteUrl(relativePath))
 
       return {
         ...language,

@@ -64,6 +64,7 @@ import { getRuntimeStatus } from '../GetRuntimeStatus/GetRuntimeStatus.ts'
 import { getStatusBarItemContextMenuItems, getStatusBarItems } from '../GetStatusBarItems/GetStatusBarItems.ts'
 import { getViews } from '../GetViews/GetViews.ts'
 import { getViewsFromExtensions } from '../GetViewsFromExtensions/GetViewsFromExtensions.ts'
+import { getWorkspaceProgressData } from '../GetWorkspaceProgressData/GetWorkspaceProgressData.ts'
 import { handleData } from '../HandleData/HandleData.ts'
 import { handleFileChanges } from '../HandleFileChanges/HandleFileChanges.ts'
 import { handleMessagePort } from '../HandleMessagePort/HandleMessagePort.ts'
@@ -92,6 +93,7 @@ import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
 import { uninstallExtension } from '../UninstallExtension/UninstallExtension.ts'
 import * as WebRtc from '../WebRtc/WebRtc.ts'
+import * as WorkspaceProgressHandleChange from '../WorkspaceProgressHandleChange/WorkspaceProgressHandleChange.ts'
 import * as WorkspaceTransport from '../WorkspaceTransport/WorkspaceTransport.ts'
 
 const wrapCommand = (command: (extensionsState: ExtensionState, ...args: readonly any[]) => any) => {
@@ -262,6 +264,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getViewInstanceState': ExtensionView.getViewInstanceState,
   'Extensions.getViewMenuEntries': ExtensionView.getViewMenuEntries,
   'Extensions.getViews': getViews,
+  'Extensions.getWorkspaceProgressData': wrapCommand((extensionsState) => getWorkspaceProgressData(extensionsState.applicationId)),
   'Extensions.getWorkspaceTransportUri': WorkspaceTransport.getWorkspaceTransportUri,
   'Extensions.handleData': handleData,
   'Extensions.handleFileChanges': handleFileChanges,
@@ -293,4 +296,5 @@ export const commandMap: Record<string, ScopedCommand> = {
   'WebRtc.setRemoteDescription': WebRtc.setRemoteDescription,
   'WebRtc.startWebRtcAudioStream': WebRtc.startWebRtcAudioStream,
   'WebRtc.stopWebRtcAudioStream': WebRtc.stopWebRtcAudioStream,
+  'WorkspaceProgress.handleChange': WorkspaceProgressHandleChange.handleChange,
 }

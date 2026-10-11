@@ -34,8 +34,8 @@ export const handleRpcInfos = (extension: any, platform: any): void => {
       if (rpc.type === 'node' || rpc.type === 'node-process') {
         continue
       }
-      rpc.url = `${urlPrefix}/${rpc.url}`
-      ExtensionHostRpcState.add(rpc.id, rpc)
+      const resolvedRpc = { ...rpc, url: `${urlPrefix}/${rpc.url}` }
+      ExtensionHostRpcState.add(resolvedRpc.id, resolvedRpc)
     }
   } catch (error) {
     console.warn(`Failed to handle extension rpcs: ${error}`)

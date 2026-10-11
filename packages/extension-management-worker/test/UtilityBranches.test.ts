@@ -137,16 +137,18 @@ test('handleRpcInfos ignores invalid extension rpc contributions', () => {
   expect(ExtensionHostRpcState.get('invalid-rpc')).toBeUndefined()
 })
 
-test('handleRpcInfos stores rpc contributions with absolute urls', () => {
+test('handleRpcInfos stores rpc contributions with absolute urls without mutating the manifest', () => {
   const rpc = { id: 'utility-branches-rpc', url: 'worker.js' }
+  const extension = { path: '/extensions/sample', rpc: [rpc] }
 
-  handleRpcInfos({ path: '/extensions/sample', rpc: [rpc] }, PlatformType.Web)
+  handleRpcInfos(extension, PlatformType.Web)
+  handleRpcInfos(extension, PlatformType.Web)
 
   expect(getRpcInfo('utility-branches-rpc')).toEqual({
     id: 'utility-branches-rpc',
     url: '/extensions/sample/worker.js',
   })
-  expect(rpc.url).toBe('/extensions/sample/worker.js')
+  expect(rpc.url).toBe('worker.js')
 })
 
 test.each(['node', 'node-process'])('handleRpcInfos does not expose %s declarations as web worker rpcs', (type) => {

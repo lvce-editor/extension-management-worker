@@ -61,13 +61,30 @@ jobs:
           traced = traced.replace('const content = JSON.stringify(message)', 'traceElm("send", message); const content = JSON.stringify(message)')
           if (traced === original || !traced.includes('traceElm("receive"') || !traced.includes('traceElm("send"')) throw new Error('Trace anchors missing')
           traced = `import { appendFileSync } from 'node:fs'\nconst traceElm = (direction, message) => { const payload = JSON.stringify(message); if (payload.includes('Diagnostic.elm') && process.env.LVCE_ELM_TRACE) appendFileSync(process.env.LVCE_ELM_TRACE, JSON.stringify({ time: Date.now(), direction, message }) + '\\n') }\n` + traced
+          let settled = traced.replace('this.diagnosticWaiters.delete(normalizedUri)', '').replace('waiter.resolve(diagnostics)', 'waiter.publish(diagnostics)')
+          settled = settled.replace('if (!documentChanged && cached)', 'if (!documentChanged && cached && !this.diagnosticWaiters.has(textDocument.uri))')
+          const waiterStart = settled.indexOf('const waiters = this.diagnosticWaiters.get(uri) || new Set()')
+          const waiterEnd = settled.indexOf('this.diagnosticWaiters.set(uri, waiters)', waiterStart) + 'this.diagnosticWaiters.set(uri, waiters)'.length
+          if (waiterStart < 0 || waiterEnd < waiterStart) throw new Error('Waiter patch anchors missing')
+          settled = settled.slice(0, waiterStart) + `const waiters = this.diagnosticWaiters.get(uri) || new Set()
+            let timeout, settling
+            const remove = () => { clearTimeout(timeout); clearTimeout(settling); waiters.delete(waiter); if (waiters.size === 0) this.diagnosticWaiters.delete(uri) }
+            const waiter = {
+              publish(value) { clearTimeout(settling); settling = setTimeout(() => waiter.resolve(value), 300) },
+              reject(error) { remove(); reject(error) },
+              resolve(value) { remove(); resolve(value) }
+            }
+            timeout = setTimeout(() => waiter.resolve(this.publishedDiagnostics.get(uri) || []), PublishDiagnosticsTimeout)
+            waiters.add(waiter)
+            this.diagnosticWaiters.set(uri, waiters)` + settled.slice(waiterEnd)
           const baseline = git('rev-parse', 'origin/main')
           const candidate = git('rev-parse', 'HEAD')
           const results = []
           try {
             writeFileSync(connection, traced)
             npm(['run', 'e2e:prepare', '--workspace=packages/e2e'])
-            for (const [label, revision] of [['candidate', candidate], ['baseline', baseline]]) {
+            for (const [label, revision] of [['candidate', candidate], ['candidate-settled', candidate], ['baseline', baseline]]) {
+              writeFileSync(connection, label === 'candidate-settled' ? settled : traced)
               git('restore', `--source=${revision}`, '--', 'packages/extension-management-worker/src')
               npm(['run', 'build'])
               for (let iteration = 1; iteration <= 3; iteration++) {

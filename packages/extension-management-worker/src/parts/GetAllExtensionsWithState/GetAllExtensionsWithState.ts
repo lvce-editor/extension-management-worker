@@ -74,7 +74,10 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
     extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
   } else {
-    const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
+    const local =
+      fields === undefined
+        ? await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
+        : await SharedProcess.invoke('ExtensionManagement.getAllExtensions', [...new Set([...fields, 'id', 'disabled'])])
     extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
   }
   if (fields === undefined) {

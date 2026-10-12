@@ -42,7 +42,7 @@ test('addWebExtension - adds new uri once and clears cache', async () => {
     json: async () => manifest,
     ok: true,
   } as Response)
-  ExtensionsState.update({ cachedExtensions: 'cached-value' })
+  ExtensionsState.update({ cachedExtensions: Promise.resolve([]) })
 
   const result = await addWebExtension(uri)
 

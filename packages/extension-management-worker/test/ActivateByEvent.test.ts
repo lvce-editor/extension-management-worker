@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import { activateByEvent } from '../src/parts/ActivateByEvent/ActivateByEvent.ts'
+import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
@@ -19,6 +20,7 @@ const state: {
 
 beforeEach(() => {
   jest.useFakeTimers()
+  ExtensionsState.reset()
 })
 
 afterEach(() => {
@@ -125,6 +127,7 @@ test('activateByEvent does not notify the renderer again when an extension is al
   await activateByEvent('onCommand:test', '/assets', PlatformType.Electron)
   await jest.runAllTimersAsync()
 
+  expect(state.sharedProcess?.invocations).toHaveLength(1)
   expect(getExtensionChangeInvocations()).toEqual([['Layout.handleExtensionsChanged']])
 })
 

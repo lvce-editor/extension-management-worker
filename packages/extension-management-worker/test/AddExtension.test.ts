@@ -26,7 +26,7 @@ test('addExtension - dynamically adds extension and clears cache', async () => {
     name: 'sample-extension',
     uri: 'https://example.com/extension',
   }
-  ExtensionsState.update({ cachedExtensions: 'cached-value' })
+  ExtensionsState.update({ cachedExtensions: Promise.resolve([]) })
 
   const result = await addExtension(extension)
 

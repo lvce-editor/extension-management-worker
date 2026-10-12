@@ -30,7 +30,7 @@ test('projects source control actions before returning the RPC response', async 
   expect(await query('/assets', PlatformType.Test)).toEqual([manifest, { id: 'theme' }])
   expect(await query('/assets', PlatformType.Test, [])).toEqual([{}, {}])
   expect(await query('/assets', PlatformType.Test, ['missing', 'toString'])).toEqual([{}, {}])
-  expect(rpc.invocations).toHaveLength(4)
+  expect(rpc.invocations).toHaveLength(1)
 })
 
 test('projects resolved enablement state and dynamic extension metadata', async () => {

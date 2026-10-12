@@ -116,9 +116,16 @@ test('executeCompletionProvider asks matching isolated completion providers and 
   IsolatedExtensionHostWorkerState.set('extension-two', secondRpc.rpc)
 
   await expect(ExecuteCompletionProvider.executeCompletionProvider(extensionsState, textDocument, 4)).resolves.toEqual(firstResult)
+  await expect(ExecuteCompletionProvider.executeCompletionProvider(extensionsState, textDocument, 4)).resolves.toEqual(firstResult)
 
-  expect(firstRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
-  expect(secondRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', textDocument, 4]])
+  expect(firstRpc.invocations).toEqual([
+    ['ExtensionApi.executeCompletionProvider', textDocument, 4],
+    ['ExtensionApi.executeCompletionProvider', textDocument, 4],
+  ])
+  expect(secondRpc.invocations).toEqual([
+    ['ExtensionApi.executeCompletionProvider', textDocument, 4],
+    ['ExtensionApi.executeCompletionProvider', textDocument, 4],
+  ])
 })
 
 test('executeCompletionProvider returns empty completions when no matching isolated completion provider exists', async () => {

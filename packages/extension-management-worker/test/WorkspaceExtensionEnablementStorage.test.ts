@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
-import { afterEach, expect, jest, test } from '@jest/globals'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
 import { PlatformType } from '@lvce-editor/constants'
 import { FileSystemWorker, RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
@@ -11,6 +11,7 @@ import { disableExtension2 } from '../src/parts/DisableExtension2/DisableExtensi
 import { disableWorkspaceExtension } from '../src/parts/DisableWorkspaceExtension/DisableWorkspaceExtension.ts'
 import { enableExtension2 } from '../src/parts/EnableExtension2/EnableExtension2.ts'
 import { enableWorkspaceExtension } from '../src/parts/EnableWorkspaceExtension/EnableWorkspaceExtension.ts'
+import * as ExtensionsStateModule from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getExtension } from '../src/parts/GetExtension/GetExtension.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -30,6 +31,10 @@ const DefaultStorageUri = `${DefaultStorageDirectoryUri}/extension-enablement.js
 const WorkspaceTwoUri = 'memfs:///workspace-two'
 const WorkspaceTwoHash = '49d020f60846a76d96e0915007a78c867345bd04b52154637495b53fc90d83cf'
 const WorkspaceTwoStorageUri = `${ConfigUri}/workspaces/${WorkspaceTwoHash}/extension-enablement.json`
+
+beforeEach(() => {
+  ExtensionsStateModule.reset()
+})
 
 const state: {
   fileSystemWorker: DisposableMockRpc | undefined

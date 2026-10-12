@@ -56,6 +56,23 @@ const getExtensionsWithState = async (extensions: readonly any[], extensionsStat
   return withDisabledState(extensionsWithDisabledState, workspaceDisabledIds, workspaceEnabledIds)
 }
 
+const getSharedProcessExtensions = (extensionsState: ExtensionsState): Promise<readonly any[]> => {
+  const current = ExtensionsStateModule.get(extensionsState.applicationId)
+  if (current.cachedExtensions) {
+    return current.cachedExtensions
+  }
+  const extensions = Promise.try(() => SharedProcess.invoke('ExtensionManagement.getAllExtensions'))
+  ExtensionsStateModule.update({ cachedExtensions: extensions }, extensionsState.applicationId)
+  void extensions.catch(() => {
+    try {
+      ExtensionsStateModule.clearCachedExtensions(extensionsState.applicationId, extensions)
+    } catch {
+      // The application may have been disposed while discovery was pending.
+    }
+  })
+  return extensions
+}
+
 export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number, fields?: readonly string[]) => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   Assert.string(resolvedAssetDir)
@@ -74,7 +91,7 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
     extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
   } else {
-    const local = await SharedProcess.invoke('ExtensionManagement.getAllExtensions')
+    const local = await getSharedProcessExtensions(extensionsState)
     extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
   }
   if (fields === undefined) {

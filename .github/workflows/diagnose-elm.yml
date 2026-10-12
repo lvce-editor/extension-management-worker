@@ -1,0 +1,91 @@
+name: Diagnose Elm
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  compare:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - uses: erlef/setup-beam@v1.24.1
+        with:
+          otp-version: '27.3.4.16'
+          version-type: strict
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx playwright install chromium
+        working-directory: packages/e2e
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0
+      - name: Compare candidate and baseline with protocol capture
+        shell: bash
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0
+        run: |
+          node --input-type=module <<'NODE'
+          import { spawnSync } from 'node:child_process'
+          import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+          import { createRequire } from 'node:module'
+          import { resolve, dirname } from 'node:path'
+          const root = process.cwd()
+          const evidence = resolve('elm-comparison')
+          mkdirSync(evidence, { recursive: true })
+          const npm = (args, options = {}) => {
+            const result = spawnSync('npm', args, { cwd: root, encoding: 'utf8', shell: process.platform === 'win32', ...options })
+            if (result.status !== 0) throw new Error(`npm ${args.join(' ')}: ${result.stderr}\n${result.stdout}`)
+            return result
+          }
+          const git = (...args) => {
+            const result = spawnSync('git', args, { encoding: 'utf8' })
+            if (result.status !== 0) throw new Error(result.stderr)
+            return result.stdout.trim()
+          }
+          const requireWorkspace = createRequire(resolve('packages/server/package.json'))
+          const requireServer = createRequire(requireWorkspace.resolve('@lvce-editor/server'))
+          const sharedRoot = dirname(requireServer.resolve('@lvce-editor/shared-process'))
+          const connection = resolve(sharedRoot, 'src/parts/LanguageServerConnection/LanguageServerConnection.js')
+          const original = readFileSync(connection, 'utf8')
+          let traced = original.replace('this.handlePublishedDiagnostics(message.params)', 'traceElm("receive", message); this.handlePublishedDiagnostics(message.params)')
+          traced = traced.replace('const content = JSON.stringify(message)', 'traceElm("send", message); const content = JSON.stringify(message)')
+          if (traced === original || !traced.includes('traceElm("receive"') || !traced.includes('traceElm("send"')) throw new Error('Trace anchors missing')
+          traced = `import { appendFileSync } from 'node:fs'\nconst traceElm = (direction, message) => { const payload = JSON.stringify(message); if (payload.includes('Diagnostic.elm') && process.env.LVCE_ELM_TRACE) appendFileSync(process.env.LVCE_ELM_TRACE, JSON.stringify({ time: Date.now(), direction, message }) + '\\n') }\n` + traced
+          const baseline = git('rev-parse', 'origin/main')
+          const candidate = git('rev-parse', 'HEAD')
+          const results = []
+          try {
+            writeFileSync(connection, traced)
+            npm(['run', 'e2e:prepare', '--workspace=packages/e2e'])
+            for (const [label, revision] of [['candidate', candidate], ['baseline', baseline]]) {
+              git('restore', `--source=${revision}`, '--', 'packages/extension-management-worker/src')
+              npm(['run', 'build'])
+              for (let iteration = 1; iteration <= 3; iteration++) {
+                const trace = resolve(evidence, `${label}-${iteration}.jsonl`)
+                const result = spawnSync('npm', ['exec', '--workspace=packages/e2e', '--', 'test-with-playwright', '--only-extension=./.tmp/extension', '--test-path=.', '--filter=language-server.elm-native', '--headless', '--timeout=60000'], { cwd: root, encoding: 'utf8', shell: process.platform === 'win32', env: { ...process.env, LVCE_ELM_TRACE: trace } })
+                writeFileSync(resolve(evidence, `${label}-${iteration}.log`), `${result.stdout}\n${result.stderr}`)
+                results.push({ label, revision, iteration, status: result.status, error: result.error?.message })
+                console.log(`[DEBUG-elm-comparison] ${label} ${iteration}: ${result.status}`)
+              }
+            }
+          } finally {
+            writeFileSync(connection, original)
+            git('restore', `--source=${candidate}`, '--', 'packages/extension-management-worker/src')
+            writeFileSync(resolve(evidence, 'results.json'), JSON.stringify(results, null, 2))
+          }
+          NODE
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: elm-windows-comparison
+          path: elm-comparison

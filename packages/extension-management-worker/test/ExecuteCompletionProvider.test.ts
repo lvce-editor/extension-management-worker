@@ -229,7 +229,11 @@ test('projected desktop manifests still select and execute completion providers'
   using sharedProcess = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions': async (fields: readonly string[]) => {
       requestedFields = fields
-      return [Object.fromEntries(fields.filter((field) => Object.hasOwn(manifest, field)).map((field) => [field, Reflect.get(manifest, field)]))]
+      return [
+        Object.fromEntries(
+          fields.filter((field) => Object.hasOwn(manifest, field)).map((field) => [field, manifest[field as keyof typeof manifest]]),
+        ),
+      ]
     },
   })
   const providerRpc = createRpc([{ label: 'result' }])

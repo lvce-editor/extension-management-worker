@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
+import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteCompletionProvider from '../src/parts/ExecuteCompletionProvider/ExecuteCompletionProvider.ts'
@@ -218,4 +219,37 @@ test('executeCompletionProvider routes language server contributions through the
   ])
   expect(invocations).toHaveLength(1)
   sharedProcess[Symbol.dispose]()
+})
+
+test('projected desktop manifests still select and execute completion providers', async () => {
+  const manifest = {
+    browser: 'main.js',
+    completionProviders: [{ languageId: 'typescript' }],
+    contentSecurityPolicy: ['worker-src self'],
+    description: 'Unrelated metadata',
+    id: 'projected-provider',
+    isolated: true,
+    rpc: [{ id: 'provider-rpc', type: 'worker', url: 'rpc.js' }],
+    workerName: 'Provider',
+  }
+  let requestedFields: readonly string[] | undefined
+  using sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions': async (fields: readonly string[]) => {
+      requestedFields = fields
+      return [
+        Object.fromEntries(
+          fields.filter((field) => Object.hasOwn(manifest, field)).map((field) => [field, manifest[field as keyof typeof manifest]]),
+        ),
+      ]
+    },
+  })
+  const providerRpc = createRpc([{ label: 'result' }])
+  IsolatedExtensionHostWorkerState.set(manifest.id, providerRpc.rpc)
+  const extensionsState = { ...createExtensionsState([]), platform: PlatformType.Test }
+  const document = { languageId: 'typescript' }
+  expect(await ExecuteCompletionProvider.executeCompletionProvider(extensionsState, document)).toEqual([{ label: 'result' }])
+  expect(providerRpc.invocations).toEqual([['ExtensionApi.executeCompletionProvider', document]])
+  expect(requestedFields).toEqual(expect.arrayContaining(['browser', 'completionProviders', 'contentSecurityPolicy', 'rpc', 'workerName']))
+  expect(requestedFields).not.toContain('description')
+  expect(sharedProcess.invocations).toHaveLength(1)
 })

@@ -8,7 +8,7 @@ export interface ExtensionsState {
   readonly applicationGeneration?: number | undefined
   readonly applicationId?: string | undefined
   readonly cachedActivationEvents: Readonly<Record<string, Promise<void>>>
-  readonly cachedExtensions: Promise<readonly any[]> | undefined
+  readonly cachedExtensions: { readonly extensions: Promise<readonly any[]>; readonly fields: readonly string[] | undefined } | undefined
   readonly disabledIds: readonly string[]
   readonly platform: number
   readonly runtimeStatuses: Readonly<Record<string, RuntimeStatus>>
@@ -166,7 +166,7 @@ export const removeWebExtension = (id: string, applicationId?: string): boolean 
 
 export const clearCachedExtensions = (applicationId?: string, expected?: Promise<readonly any[]>): void => {
   const current = get(applicationId)
-  if (expected !== undefined && current.cachedExtensions !== expected) {
+  if (expected !== undefined && current.cachedExtensions?.extensions !== expected) {
     return
   }
   update({ cachedExtensions: undefined }, applicationId)

@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, beforeEach, expect, test } from '@jest/globals'
+import { PlatformType } from '@lvce-editor/constants'
 import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteDiagnosticProvider from '../src/parts/ExecuteDiagnosticProvider/ExecuteDiagnosticProvider.ts'
@@ -408,4 +409,37 @@ test('streamDiagnosticProvider distinguishes a failed provider from a successful
   expect(messages).toContainEqual({ diagnostics: [], error: 'provider unavailable', providerId: 'failed', providerIndex: 0, type: 'result' })
   expect(messages).toContainEqual({ diagnostics: [], providerId: 'empty', providerIndex: 1, type: 'result' })
   expect(messages.at(-1)).toEqual({ type: 'done' })
+})
+
+test('projected desktop manifests still select and execute diagnostic providers', async () => {
+  const manifest = {
+    browser: 'main.js',
+    contentSecurityPolicy: ['worker-src self'],
+    description: 'Unrelated metadata',
+    diagnosticProviders: [{ languageId: 'typescript' }],
+    id: 'projected-provider',
+    isolated: true,
+    rpc: [{ id: 'provider-rpc', type: 'worker', url: 'rpc.js' }],
+    workerName: 'Provider',
+  }
+  let requestedFields: readonly string[] | undefined
+  using sharedProcess = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions': async (fields: readonly string[]) => {
+      requestedFields = fields
+      return [
+        Object.fromEntries(
+          fields.filter((field) => Object.hasOwn(manifest, field)).map((field) => [field, manifest[field as keyof typeof manifest]]),
+        ),
+      ]
+    },
+  })
+  const providerRpc = createRpc([{ label: 'result' }])
+  IsolatedExtensionHostWorkerState.set(manifest.id, providerRpc.rpc)
+  const extensionsState = { ...createExtensionsState([]), platform: PlatformType.Test }
+  const document = { languageId: 'typescript' }
+  expect(await ExecuteDiagnosticProvider.executeDiagnosticProvider(extensionsState, document)).toEqual([{ label: 'result' }])
+  expect(providerRpc.invocations).toEqual([['ExtensionApi.executeDiagnosticProvider', document]])
+  expect(requestedFields).toEqual(expect.arrayContaining(['browser', 'diagnosticProviders', 'contentSecurityPolicy', 'rpc', 'workerName']))
+  expect(requestedFields).not.toContain('description')
+  expect(sharedProcess.invocations).toHaveLength(1)
 })

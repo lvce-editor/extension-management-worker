@@ -56,13 +56,22 @@ const getExtensionsWithState = async (extensions: readonly any[], extensionsStat
   return withDisabledState(extensionsWithDisabledState, workspaceDisabledIds, workspaceEnabledIds)
 }
 
-const getSharedProcessExtensions = (extensionsState: ExtensionsState): Promise<readonly any[]> => {
+const getSharedProcessExtensions = (extensionsState: ExtensionsState, fields?: readonly string[]): Promise<readonly any[]> => {
   const current = ExtensionsStateModule.get(extensionsState.applicationId)
-  if (current.cachedExtensions) {
-    return current.cachedExtensions
+  const requestedFields = fields === undefined ? undefined : [...new Set([...fields, 'id', 'disabled'])]
+  const cached = current.cachedExtensions
+  if (cached) {
+    const cachedFields = cached.fields
+    if (cachedFields === undefined || (requestedFields !== undefined && requestedFields.every((field) => cachedFields.includes(field)))) {
+      return cached.extensions
+    }
   }
-  const extensions = Promise.try(() => SharedProcess.invoke('ExtensionManagement.getAllExtensions'))
-  ExtensionsStateModule.update({ cachedExtensions: extensions }, extensionsState.applicationId)
+  const extensions = Promise.try(() =>
+    requestedFields === undefined
+      ? SharedProcess.invoke('ExtensionManagement.getAllExtensions')
+      : SharedProcess.invoke('ExtensionManagement.getAllExtensions', requestedFields),
+  )
+  ExtensionsStateModule.update({ cachedExtensions: { extensions, fields: requestedFields } }, extensionsState.applicationId)
   void extensions.catch(() => {
     try {
       ExtensionsStateModule.clearCachedExtensions(extensionsState.applicationId, extensions)
@@ -91,7 +100,7 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
     const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
     extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
   } else {
-    const local = await getSharedProcessExtensions(extensionsState)
+    const local = await getSharedProcessExtensions(extensionsState, fields)
     extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
   }
   if (fields === undefined) {

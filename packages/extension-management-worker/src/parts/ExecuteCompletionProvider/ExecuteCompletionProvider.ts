@@ -7,6 +7,7 @@ import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllEx
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
+import { languageProviderManifestFields } from '../LanguageProviderManifestFields/LanguageProviderManifestFields.ts'
 
 interface CompletionProviderContribution {
   readonly languageId?: string
@@ -44,7 +45,7 @@ const getMatchingExtensions = async (
   assetDir: string,
   platform: number,
 ): Promise<readonly ExtensionManifest[]> => {
-  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
+  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform, languageProviderManifestFields)
   return extensions.filter(
     (extension): boolean =>
       !extension.disabled &&

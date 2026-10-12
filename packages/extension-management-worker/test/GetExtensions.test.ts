@@ -71,3 +71,19 @@ test('reuses the static manifest while refreshing dynamic extension metadata', a
 
   expect(fetchCount).toBe(1)
 })
+
+test('requests projection before shared-process transport while retaining identity for enablement', async () => {
+  ExtensionsState.update({ disabledIds: ['git'] })
+  let requestedFields: readonly string[] | undefined
+  using rpc = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions': async (fields: readonly string[]) => {
+      requestedFields = fields
+      return [{ disabled: false, id: 'git', name: 'Git' }]
+    },
+  })
+  expect(await commandMap['Extensions.getAllExtensions']('/assets', PlatformType.Test, ['name', 'disabled'])).toEqual([
+    { disabled: true, name: 'Git' },
+  ])
+  expect(requestedFields).toEqual(['name', 'disabled', 'id'])
+  expect(rpc.invocations).toHaveLength(1)
+})

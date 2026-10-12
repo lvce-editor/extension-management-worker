@@ -30,7 +30,10 @@ test('projects source control actions before returning the RPC response', async 
   expect(await query('/assets', PlatformType.Test)).toEqual([manifest, { id: 'theme' }])
   expect(await query('/assets', PlatformType.Test, [])).toEqual([{}, {}])
   expect(await query('/assets', PlatformType.Test, ['missing', 'toString'])).toEqual([{}, {}])
-  expect(rpc.invocations).toHaveLength(4)
+  expect(rpc.invocations).toEqual([
+    ['ExtensionManagement.getAllExtensions', ['source-control-actions', 'id', 'disabled']],
+    ['ExtensionManagement.getAllExtensions'],
+  ])
 })
 
 test('projects resolved enablement state and dynamic extension metadata', async () => {
@@ -86,4 +89,36 @@ test('requests projection before shared-process transport while retaining identi
   ])
   expect(requestedFields).toEqual(['name', 'disabled', 'id'])
   expect(rpc.invocations).toHaveLength(1)
+})
+
+test('reuses projected discovery for concurrent reordered fields and subsets', async () => {
+  using rpc = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions': async () => [{ id: 'sample', name: 'Sample' }],
+  })
+  const query = commandMap['Extensions.getAllExtensions']
+  await expect(
+    Promise.all([query('/assets', PlatformType.Test, ['name', 'id']), query('/assets', PlatformType.Test, ['id', 'name'])]),
+  ).resolves.toEqual([[{ id: 'sample', name: 'Sample' }], [{ id: 'sample', name: 'Sample' }]])
+  await expect(query('/assets', PlatformType.Test, ['id'])).resolves.toEqual([{ id: 'sample' }])
+  expect(rpc.invocations).toHaveLength(1)
+})
+
+test('a projected cache cannot satisfy missing fields or a full-manifest request', async () => {
+  const manifest = { description: 'Full metadata', id: 'sample', name: 'Sample' }
+  using rpc = SharedProcess.registerMockRpc({
+    'ExtensionManagement.getAllExtensions': async (fields?: readonly string[]) =>
+      fields === undefined
+        ? [manifest]
+        : [
+            Object.fromEntries(
+              fields.filter((field) => Object.hasOwn(manifest, field)).map((field) => [field, manifest[field as keyof typeof manifest]]),
+            ),
+          ],
+  })
+  const query = commandMap['Extensions.getAllExtensions']
+  await expect(query('/assets', PlatformType.Test, ['id'])).resolves.toEqual([{ id: 'sample' }])
+  await expect(query('/assets', PlatformType.Test, ['name'])).resolves.toEqual([{ name: 'Sample' }])
+  await expect(query('/assets', PlatformType.Test)).resolves.toEqual([manifest])
+  await expect(query('/assets', PlatformType.Test, ['description'])).resolves.toEqual([{ description: 'Full metadata' }])
+  expect(rpc.invocations).toHaveLength(3)
 })

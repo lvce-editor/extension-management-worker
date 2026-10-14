@@ -45,6 +45,7 @@ import {
 } from '../ExecuteSourceControlProvider/ExecuteSourceControlProvider.ts'
 import { readFile as readExtensionApiFile } from '../ExtensionApiFileSystem/ExtensionApiFileSystem.ts'
 import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
+import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import { clearOutputChannel, getOutputChannelProviders, readOutputChannel } from '../ExtensionOutputChannel/ExtensionOutputChannel.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionView from '../ExtensionView/ExtensionView.ts'
@@ -268,6 +269,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getWorkspaceTransportUri': WorkspaceTransport.getWorkspaceTransportUri,
   'Extensions.handleData': handleData,
   'Extensions.handleFileChanges': handleFileChanges,
+  'Extensions.handleFileWatcherEvent': ExtensionFileWatcher.handleEvent,
   'Extensions.handleLinkedExtensionChange': handleLinkedExtensionChange,
   'Extensions.handleMessagePort': handleMessagePort,
   'Extensions.handleUncaughtExtensionError': handleUncaughtExtensionError,

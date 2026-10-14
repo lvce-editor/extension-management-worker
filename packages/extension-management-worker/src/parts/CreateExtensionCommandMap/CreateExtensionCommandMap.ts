@@ -1,5 +1,6 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNodeRpcConnection/CreateNodeRpcConnection.ts'
+import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
@@ -95,6 +96,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
   }
   return {
     ...inheritedCommands,
+    'Extensions.createFileSystemWatcher'(clientId: number, options: any) {
+      return ExtensionFileWatcher.create(extensionId, clientId, options)
+    },
     'Extensions.createNodeRpcConnection'(rpcId: string) {
       return createNodeRpcConnection(extensionId, rpcId)
     },
@@ -103,6 +107,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     },
     'Extensions.deleteSecret'(key: string) {
       return deleteSecret(extensionId, key)
+    },
+    'Extensions.disposeFileSystemWatcher'(clientId: number) {
+      return ExtensionFileWatcher.dispose(extensionId, clientId)
     },
     'Extensions.executeCommand'(id: string, ...args: readonly any[]) {
       return executeCommand(invokeCommand, id, ...args)

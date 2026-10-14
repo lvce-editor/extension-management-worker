@@ -9,6 +9,7 @@ import {
   type ExtensionCommandMap,
 } from '../CreateExtensionCommandMap/CreateExtensionCommandMap.ts'
 import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
+import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
@@ -77,6 +78,12 @@ export const createIsolatedExtensionHostWorker = async (
           ExtensionsState.assertCurrentApplication(application)
           if (method === 'Extensions.getCacheFileHandle') {
             return getCacheFileHandle(extensionId, args[0])
+          }
+          if (method === 'Extensions.createFileSystemWatcher') {
+            return ExtensionFileWatcher.create(extensionId, args[0], args[1], application)
+          }
+          if (method === 'Extensions.disposeFileSystemWatcher') {
+            return ExtensionFileWatcher.dispose(extensionId, args[0], application)
           }
           if (method === 'Extensions.registerFileChangeHandler') {
             return FileChangeHandlerRegistry.register(extensionId, application.applicationId)

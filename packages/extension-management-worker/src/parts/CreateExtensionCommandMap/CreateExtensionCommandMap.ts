@@ -1,5 +1,6 @@
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { createNodeRpcConnection, createNodeRpcMessagePort } from '../CreateNodeRpcConnection/CreateNodeRpcConnection.ts'
+import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import { handleUncaughtExtensionError } from '../HandleUncaughtExtensionError/HandleUncaughtExtensionError.ts'
@@ -86,6 +87,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     // callback (notifications, secrets, file watchers, or privileged node ports).
     return {
       ...inheritedCommands,
+      'Extensions.createFileSystemWatcher': (clientId: number, options: any) =>
+        invokeCommand('Extensions.createFileSystemWatcher', clientId, options),
+      'Extensions.disposeFileSystemWatcher': (clientId: number) => invokeCommand('Extensions.disposeFileSystemWatcher', clientId),
       'Extensions.executeCommand': (id: string, ...args: readonly any[]) => executeCommand(invokeCommand, id, ...args),
       'Extensions.getCacheFileHandle': (name: string) => invokeCommand('Extensions.getCacheFileHandle', name),
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),
@@ -95,6 +99,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
   }
   return {
     ...inheritedCommands,
+    'Extensions.createFileSystemWatcher'(clientId: number, options: any) {
+      return ExtensionFileWatcher.create(extensionId, clientId, options)
+    },
     'Extensions.createNodeRpcConnection'(rpcId: string) {
       return createNodeRpcConnection(extensionId, rpcId)
     },
@@ -103,6 +110,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     },
     'Extensions.deleteSecret'(key: string) {
       return deleteSecret(extensionId, key)
+    },
+    'Extensions.disposeFileSystemWatcher'(clientId: number) {
+      return ExtensionFileWatcher.dispose(extensionId, clientId)
     },
     'Extensions.executeCommand'(id: string, ...args: readonly any[]) {
       return executeCommand(invokeCommand, id, ...args)

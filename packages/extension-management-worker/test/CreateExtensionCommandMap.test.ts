@@ -173,3 +173,15 @@ test('rejects arbitrary Electron port targets', () => {
   port1.close()
   port2.close()
 })
+
+test('application watcher requests reach the scoped router without a caller-supplied owner', async () => {
+  const scoped = jest.fn(async (..._args: readonly unknown[]) => {})
+  const commands = createExtensionCommandMap('trusted-runtime', scoped)
+  const options = { roots: ['file:///workspace'] }
+  await commands['Extensions.createFileSystemWatcher'](1, options)
+  await commands['Extensions.disposeFileSystemWatcher'](1)
+  expect(scoped.mock.calls).toEqual([
+    ['Extensions.createFileSystemWatcher', 1, options],
+    ['Extensions.disposeFileSystemWatcher', 1],
+  ])
+})

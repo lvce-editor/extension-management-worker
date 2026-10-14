@@ -98,3 +98,9 @@ test('application-backed filesystem URIs cannot accidentally watch host disk', a
     ExtensionsState.removeApplication('embedded')
   }
 })
+
+test('shallow watchers preserve recursive defaults and validate their scope option', async () => {
+  await Watcher.create('one', 1, { recursive: false, roots: ['file:///workspace'] })
+  expect(watch).toHaveBeenCalledWith(expect.any(String), { depth: 0, exclude: [], roots: ['file:///workspace'] })
+  await expect(Watcher.create('one', 2, { recursive: 'false', roots: ['file:///workspace'] } as any)).rejects.toThrow('disk roots')
+})

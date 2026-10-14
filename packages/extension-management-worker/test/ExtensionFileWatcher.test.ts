@@ -104,3 +104,10 @@ test('shallow watchers preserve recursive defaults and validate their scope opti
   expect(watch).toHaveBeenCalledWith(expect.any(String), { depth: 0, exclude: [], roots: ['file:///workspace'] })
   await expect(Watcher.create('one', 2, { recursive: 'false', roots: ['file:///workspace'] } as any)).rejects.toThrow('disk roots')
 })
+
+test('child names are forwarded only for shallow watches', async () => {
+  await Watcher.create('one', 1, { childNames: ['tsconfig.json'], recursive: false, roots: ['file:///workspace'] })
+  expect(watch).toHaveBeenCalledWith(expect.any(String), { childNames: ['tsconfig.json'], depth: 0, exclude: [], roots: ['file:///workspace'] })
+  await expect(Watcher.create('one', 2, { childNames: ['tsconfig.json'], roots: ['file:///workspace'] })).rejects.toThrow('disk roots')
+  await expect(Watcher.create('one', 3, { childNames: ['../config'], recursive: false, roots: ['file:///workspace'] })).rejects.toThrow('disk roots')
+})

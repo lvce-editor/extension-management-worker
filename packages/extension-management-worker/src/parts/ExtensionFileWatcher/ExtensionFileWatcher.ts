@@ -4,6 +4,7 @@ import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorke
 import * as RendererWorker from '../Rpc/Rpc.ts'
 
 interface WatchOptions {
+  readonly childNames?: readonly string[]
   readonly exclude?: readonly string[]
   readonly recursive?: boolean
   readonly roots: readonly string[]
@@ -34,6 +35,10 @@ export const create = async (
     clientId < 1 ||
     !Array.isArray(options?.roots) ||
     options.roots.length === 0 ||
+    (options.childNames !== undefined &&
+      (options.recursive !== false ||
+        !Array.isArray(options.childNames) ||
+        options.childNames.some((name) => typeof name !== 'string' || !name || /[\\/]/.test(name)))) ||
     (options.recursive !== undefined && typeof options.recursive !== 'boolean') ||
     options.roots.some((uri) => typeof uri !== 'string' || !uri.startsWith('file://')) ||
     (options.exclude !== undefined && (!Array.isArray(options.exclude) || options.exclude.some((name) => typeof name !== 'string')))
@@ -50,6 +55,7 @@ export const create = async (
   byId.set(registration.id, registration)
   try {
     await RendererWorker.invoke('FileWatcher.watchExtension', registration.id, {
+      ...(options.childNames !== undefined && { childNames: options.childNames }),
       ...(options.recursive === false && { depth: 0 }),
       exclude: options.exclude || [],
       roots: options.roots,

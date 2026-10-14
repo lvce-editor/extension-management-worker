@@ -87,6 +87,9 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     // callback (notifications, secrets, file watchers, or privileged node ports).
     return {
       ...inheritedCommands,
+      'Extensions.createFileSystemWatcher': (clientId: number, options: any) =>
+        invokeCommand('Extensions.createFileSystemWatcher', clientId, options),
+      'Extensions.disposeFileSystemWatcher': (clientId: number) => invokeCommand('Extensions.disposeFileSystemWatcher', clientId),
       'Extensions.executeCommand': (id: string, ...args: readonly any[]) => executeCommand(invokeCommand, id, ...args),
       'Extensions.getCacheFileHandle': (name: string) => invokeCommand('Extensions.getCacheFileHandle', name),
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),

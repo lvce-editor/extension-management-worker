@@ -50,7 +50,7 @@ export const create = async (
   byId.set(registration.id, registration)
   try {
     await RendererWorker.invoke('FileWatcher.watchExtension', registration.id, {
-      ...((options.recursive === false) && { depth: 0 }),
+      ...(options.recursive === false && { depth: 0 }),
       exclude: options.exclude || [],
       roots: options.roots,
     })

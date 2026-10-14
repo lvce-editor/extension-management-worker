@@ -52,3 +52,15 @@ export const clear = (): void => {
     delete instances[Number(uid)]
   }
 }
+
+export const invalidateRpc = (rpc: Rpc): void => {
+  for (const { instance, uid } of getEntries()) {
+    if (instance.status === 'ready' && instance.rpc === rpc) {
+      set(uid, {
+        error: { message: 'Extension runtime disposed', name: 'Error' },
+        status: 'error',
+        viewId: instance.viewId,
+      })
+    }
+  }
+}

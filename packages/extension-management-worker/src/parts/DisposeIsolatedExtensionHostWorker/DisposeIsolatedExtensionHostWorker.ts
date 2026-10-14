@@ -1,6 +1,7 @@
 import * as ActivateByEvent from '../ActivateByEvent/ActivateByEvent.ts'
 import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import * as ExtensionViewInstanceState from '../ExtensionViewInstanceState/ExtensionViewInstanceState.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
@@ -14,6 +15,7 @@ export const disposeIsolatedExtensionHostWorker = async (extensionId: string, in
     await ExtensionFileWatcher.disposeOwner(extensionId)
     return false
   }
+  ExtensionViewInstanceState.invalidateRpc(rpc)
   ActivateByEvent.resetExtensionActivation(extensionId)
   ExtensionsState.resetExtensionRuntimeState(extensionId)
   // Close all owned resources even if one backend fails during teardown.

@@ -2,9 +2,9 @@ import { CacheWorker } from '@lvce-editor/rpc-registry'
 import { VError } from '@lvce-editor/verror'
 import * as CreateResponseFromData from '../CreateResponseFromData/CreateResponseFromData.ts'
 
-const cacheName = 'Extensions' // TODO
+const defaultCacheName = 'Extensions'
 
-export const getJson = async (cacheKey: string): Promise<any> => {
+export const getJson = async (cacheKey: string, cacheName = defaultCacheName): Promise<any> => {
   const item = await CacheWorker.getCacheStorageItem(cacheKey, cacheName)
   if (!item) {
     return undefined
@@ -14,7 +14,7 @@ export const getJson = async (cacheKey: string): Promise<any> => {
   return JSON.parse(json)
 }
 
-export const setJson = async (cacheKey: string, data: any): Promise<void> => {
+export const setJson = async (cacheKey: string, data: any, cacheName = defaultCacheName): Promise<void> => {
   try {
     const response = CreateResponseFromData.createResponseFromData(data)
     const headers = Object.fromEntries(response.headers.entries())

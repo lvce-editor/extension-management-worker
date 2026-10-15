@@ -119,8 +119,6 @@ const sharedApplicationCommands = new Set([
   'Extensions.getColorThemeCssFromJson',
   'Extensions.getColorThemeJson',
   'Extensions.getColorThemeNames',
-  'Extensions.getPreference',
-  'Extensions.setPreference',
 ])
 
 const invokeForApplication = async (applicationId: string, method: string, ...args: readonly any[]): Promise<any> => {
@@ -148,6 +146,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform, args[2])
     case 'Extensions.getDynamicWebExtensions':
       return application.webExtensions
+    case 'Extensions.getPreference':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Preferences.get', ...args)
     case 'Extensions.getRpcInfo':
       return ExtensionApplicationServices.getRpcInfo(application, args[0])
     case 'Extensions.getRuntimeStatus':
@@ -166,8 +166,12 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return ExtensionView.requestViewRerender(args[0], applicationId)
     case 'Extensions.sendMessagePortToFileSystemWorker':
       return ExtensionApplicationServices.createFileSystemPort(application, args[0])
+    case 'Extensions.setPreference':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Preferences.update', { [args[0]]: args[1] })
     case 'Extensions.showNotification':
       return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Notification.create', ...args)
+    case 'StatusBar.handleChange':
+      return StatusBarHandleChange.handleChange(args[0], applicationId)
     default:
       throw new Error(`Extension command does not support application context: ${method}`)
   }

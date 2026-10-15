@@ -270,3 +270,15 @@ test('getAllExtensionsWithState reads remote extensions when served over http', 
   ])
 })
 state.cacheWorker = undefined
+
+test('application runtime discovery queries its own layout when there is no global shell', async () => {
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Application.execute': async (_applicationId: string, command: string) =>
+      command === 'Layout.getAssetDir' ? '/preview/assets' : PlatformType.Web,
+  })
+  await expect(getRuntimeContext('', 0, 'preview')).resolves.toEqual({ assetDir: '/preview/assets', platform: PlatformType.Web })
+  expect(state.rendererWorker.invocations).toEqual([
+    ['Application.execute', 'preview', 'Layout.getAssetDir'],
+    ['Application.execute', 'preview', 'Layout.getPlatform'],
+  ])
+})

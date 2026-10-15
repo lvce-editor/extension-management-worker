@@ -30,3 +30,18 @@ test('handleChange skips the refresh when the status bar is hidden', async () =>
 
   expect(mockRpc.invocations).toEqual([['Layout.getStatusBarVisible']])
 })
+
+test.each([true, false])('application refresh preserves its owner when visibility is %s', async (visible) => {
+  using renderer = RendererWorker.registerMockRpc({
+    'Application.execute': async () => visible,
+  })
+  await handleChange('sample.item', 'preview')
+  expect(renderer.invocations).toEqual(
+    visible
+      ? [
+          ['Application.execute', 'preview', 'Layout.getStatusBarVisible'],
+          ['Application.execute', 'preview', 'StatusBar.handleChange'],
+        ]
+      : [['Application.execute', 'preview', 'Layout.getStatusBarVisible']],
+  )
+})

@@ -119,8 +119,6 @@ const sharedApplicationCommands = new Set([
   'Extensions.getColorThemeCssFromJson',
   'Extensions.getColorThemeJson',
   'Extensions.getColorThemeNames',
-  'Extensions.getPreference',
-  'Extensions.setPreference',
 ])
 
 const invokeForApplication = async (applicationId: string, method: string, ...args: readonly any[]): Promise<any> => {
@@ -148,6 +146,10 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return getAllExtensionsWithState(application, args[0] || '', args[1] ?? application.platform, args[2])
     case 'Extensions.getDynamicWebExtensions':
       return application.webExtensions
+    case 'Extensions.getPreference':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Preferences.get', ...args)
+    case 'Extensions.setPreference':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Preferences.update', { [args[0]]: args[1] })
     case 'Extensions.getRpcInfo':
       return ExtensionApplicationServices.getRpcInfo(application, args[0])
     case 'Extensions.getRuntimeStatus':

@@ -187,3 +187,13 @@ test('application extension queries return only requested fields without changin
     expect.objectContaining({ ...manifest, applicationId: 'source' }),
   ])
 })
+
+test('preference calls use the calling application renderer rather than the global shell', async () => {
+  const invoke = commandMap['Extensions.invokeForApplication']
+  await invoke('preview', 'Extensions.getPreference', 'editor.fontSize')
+  await invoke('source', 'Extensions.setPreference', 'editor.fontSize', 18)
+  expect(execute.mock.calls).toEqual([
+    ['preview', 'Preferences.get', 'editor.fontSize'],
+    ['source', 'Preferences.update', { 'editor.fontSize': 18 }],
+  ])
+})

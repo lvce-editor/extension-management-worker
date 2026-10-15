@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExtensionOutputChannel from '../src/parts/ExtensionOutputChannel/ExtensionOutputChannel.ts'
+import * as ExtensionsStateModule from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const state: {
@@ -255,4 +256,34 @@ test('clearOutputChannel rejects an output channel that is not registered', asyn
   await expect(ExtensionOutputChannel.clearOutputChannel(extensionsState, 'extension-output://extension.one/first-output')).rejects.toThrow(
     'Output channel first-output is not registered by extension extension.one',
   )
+})
+
+test('discovers, reads, and clears channels through the owning application without a global layout', async () => {
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Application.execute': async (_applicationId: string, method: string) => (method === 'Layout.getAssetDir' ? '/assets' : 1),
+  })
+  const manifest = { id: 'sample.output', isolated: true, outputChannels: [{ id: 'build', label: 'Build' }] }
+  ExtensionsStateModule.createApplication('preview', 1, [manifest])
+  const application = ExtensionsStateModule.get('preview')
+  const worker = createRpc({
+    'ExtensionApi.clearOutputChannel': () => true,
+    'ExtensionApi.getOutputChannelLogs': () => 'preview log',
+    'ExtensionApi.getOutputChannelRegistrySnapshot': () => ({ outputChannels: [{ id: 'build' }] }),
+  })
+  IsolatedExtensionHostWorkerState.set('sample.output', worker.rpc, 'preview')
+  try {
+    const channels = await ExtensionOutputChannel.getOutputChannelProviders(application)
+    expect(channels).toEqual([{ id: 'build', label: 'Build', uri: 'extension-output://sample.output/build' }])
+    await expect(ExtensionOutputChannel.readOutputChannel(application, channels[0].uri)).resolves.toBe('preview log')
+    await ExtensionOutputChannel.clearOutputChannel(application, channels[0].uri)
+    expect(state.rendererWorker.invocations).toEqual([
+      ['Application.execute', 'preview', 'Layout.getAssetDir'],
+      ['Application.execute', 'preview', 'Layout.getAssetDir'],
+      ['Application.execute', 'preview', 'Layout.getAssetDir'],
+    ])
+  } finally {
+    ExtensionsStateModule.removeApplication('preview')
+    IsolatedExtensionHostWorkerState.clear('preview')
+  }
 })

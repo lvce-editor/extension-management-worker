@@ -94,7 +94,7 @@ const getExtensionOutputChannelProviders = async (
 }
 
 export const getOutputChannelProviders = async (extensionsState: ExtensionsState): Promise<readonly OutputChannelProvider[]> => {
-  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform, extensionsState.applicationId)
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   const outputExtensions = extensions.filter(hasOutputChannels)
   const providers = await Promise.all(outputExtensions.map((extension) => getExtensionOutputChannelProviders(extension, assetDir, platform)))
@@ -126,7 +126,7 @@ interface ResolvedOutputChannel {
 
 const resolveOutputChannel = async (extensionsState: ExtensionsState, uri: string): Promise<ResolvedOutputChannel> => {
   const [extensionId, outputChannelId] = parseOutputChannelUri(uri)
-  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
+  const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform, extensionsState.applicationId)
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   const extension = extensions.find((candidate) => getExtensionId(candidate) === extensionId && hasOutputChannels(candidate))
   const isContributed = extension?.outputChannels?.some((outputChannel: OutputChannelContribution) => outputChannel.id === outputChannelId)

@@ -66,7 +66,7 @@ test('web color theme JSON is reused when the ETag is unchanged', async () => {
     { json: async () => ({ colors: { EditorBackground: '#000' } }), ok: true },
     { headers: { get: () => '"theme-v1"' }, ok: true },
   ]
-  const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => responses.shift() as Response)
+  const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => responses.shift() as unknown as Response)
 
   await expect(getColorThemeJson('dark', PlatformType.Web, '/assets')).resolves.toEqual({ colors: { EditorBackground: '#000' } })
   await expect(getColorThemeJson('dark', PlatformType.Web, '/assets')).resolves.toEqual({ colors: { EditorBackground: '#000' } })

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import extract from 'extract-zip'
+import { extractZip } from './extractZip.js'
 
 const zigVersion = '0.16.0'
 const zlsVersion = '0.16.0'
@@ -63,7 +63,7 @@ const downloadFile = async (path, url, sha256) => {
  */
 const extractArchive = async (archivePath, extractionPath) => {
   if (archivePath.endsWith('.zip')) {
-    await extract(archivePath, { dir: extractionPath })
+    await extractZip(archivePath, extractionPath)
     return
   }
   execFileSync('tar', ['-xJf', archivePath, '-C', extractionPath], { stdio: 'inherit' })

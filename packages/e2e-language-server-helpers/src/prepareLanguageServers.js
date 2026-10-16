@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import extract from 'extract-zip'
+import { extractZip } from './extractZip.js'
 import { prepareZigLanguageServer } from './prepareZigLanguageServer.js'
 
 const vscodeJavaVersion = '1.55.0-995'
@@ -74,7 +74,7 @@ const prepareErlangLanguagePlatform = async (temporaryDirectory) => {
   const archivePath = join(temporaryDirectory, asset.name)
   const extractionPath = join(temporaryDirectory, 'erlang-language-platform')
   await writeFile(archivePath, archive)
-  await extract(archivePath, { dir: extractionPath })
+  await extractZip(archivePath, extractionPath)
 
   const executableName = process.platform === 'win32' ? 'elp.exe' : 'elp'
   return pathToFileURL(join(extractionPath, 'extension', 'bin', executableName)).href
@@ -97,7 +97,7 @@ const prepareJavaLanguageServer = async (temporaryDirectory) => {
   const archivePath = join(temporaryDirectory, `vscode-java-${vscodeJavaVersion}.vsix`)
   const extractionPath = join(temporaryDirectory, 'vscode-java')
   await writeFile(archivePath, archive)
-  await extract(archivePath, { dir: extractionPath })
+  await extractZip(archivePath, extractionPath)
 
   const serverPath = join(extractionPath, 'extension', 'server')
   const plugins = await readdir(join(serverPath, 'plugins'))
@@ -146,27 +146,35 @@ const prepareRustAnalyzer = () => {
  * @param {{ cachedDependenciesDirectory: string, temporaryDirectory: string }} options
  */
 export const prepareLanguageServers = async ({ cachedDependenciesDirectory, temporaryDirectory }) => {
-  await mkdir(temporaryDirectory, { recursive: true })
+  // Keep the process alive while fetch response bodies are being consumed.
+  // On Node 26, an unresolved response.arrayBuffer() can otherwise let the
+  // process exit with code 13 before the body finishes downloading.
+  const keepAlive = setInterval(() => {}, 1_000)
+  try {
+    await mkdir(temporaryDirectory, { recursive: true })
 
-  const erlangLanguagePlatformUri = await prepareErlangLanguagePlatform(temporaryDirectory)
-  const rustAnalyzerUri = prepareRustAnalyzer()
-  const javaLanguageServer = await prepareJavaLanguageServer(temporaryDirectory)
-  const zigLanguageServerUri = await prepareZigLanguageServer(temporaryDirectory, cachedDependenciesDirectory)
+    const erlangLanguagePlatformUri = await prepareErlangLanguagePlatform(temporaryDirectory)
+    const rustAnalyzerUri = prepareRustAnalyzer()
+    const javaLanguageServer = await prepareJavaLanguageServer(temporaryDirectory)
+    const zigLanguageServerUri = await prepareZigLanguageServer(temporaryDirectory, cachedDependenciesDirectory)
 
-  return {
-    elmLanguageServerUri: resolvePackageFile(import.meta.resolve('@elm-tooling/elm-language-server/package.json'), './out/node/index.js'),
-    erlangLanguagePlatformUri,
-    javaLanguageServer,
-    rustAnalyzerUri,
-    typescriptLanguageServerUri: resolvePackageFile(import.meta.resolve('typescript/package.json'), './lib/tsc.js'),
-    vscodeCssLanguageServerUri: resolvePackageFile(
-      import.meta.resolve('vscode-langservers-extracted/package.json'),
-      './lib/css-language-server/node/cssServerMain.js',
-    ),
-    vscodeHtmlLanguageServerUri: resolvePackageFile(
-      import.meta.resolve('vscode-langservers-extracted/package.json'),
-      './lib/html-language-server/node/htmlServerMain.js',
-    ),
-    zigLanguageServerUri,
+    return {
+      elmLanguageServerUri: resolvePackageFile(import.meta.resolve('@elm-tooling/elm-language-server/package.json'), './out/node/index.js'),
+      erlangLanguagePlatformUri,
+      javaLanguageServer,
+      rustAnalyzerUri,
+      typescriptLanguageServerUri: resolvePackageFile(import.meta.resolve('typescript/package.json'), './lib/tsc.js'),
+      vscodeCssLanguageServerUri: resolvePackageFile(
+        import.meta.resolve('vscode-langservers-extracted/package.json'),
+        './lib/css-language-server/node/cssServerMain.js',
+      ),
+      vscodeHtmlLanguageServerUri: resolvePackageFile(
+        import.meta.resolve('vscode-langservers-extracted/package.json'),
+        './lib/html-language-server/node/htmlServerMain.js',
+      ),
+      zigLanguageServerUri,
+    }
+  } finally {
+    clearInterval(keepAlive)
   }
 }

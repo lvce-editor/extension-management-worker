@@ -148,6 +148,17 @@ test.each(['ExtensionHostQuickPick.showQuickPick', 'ExtensionHostQuickPick.showQ
   ])
 })
 
+test('dialogs are routed only to the calling application', async () => {
+  const options = { confirmMessage: 'OK', message: 'No files have been changed.', title: 'Example Error', type: 'error' }
+  const invoke = commandMap['Extensions.invokeForApplication']
+  await invoke('preview', 'ExtensionHostDialog.showDialog', options)
+  await invoke('source', 'ExtensionHostDialog.showDialog', options)
+  expect(execute.mock.calls).toEqual([
+    ['preview', 'Dialog.show', options],
+    ['source', 'Dialog.show', options],
+  ])
+})
+
 test('notification popups are routed only to the calling application', async () => {
   const invoke = commandMap['Extensions.invokeForApplication']
   await invoke('preview', 'Extensions.showNotification', 'info', 'Hello World!')

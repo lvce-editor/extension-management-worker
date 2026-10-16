@@ -89,6 +89,7 @@ import { reloadApplicationExtension } from '../ReloadApplicationExtension/Reload
 import * as ApplicationRendererWorker from '../Rpc/Rpc.ts'
 import { sendMessagePortToElectron } from '../SendMessagePortToElectron/SendMessagePortToElectron.ts'
 import { sendMessagePortToFileSystemWorker } from '../SendMessagePortToFileSystemWorker/SendMessagePortToFileSystemWorker.ts'
+import { showDialog } from '../ShowDialog/ShowDialog.ts'
 import { showQuickInput } from '../ShowQuickInput/ShowQuickInput.ts'
 import { showQuickPick } from '../ShowQuickPick/ShowQuickPick.ts'
 import * as StatusBarHandleChange from '../StatusBarHandleChange/StatusBarHandleChange.ts'
@@ -136,6 +137,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
     case 'ExtensionHostQuickPick.showQuickInput':
     case 'ExtensionHostQuickPick.showQuickPick':
       return ApplicationRendererWorker.invoke('Application.execute', applicationId, method, ...args)
+    case 'ExtensionHostDialog.showDialog':
+      return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Dialog.show', ...args)
     case 'Extensions.activateByEvent':
       return activateByEvent(args[0], args[1], args[2] ?? application.platform, application)
     case 'Extensions.createWebViewWorkerRpc':
@@ -180,6 +183,7 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
 export const commandMap: Record<string, ScopedCommand> = {
   'ExtensionApi.readFile': readExtensionApiFile,
   'ExtensionHost.sourceControlGetChangedFiles': wrapSourceControlProviderCommand('executeSourceControlGetChangedFiles'),
+  'ExtensionHostDialog.showDialog': showDialog,
   'ExtensionHostQuickPick.showQuickInput': showQuickInput,
   'ExtensionHostQuickPick.showQuickPick': showQuickPick,
   'ExtensionHostSourceControl.acceptInput': wrapSourceControlProviderCommand('executeSourceControlAcceptInput'),

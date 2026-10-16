@@ -43,6 +43,7 @@ const EmptyEnablement: WorkspaceExtensionEnablement = {
 
 const cache = new Map<string, Promise<WorkspaceExtensionEnablement>>()
 const mutationQueues = new Map<string, Promise<void>>()
+const fileLocations = new Map<string, FileStorageLocation>()
 
 const encodePathSegment = (segment: string, index: number): string => {
   if (index === 0 && WindowsDriveSegmentRegex.test(segment)) {
@@ -98,17 +99,26 @@ const getConfigUri = async (): Promise<string> => {
 }
 
 const getStorageLocation = async (workspaceUri: string): Promise<StorageLocation> => {
+  const cached = fileLocations.get(workspaceUri)
+  if (cached) {
+    return cached
+  }
   const workspaceHash = await hashWorkspaceUri(workspaceUri)
   try {
     const configUri = await getConfigUri()
     const directoryUri = joinUri(configUri, WorkspacesFolderName, workspaceHash)
     const uri = joinUri(directoryUri, ExtensionEnablementFileName)
-    return {
+    const location: FileStorageLocation = {
       directoryUri,
       key: uri,
       type: 'file',
       uri,
     }
+    // The config URI is fixed for this worker's lifetime. Keep only the latest
+    // successful file location; transient failures must retry file storage.
+    fileLocations.clear()
+    fileLocations.set(workspaceUri, location)
+    return location
   } catch {
     return {
       key: joinUri(CacheKeyPrefix, workspaceHash, ExtensionEnablementFileName),
@@ -232,6 +242,7 @@ const mutate = async (
 export const clearCache = (): void => {
   cache.clear()
   mutationQueues.clear()
+  fileLocations.clear()
 }
 
 export const getWorkspaceExtensionEnablement = async (): Promise<WorkspaceExtensionEnablement> => {

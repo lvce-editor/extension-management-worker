@@ -66,14 +66,18 @@ const createMockFileSystem = (files: readonly [string, string][] = []): MockFile
   }
 }
 
-const registerMocks = (mockFileSystem = createMockFileSystem(), getWorkspaceUri: () => string = () => DefaultWorkspaceUri): MockFileSystem => {
+const registerMocks = (
+  mockFileSystem = createMockFileSystem(),
+  getWorkspaceUri: () => string = () => DefaultWorkspaceUri,
+  getConfigUri: () => string = () => ConfigUri,
+): MockFileSystem => {
   state.rendererWorker = RendererWorker.registerMockRpc({
     'ExtensionManagement.handleExtensionsCacheInvalidated'() {},
     'WebView.compatSharedProcessInvoke'(command: string) {
       if (command !== 'Platform.getConfigUri') {
         throw new Error(`Unexpected shared process command: ${command}`)
       }
-      return ConfigUri
+      return getConfigUri()
     },
     'Workspace.getPath'() {
       return getWorkspaceUri()
@@ -355,4 +359,66 @@ test('activateByEvent skips workspace disabled extensions', async () => {
     error: undefined,
     hasActivatedExtensions: false,
   })
+})
+
+test('reuses successful storage resolution while reading the current workspace on every lookup', async () => {
+  const getWorkspaceUri = jest.fn(() => DefaultWorkspaceUri)
+  const getConfigUri = jest.fn(() => ConfigUri)
+  registerMocks(createMockFileSystem(), getWorkspaceUri, getConfigUri)
+
+  for (let index = 0; index < 10; index++) {
+    await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  }
+
+  expect(getWorkspaceUri).toHaveBeenCalledTimes(10)
+  expect(getConfigUri).toHaveBeenCalledTimes(1)
+})
+
+test('resolves a new storage location when the workspace changes', async () => {
+  let workspaceUri = DefaultWorkspaceUri
+  const getConfigUri = jest.fn(() => ConfigUri)
+  registerMocks(
+    createMockFileSystem([
+      [DefaultStorageUri, '{"disabledExtensions":["sample.one"]}'],
+      [WorkspaceTwoStorageUri, '{"disabledExtensions":["sample.two"]}'],
+    ]),
+    () => workspaceUri,
+    getConfigUri,
+  )
+
+  const first = await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  expect(first.disabledIds).toEqual(['sample.one'])
+  workspaceUri = WorkspaceTwoUri
+  const second = await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  expect(second.disabledIds).toEqual(['sample.two'])
+  workspaceUri = DefaultWorkspaceUri
+  const revisited = await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  expect(revisited.disabledIds).toEqual(['sample.one'])
+  expect(getConfigUri).toHaveBeenCalledTimes(3)
+})
+
+test('clearing cached enablement also clears the resolved storage location', async () => {
+  const getConfigUri = jest.fn(() => ConfigUri)
+  registerMocks(createMockFileSystem(), () => DefaultWorkspaceUri, getConfigUri)
+
+  await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  WorkspaceExtensionEnablementStorage.clearCache()
+  await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+
+  expect(getConfigUri).toHaveBeenCalledTimes(2)
+})
+
+test('retries file storage after a transient config URI failure', async () => {
+  const getConfigUri = jest
+    .fn(() => ConfigUri)
+    .mockImplementationOnce(() => {
+      throw new Error('config temporarily unavailable')
+    })
+  registerMocks(createMockFileSystem([[DefaultStorageUri, '{"disabledExtensions":["sample.one"]}']]), () => DefaultWorkspaceUri, getConfigUri)
+
+  await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablementSafe()
+  const enablement = await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  expect(enablement.disabledIds).toEqual(['sample.one'])
+  await WorkspaceExtensionEnablementStorage.getWorkspaceExtensionEnablement()
+  expect(getConfigUri).toHaveBeenCalledTimes(2)
 })

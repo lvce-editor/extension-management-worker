@@ -37,7 +37,13 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Prepare owned integration tests
         run: node packages/e2e-integration/prepare.mjs .tmp/lvce-integration
+      - name: Build application server
+        working-directory: .tmp/lvce-integration
+        run: npm run build:server
+      - name: Export application tests
+        working-directory: .tmp/lvce-integration
+        run: npm run test-static-export
       - name: Run owned integration tests
         working-directory: .tmp/lvce-integration/packages/extension-host-worker-tests
         shell: bash
-        run: npm run e2e:headless --
+        run: npm run e2e:headless -- --ci

@@ -10,32 +10,40 @@ import {
 
 export const name = 'extension.disable-refreshes-source-control-contributions'
 
-export const test: Test = async ({ Command, expect, Locator, RunningExtensions, SourceControl, ...api }) => {
-  await addWorkspaceLifecycleExtension({ Command, ...api })
-  await SourceControl.show()
+export const test: Test = async ({ Command, expect, ExtensionDetail, Locator, RunningExtensions, SourceControl, ...api }) => {
+  // This scenario expects every other source control extension to be disabled.
+  await ExtensionDetail.open('builtin.git')
+  await ExtensionDetail.handleClickDisable()
+  try {
+    await addWorkspaceLifecycleExtension({ Command, ExtensionDetail, ...api })
+    await SourceControl.show()
 
-  const sourceControlItem = Locator('.ActivityBarItem[title="Source Control"]')
-  const sourceControlBadge = sourceControlItem.locator('.ActivityBarItemBadge')
-  const statusBarItem = Locator(statusBarItemSelector)
-  await expect(sourceControlBadge).toHaveText('3')
-  await expect(statusBarItem).toBeVisible()
+    const sourceControlItem = Locator('.ActivityBarItem[title="Source Control"]')
+    const sourceControlBadge = sourceControlItem.locator('.ActivityBarItemBadge')
+    const statusBarItem = Locator(statusBarItemSelector)
+    await expect(sourceControlBadge).toHaveText('3')
+    await expect(statusBarItem).toBeVisible()
 
-  await disableLifecycleExtension(api)
+    await disableLifecycleExtension({ ExtensionDetail, ...api })
 
-  await expect(sourceControlBadge).toHaveCount(0)
-  const badgeCounts = await Command.execute('Layout.getBadgeCounts')
-  if (badgeCounts['Source Control'] !== 0) {
-    throw new Error(`Expected source control badge count to be 0, got ${badgeCounts['Source Control']}`)
+    await expect(sourceControlBadge).toHaveCount(0)
+    const badgeCounts = await Command.execute('Layout.getBadgeCounts')
+    if (badgeCounts['Source Control'] !== 0) {
+      throw new Error(`Expected source control badge count to be 0, got ${badgeCounts['Source Control']}`)
+    }
+    await expect(statusBarItem).toBeHidden()
+
+    await SourceControl.show()
+    const message = Locator('.Viewlet.SourceControl > .Message')
+    await expect(message).toBeVisible()
+    await expect(message).toHaveText('All installed source control extensions are disabled.')
+
+    await RunningExtensions.show()
+    const runningExtension = Locator(runningExtensionSelector, { hasText: extensionId })
+    await expect(runningExtension).toBeHidden()
+    await enableLifecycleExtension({ Command, ExtensionDetail, ...api })
+  } finally {
+    await ExtensionDetail.open('builtin.git')
+    await ExtensionDetail.handleClickEnable()
   }
-  await expect(statusBarItem).toBeHidden()
-
-  await SourceControl.show()
-  const message = Locator('.Viewlet.SourceControl > .Message')
-  await expect(message).toBeVisible()
-  await expect(message).toHaveText('All installed source control extensions are disabled.')
-
-  await RunningExtensions.show()
-  const runningExtension = Locator(runningExtensionSelector, { hasText: extensionId })
-  await expect(runningExtension).toBeHidden()
-  await enableLifecycleExtension({ Command, ...api })
 }

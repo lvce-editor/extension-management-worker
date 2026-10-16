@@ -16,6 +16,7 @@ export const test: Test = async ({ expect, Locator, SideBar, ...api }) => {
 
   await disableLifecycleExtension(api)
 
-  await expect(sideBarTitle).toHaveText('extension.disable-switches-active-sidebar-to-explorer.html')
+  await expect(sideBarTitle).toHaveText('Explorer')
+  await expect(Locator('.Explorer')).toBeVisible()
   await enableLifecycleExtension(api)
 }

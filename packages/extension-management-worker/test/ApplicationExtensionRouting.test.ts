@@ -64,7 +64,11 @@ test('application metadata and status calls stay within the requested session', 
   await invoke('source', 'Extensions.handleFileChanges', { changed: ['memfs:///main.ts'] })
   await expect(invoke('source', 'Unknown.command')).rejects.toThrow('does not support application context')
   await invoke('source', 'Extensions.executeCommand', 'Main.openInput', 'memfs:///main.ts')
-  expect(execute).toHaveBeenCalledWith('source', 'Main.openInput', 'memfs:///main.ts')
+  await invoke('preview', 'Extensions.executeCommand', 'FileSystem.getBlob', 'file:///workspace/heap.heapsnapshot')
+  expect(execute.mock.calls).toEqual([
+    ['source', 'Main.openInput', 'memfs:///main.ts'],
+    ['preview', 'FileSystem.getBlob', 'file:///workspace/heap.heapsnapshot'],
+  ])
 })
 
 test('application manifests cannot mutate global declared RPC registries', () => {

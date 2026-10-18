@@ -22,6 +22,7 @@ class CommandNotFoundError extends Error {
 
 const allowedElectronPortCommand = 'HandleMessagePortForEmbedsProcess.handleMessagePortForEmbedsProcess'
 const workspaceSetUriCommand = 'Workspace.setUri'
+const allowedFileSystemCommands = new Set(['FileSystem.getBlob'])
 const privilegedCommandPrefixes = [
   'ElectronNet.',
   'ClipBoard.',
@@ -63,7 +64,7 @@ const executeDeferredCommand = async (invokeCommand: ExtensionCommand, id: strin
 }
 
 const executeCommand = (invokeCommand: ExtensionCommand, id: string, ...args: readonly any[]): any => {
-  if (privilegedCommandPrefixes.some((prefix) => id.startsWith(prefix))) {
+  if (!allowedFileSystemCommands.has(id) && privilegedCommandPrefixes.some((prefix) => id.startsWith(prefix))) {
     throw new Error(`Isolated extensions cannot execute privileged command ${id}`)
   }
   if (id === workspaceSetUriCommand) {

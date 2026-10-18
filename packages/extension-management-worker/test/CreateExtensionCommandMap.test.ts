@@ -42,12 +42,14 @@ test('application callbacks never invoke legacy commands or bypass privileged co
   await commands['Extensions.registerFileChangeHandler']()
   await commands['Extensions.unregisterFileChangeHandler']()
   await commands['Extensions.executeCommand']('Main.openInput', 'memfs:///main.ts')
+  await commands['Extensions.executeCommand']('FileSystem.getBlob', 'file:///workspace/heap.heapsnapshot')
   expect(scoped.mock.calls).toEqual([
     ['Extensions.showNotification', 'info', 'hello'],
     ['Extensions.getPreference', 'editor.tabSize'],
     ['Extensions.registerFileChangeHandler'],
     ['Extensions.unregisterFileChangeHandler'],
     ['Extensions.executeCommand', 'Main.openInput', 'memfs:///main.ts'],
+    ['Extensions.executeCommand', 'FileSystem.getBlob', 'file:///workspace/heap.heapsnapshot'],
   ])
   expect(() => commands['Extensions.executeCommand']('FileSystem.readFile', '/etc/passwd')).toThrow('privileged command')
   expect(legacy).not.toHaveBeenCalled()

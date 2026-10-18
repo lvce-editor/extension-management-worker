@@ -123,7 +123,9 @@ test('workspace requests run in the transport extension for the explicit workspa
   using _renderer = RendererWorker.registerMockRpc({ 'Layout.getAssetDir': () => '/assets' })
   using _shared = SharedProcess.registerMockRpc({ 'ExtensionManagement.getAllExtensions': () => [] })
   const remoteUrl = 'https://github.com/lvce-editor/extension-management-worker'
-  const invoke = jest.fn<Rpc['invoke']>(async (_method, _command, _uri, type) => type === 'git-remote' ? remoteUrl : ({ limitHit: true, results: [] }))
+  const invoke = jest.fn<Rpc['invoke']>(async (_method, _command, _uri, type) =>
+    type === 'git-remote' ? remoteUrl : { limitHit: true, results: [] },
+  )
   IsolatedExtensionHostWorkerState.set(transport.id, { dispose: async () => {}, invoke, invokeAndTransfer: async () => {}, send: () => {} })
   await expect(WorkspaceTransport.request(uri, 'text-search', ['--json', 'query'])).resolves.toEqual({ limitHit: true, results: [] })
   expect(invoke).toHaveBeenCalledWith('ExtensionApi.executeCommand', 'remote-ssh.request', uri, 'text-search', ['--json', 'query'])

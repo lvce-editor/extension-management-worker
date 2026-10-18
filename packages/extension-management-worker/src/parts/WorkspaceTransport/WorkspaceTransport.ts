@@ -82,7 +82,7 @@ export const connectTerminal = async (workspaceUri: string, port: MessagePort): 
 }
 
 export const request = async (workspaceUri: string, type: string, ...args: readonly unknown[]): Promise<unknown> => {
-  if (!isRemoteUri(workspaceUri) || !['text-search', 'file-search', 'terminal-options'].includes(type)) {
+  if (!isRemoteUri(workspaceUri) || !['text-search', 'file-search', 'terminal-options', 'git-remote'].includes(type)) {
     throw new Error('Unsupported workspace request')
   }
   const { assetDir, extension, platform } = await findTransport(workspaceUri)

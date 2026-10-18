@@ -11,6 +11,7 @@ import {
 import * as ExtensionApplicationServices from '../ExtensionApplicationServices/ExtensionApplicationServices.ts'
 import * as ExtensionFileWatcher from '../ExtensionFileWatcher/ExtensionFileWatcher.ts'
 import * as ExtensionsState from '../ExtensionsState/ExtensionsState.ts'
+import { createExtensionWorkerScope } from '../ExtensionWorkerScope/ExtensionWorkerScope.ts'
 import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileChangeHandlerRegistry.ts'
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
@@ -112,7 +113,8 @@ export const createIsolatedExtensionHostWorker = async (
           }
           return invokeApplication(application.applicationId, method, ...args)
         }
-  const commandMap = createExtensionCommandMap(runtimeId, invokeCommand)
+  const workerScope = application === undefined ? createExtensionWorkerScope(runtimeId) : undefined
+  const commandMap = { ...createExtensionCommandMap(runtimeId, invokeCommand), ...workerScope?.commandMap }
   const rpc = await createRpc({
     // PlainMessagePortRpc registers this map process-wide. Bind the restricted
     // callbacks to this port below, never to the shared host command table.
@@ -129,7 +131,20 @@ export const createIsolatedExtensionHostWorker = async (
       )
     },
   })
-  return bindCommandMap(rpc, commandMap)
+  bindCommandMap(rpc, commandMap)
+  if (workerScope) {
+    const disposeRpc = rpc.dispose.bind(rpc)
+    return {
+      ...rpc,
+      dispose: async () => {
+        // Start both cleanups even if one fails; scope disposal also rejects late callbacks.
+        const results = await Promise.allSettled([workerScope.dispose(), Promise.try(disposeRpc)])
+        const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
+        if (errors.length > 0) throw new AggregateError(errors, 'Failed to dispose extension runtime')
+      },
+    }
+  }
+  return rpc
 }
 
 const createWorker: CreateWorker = (extensionId, absolutePath, workerName, contentSecurityPolicy, application) => {

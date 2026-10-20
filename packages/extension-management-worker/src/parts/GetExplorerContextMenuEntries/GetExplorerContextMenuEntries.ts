@@ -59,7 +59,7 @@ export const getExplorerContextMenuEntries = async (state: ExtensionsState, cont
           )
           .map((entry) => ({
             args: [entry.command, clicked.uri],
-            command: 'Extensions.executeCommand',
+            command: 'ExtensionHost.executeCommand',
             flags: 0,
             id: JSON.stringify([extension.id, entry.id]),
             label: entry.label,

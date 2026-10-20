@@ -43,7 +43,7 @@ test('routes declared extension commands with the captured clicked resource', as
   const entries = await getExplorerContextMenuEntries(ExtensionsState.get(), context)
   expect(calls).toEqual([['ExtensionApi.getExplorerContextMenuEntries', context]])
   expect(entries).toEqual([
-    { args: ['runner.run', context.uri], command: 'Extensions.executeCommand', flags: 0, id: '["runner","run"]', label: 'Run' },
+    { args: ['runner.run', context.uri], command: 'ExtensionHost.executeCommand', flags: 0, id: '["runner","run"]', label: 'Run' },
   ])
 })
 

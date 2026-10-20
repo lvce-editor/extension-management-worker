@@ -5,7 +5,7 @@ import * as ExtensionsStateModule from '../ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 
-export interface TerminalExecution {
+interface TerminalExecution {
   readonly args: readonly string[]
   readonly command: string
   readonly cwd: string

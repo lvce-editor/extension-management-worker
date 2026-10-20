@@ -71,6 +71,33 @@ test('reads from a matching isolated file system provider', async () => {
   expect(invocations).toEqual([['ExtensionApi.executeFileSystemProviderReadFile', 'git-file-before', 'file:///workspace/file.txt']])
 })
 
+test('forwards explicit encoding to an isolated file system provider', async () => {
+  const invocations: unknown[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string, ...params: readonly unknown[]) => {
+      invocations.push([method, ...params])
+      return 'decoded content'
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('encoding-extension', rpc)
+  const extensionsState = createExtensionsState([
+    {
+      fileSystemProviders: [{ id: 'encoding-provider' }],
+      id: 'encoding-extension',
+      isolated: true,
+    },
+  ])
+
+  await expect(executeFileSystemProviderReadFile(extensionsState, 'encoding-provider', 'sample:///binary', 'binary')).resolves.toEqual({
+    found: true,
+    result: 'decoded content',
+  })
+  expect(invocations).toEqual([['ExtensionApi.executeFileSystemProviderReadFile', 'encoding-provider', 'sample:///binary', 'binary']])
+})
+
 test('executes isolated file system provider metadata and directory operations', async () => {
   const invocations: unknown[] = []
   const rpc: Rpc = {

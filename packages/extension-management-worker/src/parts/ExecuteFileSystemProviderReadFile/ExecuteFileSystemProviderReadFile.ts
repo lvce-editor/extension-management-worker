@@ -76,8 +76,11 @@ export const executeFileSystemProviderReadFile = (
   extensionsState: ExtensionsState,
   providerId: string,
   uri: string,
+  encoding?: string,
 ): Promise<FileSystemProviderResult> => {
-  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderReadFile', providerId, uri)
+  return encoding === undefined
+    ? executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderReadFile', providerId, uri)
+    : executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderReadFile', providerId, uri, encoding)
 }
 
 export const executeFileSystemProviderGetOpenExternalPath = (

@@ -50,7 +50,7 @@ test('application workers retain extension namespaces across generations and rej
     'Opfs.getCacheFileHandle': () => ({ kind: 'file' }),
   })
   const launch = async () => {
-    const rpc = { ipc: { execute: (_method: string, ..._args: readonly any[]): any => undefined } }
+    const rpc = { dispose: async () => {}, ipc: { execute: (_method: string, ..._args: readonly any[]): any => undefined } }
     await createIsolatedExtensionHostWorker(
       'sample.extension',
       '/sample.js',

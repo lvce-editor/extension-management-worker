@@ -42,6 +42,8 @@ const privilegedCommandPrefixes = [
   'SendMessagePort',
   'SharedProcess.',
   'TerminalProcess.',
+  'Layout.runInTerminal',
+  'Extensions.runInTerminal',
   'Transferrable.',
   'WebSocketCapability.',
   'WebView.compat',
@@ -76,7 +78,17 @@ const executeCommand = (invokeCommand: ExtensionCommand, id: string, ...args: re
   return invokeCommand('Extensions.executeCommand', id, ...args)
 }
 
-export const createExtensionCommandMap = (extensionId: string, invokeCommand: ExtensionCommand = invokeGlobalCommand): ExtensionCommandMap => {
+export const createExtensionCommandMap = (
+  extensionId: string,
+  invokeCommand: ExtensionCommand = invokeGlobalCommand,
+  runTerminal?: (options: unknown) => Promise<unknown>,
+): ExtensionCommandMap => {
+  const terminalCommands = {
+    'Extensions.runInTerminal': (options: unknown): Promise<unknown> => {
+      if (!runTerminal) throw new Error('Terminal execution is unavailable for this extension runtime')
+      return runTerminal(options)
+    },
+  }
   const inheritedCommands =
     invokeCommand === invokeGlobalCommand
       ? CommandMapRef.commandMapRef
@@ -88,6 +100,7 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
     // callback (notifications, secrets, file watchers, or privileged node ports).
     return {
       ...inheritedCommands,
+      ...terminalCommands,
       'Extensions.createFileSystemWatcher': (clientId: number, options: any) =>
         invokeCommand('Extensions.createFileSystemWatcher', clientId, options),
       'Extensions.disposeFileSystemWatcher': (clientId: number) => invokeCommand('Extensions.disposeFileSystemWatcher', clientId),
@@ -100,6 +113,7 @@ export const createExtensionCommandMap = (extensionId: string, invokeCommand: Ex
   }
   return {
     ...inheritedCommands,
+    ...terminalCommands,
     'Extensions.createFileSystemWatcher'(clientId: number, options: any) {
       return ExtensionFileWatcher.create(extensionId, clientId, options)
     },

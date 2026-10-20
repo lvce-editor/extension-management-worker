@@ -55,6 +55,7 @@ import { getColorThemeCss, getColorThemeCssFromJson } from '../GetColorThemeCss/
 import { getColorThemeJson } from '../GetColorThemeJson/GetColorThemeJson.ts'
 import { getColorThemeNames } from '../GetColorThemeNames/GetColorThemeNames.ts'
 import { getDynamicWebExtensions } from '../GetDynamicWebExtensions/GetDynamicWebExtensions.ts'
+import { getExplorerContextMenuEntries } from '../GetExplorerContextMenuEntries/GetExplorerContextMenuEntries.ts'
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getKeyBindings } from '../GetKeyBindings/GetKeyBindings.ts'
@@ -255,6 +256,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getColorThemeNames': getColorThemeNames,
   'Extensions.getDynamicWebExtensions': getDynamicWebExtensions,
   'Extensions.getEnabledSourceControlProviderIds': wrapCommand(getEnabledSourceControlProviderIds),
+  'Extensions.getExplorerContextMenuEntries': wrapCommand(getExplorerContextMenuEntries),
   'Extensions.getExtension': getExtension,
   'Extensions.getKeyBindings': getKeyBindings,
   'Extensions.getLanguages': getLanguages,

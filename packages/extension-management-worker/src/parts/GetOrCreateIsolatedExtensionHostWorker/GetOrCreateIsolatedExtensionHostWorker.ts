@@ -16,6 +16,7 @@ import * as FileChangeHandlerRegistry from '../FileChangeHandlerRegistry/FileCha
 import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
+import { runInTerminal } from '../RunInTerminal/RunInTerminal.ts'
 import { sendMessagePortToCacheWorker } from '../SendMessagePortToCacheWorker/SendMessagePortToCacheWorker.ts'
 
 interface RpcWithIpc extends Rpc {
@@ -114,7 +115,13 @@ export const createIsolatedExtensionHostWorker = async (
           return invokeApplication(application.applicationId, method, ...args)
         }
   const workerScope = application === undefined ? createExtensionWorkerScope(runtimeId) : undefined
-  const commandMap = { ...createExtensionCommandMap(runtimeId, invokeCommand), ...workerScope?.commandMap }
+  let disposed = false
+  const execute =
+    invokeCommand || ((method: string, ...args: readonly any[]) => (CommandMapRef.commandMapRef as ExtensionCommandMap)[method](...args))
+  const commandMap = {
+    ...createExtensionCommandMap(runtimeId, invokeCommand, (options) => runInTerminal(extensionId, options, execute, application, () => disposed)),
+    ...workerScope?.commandMap,
+  }
   const rpc = await createRpc({
     // PlainMessagePortRpc registers this map process-wide. Bind the restricted
     // callbacks to this port below, never to the shared host command table.
@@ -132,19 +139,17 @@ export const createIsolatedExtensionHostWorker = async (
     },
   })
   bindCommandMap(rpc, commandMap)
-  if (workerScope) {
-    const disposeRpc = rpc.dispose.bind(rpc)
-    return {
-      ...rpc,
-      dispose: async () => {
-        // Start both cleanups even if one fails; scope disposal also rejects late callbacks.
-        const results = await Promise.allSettled([workerScope.dispose(), Promise.try(disposeRpc)])
-        const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
-        if (errors.length > 0) throw new AggregateError(errors, 'Failed to dispose extension runtime')
-      },
-    }
+  const disposeRpc = rpc.dispose.bind(rpc)
+  return {
+    ...rpc,
+    dispose: async () => {
+      disposed = true
+      // Start both cleanups even if one fails; scope disposal also rejects late callbacks.
+      const results = await Promise.allSettled([Promise.try(() => workerScope?.dispose()), Promise.try(disposeRpc)])
+      const errors = results.filter((result) => result.status === 'rejected').map((result) => result.reason)
+      if (errors.length > 0) throw new AggregateError(errors, 'Failed to dispose extension runtime')
+    },
   }
-  return rpc
 }
 
 const createWorker: CreateWorker = (extensionId, absolutePath, workerName, contentSecurityPolicy, application) => {

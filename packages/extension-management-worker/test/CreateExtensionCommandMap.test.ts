@@ -156,14 +156,18 @@ test('file change registrations are bound to the calling extension', () => {
   expect(FileChangeHandlerRegistry.getRegisteredExtensionIds()).toEqual(['extension-two'])
 })
 
-test.each(['ExtensionNodeRpc.create', 'FileSystem.readFile', 'WebSocketCapability.create', 'SendMessagePortToElectron.sendMessagePortToElectron'])(
-  'rejects privileged renderer command %s',
-  (command) => {
-    const commandMap = createExtensionCommandMap('sample.extension')
+test.each([
+  'ExtensionNodeRpc.create',
+  'FileSystem.readFile',
+  'WebSocketCapability.create',
+  'SendMessagePortToElectron.sendMessagePortToElectron',
+  'Layout.runInTerminal',
+  'Extensions.runInTerminal',
+])('rejects privileged renderer command %s', (command) => {
+  const commandMap = createExtensionCommandMap('sample.extension')
 
-    expect(() => commandMap['Extensions.executeCommand'](command)).toThrow(`cannot execute privileged command ${command}`)
-  },
-)
+  expect(() => commandMap['Extensions.executeCommand'](command)).toThrow(`cannot execute privileged command ${command}`)
+})
 
 test('rejects arbitrary Electron port targets', () => {
   const commandMap = createExtensionCommandMap('sample.extension')
@@ -186,4 +190,17 @@ test('application watcher requests reach the scoped router without a caller-supp
     ['Extensions.createFileSystemWatcher', 1, options],
     ['Extensions.disposeFileSystemWatcher', 1],
   ])
+})
+
+test('terminal requests use the bound callback and cannot supply another owner', async () => {
+  const run = jest.fn(async (_options: unknown) => 7)
+  const commands = createExtensionCommandMap('runner', undefined, run)
+  const options = { args: ['file.js'], command: 'node', cwd: '/workspace' }
+  await expect(commands['Extensions.runInTerminal'](options, 'another-extension')).resolves.toBe(7)
+  expect(run).toHaveBeenCalledWith(options)
+})
+
+test('terminal requests fail closed without a bound runtime', () => {
+  const commands = createExtensionCommandMap('runner')
+  expect(() => commands['Extensions.runInTerminal']({})).toThrow('unavailable for this extension runtime')
 })

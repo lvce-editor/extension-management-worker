@@ -1,9 +1,11 @@
+// cspell:words keymap keymaps
 import type { Rpc } from '@lvce-editor/rpc'
 import type { DisposableMockRpc } from '@lvce-editor/rpc-registry'
 import { afterEach, expect, test } from '@jest/globals'
 import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as ExecuteCommand from '../src/parts/ExecuteCommand/ExecuteCommand.ts'
+import * as ExtensionsStateModule from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import * as IsolatedExtensionHostWorkerState from '../src/parts/IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 
 const state: { rendererWorker: DisposableMockRpc | undefined } = {
@@ -88,4 +90,33 @@ test('extensions cannot impersonate another extension by calling a workspace tra
     },
   ])
   await expect(ExecuteCommand.executeCommand(extensionsState, 'ssh.connectToProcess')).rejects.toThrow('only be called by extension management')
+})
+
+test('manifest keymaps are registered only in the calling application', async () => {
+  const keyMap = { initialMode: 'normal', modes: { normal: { bindings: { h: { args: ['h'], command: 'vim.handleKey' } } } } }
+  const extension = { commands: [{ id: 'vim.handleKey' }], id: 'vim', isolated: true, keyMap }
+  ExtensionsStateModule.createApplication('vim-preview', 1, [extension])
+  ExtensionsStateModule.createApplication('vim-source', 1, [])
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Application.execute': async () => 42,
+    'Layout.getAssetDir': () => '/assets',
+  })
+  try {
+    await expect(ExecuteCommand.executeCommand(ExtensionsStateModule.get('vim-preview'), 'EditorKeymap.register', 'vim')).resolves.toBe(42)
+    expect(state.rendererWorker.invocations).toContainEqual([
+      'Application.execute',
+      'vim-preview',
+      'EditorKeymap.register',
+      {
+        initialMode: 'normal',
+        modes: { normal: { bindings: { h: { args: ['vim.handleKey', 'h'], command: 'ExtensionHost.executeCommand' } } } },
+      },
+    ])
+    await expect(ExecuteCommand.executeCommand(ExtensionsStateModule.get('vim-source'), 'EditorKeymap.register', 'vim')).rejects.toThrow(
+      'does not contribute a keyMap',
+    )
+  } finally {
+    ExtensionsStateModule.removeApplication('vim-preview')
+    ExtensionsStateModule.removeApplication('vim-source')
+  }
 })

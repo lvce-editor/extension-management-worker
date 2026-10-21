@@ -1,3 +1,4 @@
+// cspell:words keymap keymaps
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
 import type { Rpc } from '@lvce-editor/rpc'
@@ -8,6 +9,7 @@ import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllEx
 import { interExtensionId } from '../InferExtensionId/InferExtensionId.ts'
 import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
+import { resolveManifestKeymap } from '../ResolveManifestKeymap/ResolveManifestKeymap.ts'
 
 interface ExtensionCommand {
   readonly id: string
@@ -65,6 +67,11 @@ const executeRendererCommand = (id: string, args: readonly unknown[], applicatio
 }
 
 export const executeCommand = async (extensionsState: ExtensionsState, id: string, ...args: readonly unknown[]): Promise<unknown> => {
+  if (id === 'EditorKeymap.register' && typeof args[0] === 'string') {
+    const extensions = await getAllExtensionsWithState(extensionsState, '', extensionsState.platform)
+    const keymap = resolveManifestKeymap(extensions, args[0])
+    return executeRendererCommand(id, [keymap], extensionsState.applicationId)
+  }
   const { result, wasFound } = await executeExtensionCommand(extensionsState, id, ...args)
   if (wasFound) {
     return result

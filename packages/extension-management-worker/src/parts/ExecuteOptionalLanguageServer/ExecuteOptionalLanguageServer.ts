@@ -18,7 +18,7 @@ import { resolveLanguageServer } from '../ResolveLanguageServer/ResolveLanguageS
 
 interface ExtensionManifest {
   readonly id?: string
-  readonly languageServers?: readonly { readonly id?: string; readonly languageId?: string; readonly optional?: boolean }[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -100,6 +100,10 @@ const convertRename = async (result: WorkspaceEdit | null, textDocument: TextDoc
   return { canRename: true, edits }
 }
 
+export const contributesOptionalLanguageServer = (extension: ExtensionManifest, languageId: string): boolean => {
+  return Boolean(extension.optionalLanguageServers?.some((item) => item.languageId === languageId))
+}
+
 // Optional contributions let activation select one backend. The registry is the source of
 // truth, so changing a preference takes effect only when the extension is restarted.
 export const executeOptionalLanguageServer = async (
@@ -110,7 +114,7 @@ export const executeOptionalLanguageServer = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<{ readonly handled: boolean; readonly result?: unknown }> => {
-  const contribution = extension.languageServers?.find((item) => item.languageId === textDocument.languageId && item.optional)
+  const contribution = extension.optionalLanguageServers?.find((item) => item.languageId === textDocument.languageId)
   if (!contribution) {
     return { handled: false }
   }

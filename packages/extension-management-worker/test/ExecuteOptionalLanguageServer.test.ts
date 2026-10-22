@@ -7,7 +7,7 @@ import { executeOptionalLanguageServer } from '../src/parts/ExecuteOptionalLangu
 const textDocument = { languageId: 'typescript', text: 'const value = 1\nvalue', uri: 'file:///workspace/main.ts' }
 const extension = {
   id: 'typescript',
-  languageServers: [{ connectionId: 'ts7', id: 'ts7.typescript', languageId: 'typescript', optional: true }],
+  optionalLanguageServers: [{ connectionId: 'ts7', id: 'ts7.typescript', languageId: 'typescript' }],
 }
 const invocations: unknown[] = []
 const disposables: DisposableMockRpc[] = []

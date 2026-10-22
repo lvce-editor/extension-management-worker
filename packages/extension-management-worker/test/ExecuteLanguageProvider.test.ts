@@ -531,7 +531,7 @@ test('an active optional server overrides static definition activation without c
       activation: ['onDefinition:typescript'],
       id: 'typescript',
       isolated: true,
-      languageServers: [{ id: 'ts7', languageId: 'typescript', optional: true }],
+      optionalLanguageServers: [{ id: 'ts7', languageId: 'typescript' }],
     },
   ])
   const invocations: string[] = []

@@ -3,7 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerDiagnostic } from '../ExecuteLanguageServerDiagnostic/ExecuteLanguageServerDiagnostic.ts'
-import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -12,7 +12,6 @@ import { languageProviderManifestFields } from '../LanguageProviderManifestField
 
 interface DiagnosticProviderContribution {
   readonly languageId?: string
-  readonly optional?: boolean
 }
 
 interface ExtensionManifest {
@@ -23,6 +22,7 @@ interface ExtensionManifest {
   readonly id?: string
   readonly isWeb?: boolean
   readonly languageServers?: readonly DiagnosticProviderContribution[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -54,7 +54,9 @@ const getMatchingExtensions = async (
     (extension): boolean =>
       !extension.disabled &&
       IsExtensionIsolated.isExtensionIsolated(extension) &&
-      (contributesDiagnosticProvider(extension, textDocument.languageId) || contributesLanguageServer(extension, textDocument.languageId)),
+      (contributesDiagnosticProvider(extension, textDocument.languageId) ||
+        contributesLanguageServer(extension, textDocument.languageId) ||
+        contributesOptionalLanguageServer(extension, textDocument.languageId)),
   )
 }
 
@@ -72,10 +74,10 @@ const executeExtensionDiagnosticProvider = async (
   if (optional.handled) {
     return optional.result as readonly unknown[]
   }
-  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
+  if (contributesLanguageServer(extension, textDocument.languageId)) {
     return executeLanguageServerDiagnostic(rpc, extension, textDocument)
   }
-  return executeRpcDiagnosticProvider(rpc, textDocument, args)
+  return contributesDiagnosticProvider(extension, textDocument.languageId) ? executeRpcDiagnosticProvider(rpc, textDocument, args) : []
 }
 
 const executeMatchingDiagnosticProvider = async (

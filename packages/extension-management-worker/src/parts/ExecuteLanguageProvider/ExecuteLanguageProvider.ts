@@ -6,7 +6,7 @@ import { executeLanguageServerCodeAction } from '../ExecuteLanguageServerCodeAct
 import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
 import { executeLanguageServerDocumentSymbols } from '../ExecuteLanguageServerDocumentSymbols/ExecuteLanguageServerDocumentSymbols.ts'
 import { executeLanguageServerReferences } from '../ExecuteLanguageServerReferences/ExecuteLanguageServerReferences.ts'
-import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -23,8 +23,8 @@ interface ExtensionManifest {
   readonly languageServers?: readonly {
     readonly id?: string
     readonly languageId?: string
-    readonly optional?: boolean
   }[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -63,6 +63,9 @@ const contributesLanguageServer = (extension: ExtensionManifest, languageId: str
 }
 
 const contributesLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
+  if (contributesOptionalLanguageServer(extension, languageId)) {
+    return true
+  }
   if (kind === 'code action') {
     return contributesCodeActionProvider(extension, languageId) || contributesLanguageServer(extension, languageId)
   }
@@ -117,7 +120,7 @@ const executeExtensionCodeActionProviders = async (
   if (contributesExplicitLanguageProvider(extension, 'code action', textDocument.languageId)) {
     providers.push(executeRpcLanguageProvider(rpc, 'code action', 'provideCodeActions', textDocument, [offset]))
   }
-  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
+  if (contributesLanguageServer(extension, textDocument.languageId)) {
     providers.push(executeLanguageServerCodeAction(rpc, extension, textDocument, offset))
   }
   const results = await Promise.all(providers)
@@ -129,6 +132,32 @@ const executeExtensionCodeActionProviders = async (
     actions.push(...result)
   }
   return actions
+}
+
+const executeDefaultExtensionLanguageProvider = async (
+  rpc: Rpc,
+  extension: ExtensionManifest,
+  kind: string,
+  methodName: string,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+): Promise<unknown> => {
+  if (kind === 'code action') {
+    const offset = typeof args[0] === 'number' ? args[0] : 0
+    return executeExtensionCodeActionProviders(rpc, extension, textDocument, offset)
+  }
+  if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    const offset = typeof args[0] === 'number' ? args[0] : 0
+    return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
+  }
+  if (kind === 'document symbol' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    return executeLanguageServerDocumentSymbols(rpc, extension, textDocument)
+  }
+  if (kind === 'reference' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+    const offset = typeof args[0] === 'number' ? args[0] : 0
+    return executeLanguageServerReferences(rpc, extension, textDocument, offset)
+  }
+  return executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
 }
 
 const executeExtensionLanguageProvider = async (
@@ -143,34 +172,13 @@ const executeExtensionLanguageProvider = async (
   if (optional.handled) {
     return optional.result
   }
-  if (kind === 'code action') {
-    const offset = typeof args[0] === 'number' ? args[0] : 0
-    return executeExtensionCodeActionProviders(rpc, extension, textDocument, offset)
-  }
   if (
-    kind === 'definition' &&
-    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
+    contributesOptionalLanguageServer(extension, textDocument.languageId) &&
     !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
   ) {
-    const offset = typeof args[0] === 'number' ? args[0] : 0
-    return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
+    return kind === 'code action' ? [] : undefined
   }
-  if (
-    kind === 'document symbol' &&
-    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
-    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
-  ) {
-    return executeLanguageServerDocumentSymbols(rpc, extension, textDocument)
-  }
-  if (
-    kind === 'reference' &&
-    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
-    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
-  ) {
-    const offset = typeof args[0] === 'number' ? args[0] : 0
-    return executeLanguageServerReferences(rpc, extension, textDocument, offset)
-  }
-  return executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
+  return executeDefaultExtensionLanguageProvider(rpc, extension, kind, methodName, textDocument, args)
 }
 
 export const executeLanguageProvider = async (

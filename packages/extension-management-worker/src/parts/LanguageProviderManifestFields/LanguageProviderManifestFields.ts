@@ -12,6 +12,7 @@ export const languageProviderManifestFields = [
   'isolated',
   'isWeb',
   'languageServers',
+  'optionalLanguageServers',
   'path',
   'rpc',
   'uri',

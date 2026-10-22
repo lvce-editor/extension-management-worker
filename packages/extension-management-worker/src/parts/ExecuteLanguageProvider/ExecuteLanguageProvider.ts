@@ -6,6 +6,7 @@ import { executeLanguageServerCodeAction } from '../ExecuteLanguageServerCodeAct
 import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
 import { executeLanguageServerDocumentSymbols } from '../ExecuteLanguageServerDocumentSymbols/ExecuteLanguageServerDocumentSymbols.ts'
 import { executeLanguageServerReferences } from '../ExecuteLanguageServerReferences/ExecuteLanguageServerReferences.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -22,6 +23,7 @@ interface ExtensionManifest {
   readonly languageServers?: readonly {
     readonly id?: string
     readonly languageId?: string
+    readonly optional?: boolean
   }[]
   readonly path?: string
   readonly uri?: string
@@ -115,7 +117,7 @@ const executeExtensionCodeActionProviders = async (
   if (contributesExplicitLanguageProvider(extension, 'code action', textDocument.languageId)) {
     providers.push(executeRpcLanguageProvider(rpc, 'code action', 'provideCodeActions', textDocument, [offset]))
   }
-  if (contributesLanguageServer(extension, textDocument.languageId)) {
+  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
     providers.push(executeLanguageServerCodeAction(rpc, extension, textDocument, offset))
   }
   const results = await Promise.all(providers)
@@ -137,18 +139,34 @@ const executeExtensionLanguageProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<unknown> => {
+  const optional = await executeOptionalLanguageServer(rpc, extension, kind, methodName, textDocument, args)
+  if (optional.handled) {
+    return optional.result
+  }
   if (kind === 'code action') {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeExtensionCodeActionProviders(rpc, extension, textDocument, offset)
   }
-  if (kind === 'definition' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+  if (
+    kind === 'definition' &&
+    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
+    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
+  ) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerDefinition(rpc, extension, textDocument, offset)
   }
-  if (kind === 'document symbol' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+  if (
+    kind === 'document symbol' &&
+    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
+    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
+  ) {
     return executeLanguageServerDocumentSymbols(rpc, extension, textDocument)
   }
-  if (kind === 'reference' && !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)) {
+  if (
+    kind === 'reference' &&
+    extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional) &&
+    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
+  ) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerReferences(rpc, extension, textDocument, offset)
   }
@@ -204,7 +222,8 @@ export const executeOrganizeImportsProvider = async (
     return { found: false }
   }
   const rpc = await getRpc(extensions[0], assetDir, platform)
-  const result = await rpc.invoke('ExtensionApi.executeOrganizeImportsProvider', textDocument)
+  const optional = await executeOptionalLanguageServer(rpc, extensions[0], 'source action', '', textDocument, ['source.organizeImports'])
+  const result = optional.handled ? optional.result : await rpc.invoke('ExtensionApi.executeOrganizeImportsProvider', textDocument)
   return { found: true, result }
 }
 
@@ -219,6 +238,7 @@ export const executeSourceActionProvider = async (
     return { found: false }
   }
   const rpc = await getRpc(extensions[0], assetDir, platform)
-  const result = await rpc.invoke('ExtensionApi.executeSourceActionProvider', textDocument, kind)
+  const optional = await executeOptionalLanguageServer(rpc, extensions[0], 'source action', '', textDocument, [kind])
+  const result = optional.handled ? optional.result : await rpc.invoke('ExtensionApi.executeSourceActionProvider', textDocument, kind)
   return { found: true, result }
 }

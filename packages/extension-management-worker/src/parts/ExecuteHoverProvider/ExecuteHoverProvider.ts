@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -18,6 +19,7 @@ interface ExtensionManifest {
   readonly hoverProviders?: readonly HoverProviderContribution[]
   readonly id?: string
   readonly isWeb?: boolean
+  readonly languageServers?: readonly { readonly id?: string; readonly languageId?: string; readonly optional?: boolean }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -55,6 +57,11 @@ export const executeHoverProvider = async (
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcHoverProvider(rpc, textDocument, args)))
+  const results = await Promise.all(
+    rpcs.map(async (rpc, index) => {
+      const optional = await executeOptionalLanguageServer(rpc, extensions[index], 'hover', '', textDocument, args)
+      return optional.handled ? optional.result : executeRpcHoverProvider(rpc, textDocument, args)
+    }),
+  )
   return results[0]
 }

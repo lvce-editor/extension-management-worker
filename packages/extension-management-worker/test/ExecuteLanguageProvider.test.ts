@@ -523,3 +523,35 @@ test('reports when no source action provider matches the document', async () => 
     ExecuteLanguageProvider.executeSourceActionProvider(createExtensionsState([]), { languageId: 'typescript' }, 'source.addMissingImports'),
   ).resolves.toEqual({ found: false })
 })
+
+test('an active optional server overrides static definition activation without calling worker providers', async () => {
+  const textDocument = { languageId: 'typescript', text: 'const value = 1\nvalue', uri: 'file:///workspace/main.ts' }
+  const extensionsState = createExtensionsState([
+    {
+      activation: ['onDefinition:typescript'],
+      id: 'typescript',
+      isolated: true,
+      languageServers: [{ id: 'ts7', languageId: 'typescript', optional: true }],
+    },
+  ])
+  const invocations: string[] = []
+  const rpc: Rpc = {
+    dispose: async () => {},
+    invoke: async (method: string) => {
+      invocations.push(method)
+      return { languageServers: [{ argv: ['--lsp', '--stdio'], id: 'ts7', languageId: 'typescript', uri: 'lvce-language-server:typescript' }] }
+    },
+    invokeAndTransfer: async () => {},
+    send() {},
+  }
+  IsolatedExtensionHostWorkerState.set('typescript', rpc)
+  const shared = SharedProcess.registerMockRpc({ 'LanguageServer.definition': () => null })
+  try {
+    await expect(
+      ExecuteLanguageProvider.executeLanguageProvider(extensionsState, 'definition', 'provideDefinition', textDocument, 2),
+    ).resolves.toEqual({ found: true, result: undefined })
+    expect(invocations).toEqual(['ExtensionApi.getLanguageServerRegistrySnapshot', 'ExtensionApi.getLanguageServerRegistrySnapshot'])
+  } finally {
+    shared[Symbol.dispose]()
+  }
+})

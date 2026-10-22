@@ -3,6 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerFormatting } from '../ExecuteLanguageServerFormatting/ExecuteLanguageServerFormatting.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -10,6 +11,7 @@ import * as IsExtensionIsolated from '../IsExtensionIsolated/IsExtensionIsolated
 
 interface FormattingProviderContribution {
   readonly languageId?: string
+  readonly optional?: boolean
 }
 
 interface ExtensionManifest {
@@ -61,7 +63,11 @@ const executeExtensionFormattingProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<readonly unknown[]> => {
-  if (contributesLanguageServer(extension, textDocument.languageId)) {
+  const optional = await executeOptionalLanguageServer(rpc, extension, 'formatting', '', textDocument, args)
+  if (optional.handled) {
+    return optional.result as readonly unknown[]
+  }
+  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
     return executeLanguageServerFormatting(rpc, extension, textDocument)
   }
   return executeRpcFormattingProvider(rpc, textDocument, args)

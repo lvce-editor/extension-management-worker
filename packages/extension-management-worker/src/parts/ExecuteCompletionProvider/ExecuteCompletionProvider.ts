@@ -3,6 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerCompletion } from '../ExecuteLanguageServerCompletion/ExecuteLanguageServerCompletion.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -11,6 +12,7 @@ import { languageProviderManifestFields } from '../LanguageProviderManifestField
 
 interface CompletionProviderContribution {
   readonly languageId?: string
+  readonly optional?: boolean
 }
 
 interface ExtensionManifest {
@@ -64,7 +66,11 @@ const executeExtensionCompletionProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<readonly unknown[]> => {
-  if (contributesLanguageServer(extension, textDocument.languageId)) {
+  const optional = await executeOptionalLanguageServer(rpc, extension, 'completion', '', textDocument, args)
+  if (optional.handled) {
+    return optional.result as readonly unknown[]
+  }
+  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerCompletion(rpc, extension, textDocument, offset)
   }
@@ -96,6 +102,11 @@ export const executeResolveCompletionItemProvider = async (
   const matchingExtensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const extensions = matchingExtensions.filter((extension) => contributesCompletionProvider(extension, textDocument.languageId))
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcResolveCompletionItemProvider(rpc, textDocument, args)))
+  const results = await Promise.all(
+    rpcs.map(async (rpc, index) => {
+      const optional = await executeOptionalLanguageServer(rpc, extensions[index], 'resolve completion', '', textDocument, args)
+      return optional.handled ? args[0] : executeRpcResolveCompletionItemProvider(rpc, textDocument, args)
+    }),
+  )
   return results[0]
 }

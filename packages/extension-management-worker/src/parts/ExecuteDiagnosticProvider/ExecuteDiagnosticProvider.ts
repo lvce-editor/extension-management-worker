@@ -3,6 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerDiagnostic } from '../ExecuteLanguageServerDiagnostic/ExecuteLanguageServerDiagnostic.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -11,6 +12,7 @@ import { languageProviderManifestFields } from '../LanguageProviderManifestField
 
 interface DiagnosticProviderContribution {
   readonly languageId?: string
+  readonly optional?: boolean
 }
 
 interface ExtensionManifest {
@@ -66,7 +68,11 @@ const executeExtensionDiagnosticProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<readonly unknown[]> => {
-  if (contributesLanguageServer(extension, textDocument.languageId)) {
+  const optional = await executeOptionalLanguageServer(rpc, extension, 'diagnostic', '', textDocument, args)
+  if (optional.handled) {
+    return optional.result as readonly unknown[]
+  }
+  if (extension.languageServers?.some((item) => item.languageId === textDocument.languageId && !item.optional)) {
     return executeLanguageServerDiagnostic(rpc, extension, textDocument)
   }
   return executeRpcDiagnosticProvider(rpc, textDocument, args)

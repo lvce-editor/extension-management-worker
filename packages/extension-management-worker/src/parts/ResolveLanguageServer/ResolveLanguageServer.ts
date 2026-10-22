@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 
 interface LanguageServerContribution {
+  readonly connectionId?: string
   readonly id?: string
   readonly languageId?: string
 }
@@ -73,7 +74,7 @@ export const resolveLanguageServer = async (
   return {
     argv: languageServer.argv,
     extensionId,
-    id: `${extensionId}.${languageServer.id}`,
+    id: `${extensionId}.${contribution.connectionId || languageServer.id}`,
     uri: resolveLanguageServerUri(extension, languageServer.uri),
   }
 }

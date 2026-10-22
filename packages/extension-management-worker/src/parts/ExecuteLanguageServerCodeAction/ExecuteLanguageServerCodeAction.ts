@@ -148,6 +148,7 @@ export const executeLanguageServerCodeAction = async (
   extension: ExtensionManifest,
   textDocument: TextDocument,
   offset: number,
+  only?: string,
 ): Promise<readonly CodeAction[]> => {
   const { text, uri: documentUri } = textDocument
   if (typeof text !== 'string' || typeof documentUri !== 'string') {
@@ -163,6 +164,7 @@ export const executeLanguageServerCodeAction = async (
     extensionId: languageServer.extensionId,
     id: languageServer.id,
     offset,
+    ...(only && { only }),
     ...(rootUri && { rootUri }),
     textDocument,
     uri: languageServer.uri,

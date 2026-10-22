@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -17,6 +18,7 @@ interface ExtensionManifest {
   readonly disabled?: boolean
   readonly id?: string
   readonly isWeb?: boolean
+  readonly languageServers?: readonly { readonly id?: string; readonly languageId?: string; readonly optional?: boolean }[]
   readonly path?: string
   readonly signatureHelpProviders?: readonly SignatureHelpProviderContribution[]
   readonly uri?: string
@@ -57,6 +59,11 @@ export const executeSignatureHelpProvider = async (
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcSignatureHelpProvider(rpc, textDocument, args)))
+  const results = await Promise.all(
+    rpcs.map(async (rpc, index) => {
+      const optional = await executeOptionalLanguageServer(rpc, extensions[index], 'signature help', '', textDocument, args)
+      return optional.handled ? optional.result : executeRpcSignatureHelpProvider(rpc, textDocument, args)
+    }),
+  )
   return results[0]
 }

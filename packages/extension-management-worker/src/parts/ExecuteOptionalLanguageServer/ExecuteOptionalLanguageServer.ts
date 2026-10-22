@@ -18,7 +18,12 @@ import { resolveLanguageServer } from '../ResolveLanguageServer/ResolveLanguageS
 
 interface ExtensionManifest {
   readonly id?: string
-  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
+  readonly optionalLanguageServers?: readonly {
+    readonly activationCommand?: string
+    readonly connectionId?: string
+    readonly id?: string
+    readonly languageId?: string
+  }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -117,6 +122,9 @@ export const executeOptionalLanguageServer = async (
   const contribution = extension.optionalLanguageServers?.find((item) => item.languageId === textDocument.languageId)
   if (!contribution) {
     return { handled: false }
+  }
+  if (contribution.activationCommand) {
+    await rpc.invoke('ExtensionApi.executeCommand', contribution.activationCommand)
   }
   let snapshot: { readonly languageServers: readonly { readonly id: string; readonly languageId: string }[] }
   try {

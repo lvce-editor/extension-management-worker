@@ -195,3 +195,28 @@ test('signature documentation is converted from LSP markup to editor strings', a
     },
   })
 })
+
+test('waits for optional backend activation before taking the registry snapshot', async () => {
+  const ready = Promise.withResolvers<void>()
+  const calls: string[] = []
+  const rpc: Rpc = {
+    ...createRpc(),
+    invoke: async (method: string, ...args: readonly unknown[]) => {
+      calls.push(method, ...args.map(String))
+      if (method === 'ExtensionApi.executeCommand') {
+        await ready.promise
+        return undefined
+      }
+      return { languageServers: [] }
+    },
+  }
+  const manifest = {
+    ...extension,
+    optionalLanguageServers: [{ ...extension.optionalLanguageServers[0], activationCommand: 'typescript.awaitActivation' }],
+  }
+  const result = executeOptionalLanguageServer(rpc, manifest, 'completion', '', textDocument, [])
+  expect(calls).toEqual(['ExtensionApi.executeCommand', 'typescript.awaitActivation'])
+  ready.resolve()
+  await expect(result).resolves.toEqual({ handled: false })
+  expect(calls).toEqual(['ExtensionApi.executeCommand', 'typescript.awaitActivation', 'ExtensionApi.getLanguageServerRegistrySnapshot'])
+})

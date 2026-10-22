@@ -166,3 +166,32 @@ test('a missing registry command means inactive, while other activation failures
   }
   await expect(executeOptionalLanguageServer(failed, extension, 'completion', '', textDocument, [])).rejects.toThrow('worker terminated')
 })
+
+test('signature documentation is converted from LSP markup to editor strings', async () => {
+  disposables.push(RendererWorker.registerMockRpc({ 'Workspace.getPath': () => '/workspace' }))
+  disposables.push(
+    SharedProcess.registerMockRpc({
+      'LanguageServer.feature': () => ({
+        signatures: [
+          {
+            documentation: { kind: 'plaintext', value: 'Greets a name' },
+            label: 'greet(name: string)',
+            parameters: [{ documentation: 'Name', label: 'name: string' }],
+          },
+          { label: 'greet()' },
+        ],
+      }),
+    }),
+  )
+  await expect(executeOptionalLanguageServer(createRpc(), extension, 'signature help', '', textDocument, [3])).resolves.toEqual({
+    handled: true,
+    result: {
+      activeParameter: 0,
+      activeSignature: 0,
+      signatures: [
+        { documentation: 'Greets a name', label: 'greet(name: string)', parameters: [{ documentation: 'Name', label: 'name: string' }] },
+        { documentation: '', label: 'greet()', parameters: [] },
+      ],
+    },
+  })
+})

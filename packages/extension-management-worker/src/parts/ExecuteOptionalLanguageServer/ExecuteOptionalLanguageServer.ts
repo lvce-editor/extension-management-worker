@@ -210,6 +210,23 @@ const executeAdditionalFeature = async (
   if (kind === 'implementation') {
     return convertReferences(result, textDocument)
   }
+  if (kind === 'signature help' && result && Array.isArray(result.signatures)) {
+    return {
+      activeParameter: result.activeParameter || 0,
+      activeSignature: result.activeSignature || 0,
+      signatures: result.signatures.map(
+        (signature: {
+          readonly documentation?: unknown
+          readonly label: string
+          readonly parameters?: readonly { readonly documentation?: unknown; readonly label: string }[]
+        }) => ({
+          ...signature,
+          documentation: documentationText(signature.documentation),
+          parameters: (signature.parameters || []).map((parameter) => ({ ...parameter, documentation: documentationText(parameter.documentation) })),
+        }),
+      ),
+    }
+  }
   if (kind === 'rename') {
     if (method === 'prepareRename') {
       if (!result) {

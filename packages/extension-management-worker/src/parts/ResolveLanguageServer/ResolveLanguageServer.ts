@@ -1,6 +1,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 
 interface LanguageServerContribution {
+  readonly connectionId?: string
   readonly id?: string
   readonly languageId?: string
 }
@@ -8,6 +9,7 @@ interface LanguageServerContribution {
 interface ExtensionManifest {
   readonly id?: string
   readonly languageServers?: readonly LanguageServerContribution[]
+  readonly optionalLanguageServers?: readonly LanguageServerContribution[]
   readonly path?: string
   readonly uri?: string
 }
@@ -60,7 +62,9 @@ export const resolveLanguageServer = async (
   extension: ExtensionManifest,
   languageId: string,
 ): Promise<ResolvedLanguageServer | undefined> => {
-  const contribution = extension.languageServers?.find((item) => item.languageId === languageId)
+  const contribution =
+    extension.optionalLanguageServers?.find((item) => item.languageId === languageId) ||
+    extension.languageServers?.find((item) => item.languageId === languageId)
   if (!contribution) {
     return undefined
   }
@@ -73,7 +77,7 @@ export const resolveLanguageServer = async (
   return {
     argv: languageServer.argv,
     extensionId,
-    id: `${extensionId}.${languageServer.id}`,
+    id: `${extensionId}.${contribution.connectionId || languageServer.id}`,
     uri: resolveLanguageServerUri(extension, languageServer.uri),
   }
 }

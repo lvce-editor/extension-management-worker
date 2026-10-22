@@ -6,6 +6,7 @@ import { executeLanguageServerCodeAction } from '../ExecuteLanguageServerCodeAct
 import { executeLanguageServerDefinition } from '../ExecuteLanguageServerDefinition/ExecuteLanguageServerDefinition.ts'
 import { executeLanguageServerDocumentSymbols } from '../ExecuteLanguageServerDocumentSymbols/ExecuteLanguageServerDocumentSymbols.ts'
 import { executeLanguageServerReferences } from '../ExecuteLanguageServerReferences/ExecuteLanguageServerReferences.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -23,6 +24,7 @@ interface ExtensionManifest {
     readonly id?: string
     readonly languageId?: string
   }[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -61,6 +63,9 @@ const contributesLanguageServer = (extension: ExtensionManifest, languageId: str
 }
 
 const contributesLanguageProvider = (extension: ExtensionManifest, kind: string, languageId: string): boolean => {
+  if (contributesOptionalLanguageServer(extension, languageId)) {
+    return true
+  }
   if (kind === 'code action') {
     return contributesCodeActionProvider(extension, languageId) || contributesLanguageServer(extension, languageId)
   }
@@ -129,7 +134,7 @@ const executeExtensionCodeActionProviders = async (
   return actions
 }
 
-const executeExtensionLanguageProvider = async (
+const executeDefaultExtensionLanguageProvider = async (
   rpc: Rpc,
   extension: ExtensionManifest,
   kind: string,
@@ -153,6 +158,27 @@ const executeExtensionLanguageProvider = async (
     return executeLanguageServerReferences(rpc, extension, textDocument, offset)
   }
   return executeRpcLanguageProvider(rpc, kind, methodName, textDocument, args)
+}
+
+const executeExtensionLanguageProvider = async (
+  rpc: Rpc,
+  extension: ExtensionManifest,
+  kind: string,
+  methodName: string,
+  textDocument: TextDocument,
+  args: readonly unknown[],
+): Promise<unknown> => {
+  const optional = await executeOptionalLanguageServer(rpc, extension, kind, methodName, textDocument, args)
+  if (optional.handled) {
+    return optional.result
+  }
+  if (
+    contributesOptionalLanguageServer(extension, textDocument.languageId) &&
+    !contributesExplicitLanguageProvider(extension, kind, textDocument.languageId)
+  ) {
+    return kind === 'code action' ? [] : undefined
+  }
+  return executeDefaultExtensionLanguageProvider(rpc, extension, kind, methodName, textDocument, args)
 }
 
 export const executeLanguageProvider = async (
@@ -204,7 +230,8 @@ export const executeOrganizeImportsProvider = async (
     return { found: false }
   }
   const rpc = await getRpc(extensions[0], assetDir, platform)
-  const result = await rpc.invoke('ExtensionApi.executeOrganizeImportsProvider', textDocument)
+  const optional = await executeOptionalLanguageServer(rpc, extensions[0], 'source action', '', textDocument, ['source.organizeImports'])
+  const result = optional.handled ? optional.result : await rpc.invoke('ExtensionApi.executeOrganizeImportsProvider', textDocument)
   return { found: true, result }
 }
 
@@ -219,6 +246,7 @@ export const executeSourceActionProvider = async (
     return { found: false }
   }
   const rpc = await getRpc(extensions[0], assetDir, platform)
-  const result = await rpc.invoke('ExtensionApi.executeSourceActionProvider', textDocument, kind)
+  const optional = await executeOptionalLanguageServer(rpc, extensions[0], 'source action', '', textDocument, [kind])
+  const result = optional.handled ? optional.result : await rpc.invoke('ExtensionApi.executeSourceActionProvider', textDocument, kind)
   return { found: true, result }
 }

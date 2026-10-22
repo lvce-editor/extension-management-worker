@@ -2,6 +2,7 @@
 
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -17,6 +18,7 @@ interface ExtensionManifest {
   readonly disabled?: boolean
   readonly id?: string
   readonly isWeb?: boolean
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly signatureHelpProviders?: readonly SignatureHelpProviderContribution[]
   readonly uri?: string
@@ -41,7 +43,7 @@ const getMatchingExtensions = async (
     (extension): boolean =>
       !extension.disabled &&
       IsExtensionIsolated.isExtensionIsolated(extension) &&
-      contributesSignatureHelpProvider(extension, textDocument.languageId),
+      (contributesSignatureHelpProvider(extension, textDocument.languageId) || contributesOptionalLanguageServer(extension, textDocument.languageId)),
   )
 }
 
@@ -57,6 +59,17 @@ export const executeSignatureHelpProvider = async (
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
   const extensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcSignatureHelpProvider(rpc, textDocument, args)))
+  const results = await Promise.all(
+    rpcs.map(async (rpc, index) => {
+      const optional = await executeOptionalLanguageServer(rpc, extensions[index], 'signature help', '', textDocument, args)
+      if (optional.handled) {
+        return optional.result
+      }
+      if (contributesSignatureHelpProvider(extensions[index], textDocument.languageId)) {
+        return executeRpcSignatureHelpProvider(rpc, textDocument, args)
+      }
+      return undefined
+    }),
+  )
   return results[0]
 }

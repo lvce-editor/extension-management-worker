@@ -3,6 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerFormatting } from '../ExecuteLanguageServerFormatting/ExecuteLanguageServerFormatting.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -20,6 +21,7 @@ interface ExtensionManifest {
   readonly id?: string
   readonly isWeb?: boolean
   readonly languageServers?: readonly FormattingProviderContribution[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -47,7 +49,9 @@ const getMatchingExtensions = async (
     (extension): boolean =>
       !extension.disabled &&
       IsExtensionIsolated.isExtensionIsolated(extension) &&
-      (contributesFormattingProvider(extension, textDocument.languageId) || contributesLanguageServer(extension, textDocument.languageId)),
+      (contributesFormattingProvider(extension, textDocument.languageId) ||
+        contributesLanguageServer(extension, textDocument.languageId) ||
+        contributesOptionalLanguageServer(extension, textDocument.languageId)),
   )
 }
 
@@ -61,10 +65,14 @@ const executeExtensionFormattingProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<readonly unknown[]> => {
+  const optional = await executeOptionalLanguageServer(rpc, extension, 'formatting', '', textDocument, args)
+  if (optional.handled) {
+    return optional.result as readonly unknown[]
+  }
   if (contributesLanguageServer(extension, textDocument.languageId)) {
     return executeLanguageServerFormatting(rpc, extension, textDocument)
   }
-  return executeRpcFormattingProvider(rpc, textDocument, args)
+  return contributesFormattingProvider(extension, textDocument.languageId) ? executeRpcFormattingProvider(rpc, textDocument, args) : []
 }
 
 export const executeFormattingProvider = async (

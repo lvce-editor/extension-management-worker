@@ -1,7 +1,8 @@
 import { join } from 'node:path'
 import { root } from './root.ts'
 
-export const threshold = 608_000
+// Optional-server dispatch adds about 1.8 KiB of initialized worker code (606,280 -> 608,016 bytes in Linux CI).
+export const threshold = 612_000
 
 export const workerPath = join(root, '.tmp/dist/dist/extensionManagementWorkerMain.js')
 

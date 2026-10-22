@@ -3,6 +3,7 @@
 import type { Rpc } from '@lvce-editor/rpc'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { executeLanguageServerCompletion } from '../ExecuteLanguageServerCompletion/ExecuteLanguageServerCompletion.ts'
+import { contributesOptionalLanguageServer, executeOptionalLanguageServer } from '../ExecuteOptionalLanguageServer/ExecuteOptionalLanguageServer.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
@@ -21,6 +22,7 @@ interface ExtensionManifest {
   readonly id?: string
   readonly isWeb?: boolean
   readonly languageServers?: readonly CompletionProviderContribution[]
+  readonly optionalLanguageServers?: readonly { readonly connectionId?: string; readonly id?: string; readonly languageId?: string }[]
   readonly path?: string
   readonly uri?: string
 }
@@ -50,7 +52,9 @@ const getMatchingExtensions = async (
     (extension): boolean =>
       !extension.disabled &&
       IsExtensionIsolated.isExtensionIsolated(extension) &&
-      (contributesCompletionProvider(extension, textDocument.languageId) || contributesLanguageServer(extension, textDocument.languageId)),
+      (contributesCompletionProvider(extension, textDocument.languageId) ||
+        contributesLanguageServer(extension, textDocument.languageId) ||
+        contributesOptionalLanguageServer(extension, textDocument.languageId)),
   )
 }
 
@@ -64,11 +68,15 @@ const executeExtensionCompletionProvider = async (
   textDocument: TextDocument,
   args: readonly unknown[],
 ): Promise<readonly unknown[]> => {
+  const optional = await executeOptionalLanguageServer(rpc, extension, 'completion', '', textDocument, args)
+  if (optional.handled) {
+    return optional.result as readonly unknown[]
+  }
   if (contributesLanguageServer(extension, textDocument.languageId)) {
     const offset = typeof args[0] === 'number' ? args[0] : 0
     return executeLanguageServerCompletion(rpc, extension, textDocument, offset)
   }
-  return executeRpcCompletionProvider(rpc, textDocument, args)
+  return contributesCompletionProvider(extension, textDocument.languageId) ? executeRpcCompletionProvider(rpc, textDocument, args) : []
 }
 
 const executeRpcResolveCompletionItemProvider = async (rpc: Rpc, textDocument: TextDocument, args: readonly unknown[]): Promise<unknown> => {
@@ -96,6 +104,11 @@ export const executeResolveCompletionItemProvider = async (
   const matchingExtensions = await getMatchingExtensions(extensionsState, textDocument, assetDir, platform)
   const extensions = matchingExtensions.filter((extension) => contributesCompletionProvider(extension, textDocument.languageId))
   const rpcs = await Promise.all(extensions.map((extension) => getRpc(extension, assetDir, platform)))
-  const results = await Promise.all(rpcs.map((rpc) => executeRpcResolveCompletionItemProvider(rpc, textDocument, args)))
+  const results = await Promise.all(
+    rpcs.map(async (rpc, index) => {
+      const optional = await executeOptionalLanguageServer(rpc, extensions[index], 'resolve completion', '', textDocument, args)
+      return optional.handled ? args[0] : executeRpcResolveCompletionItemProvider(rpc, textDocument, args)
+    }),
+  )
   return results[0]
 }

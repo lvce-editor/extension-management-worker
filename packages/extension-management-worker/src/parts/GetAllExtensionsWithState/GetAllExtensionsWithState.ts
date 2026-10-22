@@ -2,13 +2,13 @@
 
 import * as Assert from '@lvce-editor/assert'
 import { PlatformType } from '@lvce-editor/constants'
-import { SharedProcess } from '@lvce-editor/rpc-registry'
+import { RendererWorker, SharedProcess } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import * as ExtensionsStateModule from '../ExtensionsState/ExtensionsState.ts'
 import { getExtensionEnablement } from '../GetExtensionEnablement/GetExtensionEnablement.ts'
 import { getRuntimeContext } from '../GetRuntimeContext/GetRuntimeContext.ts'
 import { getWebExtensions } from '../GetWebExtensions/GetWebExtensions.ts'
-import { isExtensionCompatible } from '../IsExtensionCompatible/IsExtensionCompatible.ts'
+import { canRunOnRemote, isExtensionCompatible } from '../IsExtensionCompatible/IsExtensionCompatible.ts'
 import * as WorkspaceExtensionEnablementStorage from '../WorkspaceExtensionEnablementStorage/WorkspaceExtensionEnablementStorage.ts'
 
 const withDisabledState = (extensions: readonly any[], disabledIds: readonly string[], enabledIds: readonly string[] = []): readonly any[] => {
@@ -97,8 +97,21 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
   if (resolvedPlatform === PlatformType.Web) {
     const cache = ExtensionsStateModule.getOrCreateWebExtensionsCache(extensionsState)
     const webExtensions = await getWebExtensions(resolvedAssetDir, cache)
-    const compatibleExtensions = [...webExtensions, ...meta].filter((extension) => isExtensionCompatible(extension, resolvedPlatform))
-    extensions = await getExtensionsWithState(compatibleExtensions, extensionsState, resolvedPlatform)
+    const candidates = await getExtensionsWithState([...webExtensions, ...meta], extensionsState, resolvedPlatform)
+    let hasWorkspaceTransport = false
+    if (candidates.some((extension) => !isExtensionCompatible(extension, resolvedPlatform) && canRunOnRemote(extension))) {
+      const uri =
+        extensionsState.applicationId === undefined
+          ? await RendererWorker.invoke('Workspace.getUri')
+          : await RendererWorker.invoke('Application.execute', extensionsState.applicationId, 'Workspace.getUri')
+      if (typeof uri === 'string' && URL.canParse(uri)) {
+        const scheme = new URL(uri).protocol.slice(0, -1)
+        hasWorkspaceTransport = candidates.some(
+          (extension) => !extension.disabled && extension.isolated === true && extension.workspaceTransport?.scheme === scheme,
+        )
+      }
+    }
+    extensions = candidates.filter((extension) => isExtensionCompatible(extension, resolvedPlatform, hasWorkspaceTransport))
   } else {
     const local = await getSharedProcessExtensions(extensionsState, fields)
     extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)

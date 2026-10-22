@@ -29,3 +29,16 @@ test('isExtensionCompatible preserves electron and remote extensions', () => {
   expect(isExtensionCompatible(extension, PlatformType.Electron)).toBe(true)
   expect(isExtensionCompatible(extension, PlatformType.Remote)).toBe(true)
 })
+
+test('only enables explicitly remote Node extensions in connected browser workspaces', () => {
+  const extension = {
+    browser: 'dist/main.js',
+    compatibility: { web: false },
+    rpc: [{ onRemote: 'runOnRemote', type: 'node-process' }],
+  }
+  expect(isExtensionCompatible(extension, PlatformType.Web)).toBe(false)
+  expect(isExtensionCompatible(extension, PlatformType.Web, true)).toBe(true)
+  expect(isExtensionCompatible({ ...extension, browser: '' }, PlatformType.Web, true)).toBe(false)
+  expect(isExtensionCompatible({ ...extension, rpc: [] }, PlatformType.Web, true)).toBe(false)
+  expect(isExtensionCompatible({ ...extension, rpc: [...extension.rpc, { type: 'node-process' }] }, PlatformType.Web, true)).toBe(false)
+})

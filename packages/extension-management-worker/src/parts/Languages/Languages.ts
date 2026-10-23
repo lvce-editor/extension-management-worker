@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+
 import * as Assert from '@lvce-editor/assert'
 import { VError } from '@lvce-editor/verror'
 import type { ExtensionsState as ExtensionState } from '../ExtensionsState/ExtensionsState.ts'

@@ -1,6 +1,7 @@
 import { PlatformType } from '@lvce-editor/constants'
 import * as GetRemoteUrl from '../GetRemoteUrl/GetRemoteUrl.ts'
 
+const absoluteUrlRegex = /^[a-z][a-z\d+.-]*:/i
 const builtinStaticPathRegex = /(?:^|\/)static\/([a-f\d]{7,40})\/extensions\/([^/]+)$/i
 
 const getBuiltinTokenizerUrl = (extension: any, tokenizePath: string): string => {
@@ -38,7 +39,8 @@ export const getLanguagesFromExtension = (extension: any, platform: number): rea
       }
       const relativePath = `${extensionPath}/${language.tokenize}`
       const builtinTokenizerUrl = getBuiltinTokenizerUrl(extension, language.tokenize)
-      const absolutePath = builtinTokenizerUrl || (platform === PlatformType.Web ? relativePath : GetRemoteUrl.getRemoteUrl(relativePath))
+      const webTokenizerUrl = absoluteUrlRegex.test(language.tokenize) ? language.tokenize : relativePath
+      const absolutePath = builtinTokenizerUrl || (platform === PlatformType.Web ? webTokenizerUrl : GetRemoteUrl.getRemoteUrl(relativePath))
 
       return {
         ...language,

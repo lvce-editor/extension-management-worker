@@ -213,24 +213,25 @@ test('preference calls use the calling application renderer rather than the glob
   ])
 })
 
+const languageExtension = (path: string, id: string) => ({
+  id: 'sample.language',
+  isolated: true,
+  languages: [{ extensions: [`.${id}`], id, tokenize: 'tokenize.js' }],
+  path,
+})
+
 test('language contributions and tokenizer paths stay within their application', async () => {
-  const languageExtension = (path: string, id: string) => ({
-    id: 'sample.language',
-    isolated: true,
-    path,
-    languages: [{ id, extensions: [`.${id}`], tokenize: 'tokenize.js' }],
-  })
   ExtensionsState.update({ webExtensions: [languageExtension('https://example.com/source', 'source')] }, 'source')
   ExtensionsState.update({ webExtensions: [languageExtension('https://example.com/preview', 'sprout')] }, 'preview')
   const invoke = commandMap['Extensions.invokeForApplication']
   expect(await invoke('source', 'Extensions.getLanguages', 1, '/assets')).toEqual([
-    { id: 'source', extensions: ['.source'], extensionPath: 'https://example.com/source', tokenize: 'https://example.com/source/tokenize.js' },
+    { extensionPath: 'https://example.com/source', extensions: ['.source'], id: 'source', tokenize: 'https://example.com/source/tokenize.js' },
   ])
   expect(await invoke('preview', 'Extensions.getLanguages', 1, '/assets')).toEqual([
-    { id: 'sprout', extensions: ['.sprout'], extensionPath: 'https://example.com/preview', tokenize: 'https://example.com/preview/tokenize.js' },
+    { extensionPath: 'https://example.com/preview', extensions: ['.sprout'], id: 'sprout', tokenize: 'https://example.com/preview/tokenize.js' },
   ])
   ExtensionsState.update({ webExtensions: [languageExtension('https://example.com/updated', 'sprout')] }, 'preview')
   expect(await invoke('preview', 'Extensions.getLanguages', 1, '/assets')).toEqual([
-    { id: 'sprout', extensions: ['.sprout'], extensionPath: 'https://example.com/updated', tokenize: 'https://example.com/updated/tokenize.js' },
+    { extensionPath: 'https://example.com/updated', extensions: ['.sprout'], id: 'sprout', tokenize: 'https://example.com/updated/tokenize.js' },
   ])
 })

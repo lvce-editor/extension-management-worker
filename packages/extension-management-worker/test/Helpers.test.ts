@@ -195,3 +195,10 @@ test('getExtensionAbsolutePath resolves Windows file urls for local extensions',
     ),
   ).toBe('https://origin.test/remote/C:/Program%20Files/LVCE/extensions/sample/main.js')
 })
+
+test('web language contributions preserve generated tokenizer module URLs', () => {
+  const tokenize = 'blob:https://example.com/tokenizer'
+  expect(getLanguagesFromExtension({ languages: [{ id: 'sprout', tokenize }], path: 'https://example.com/sample' }, PlatformType.Web)).toEqual([
+    { extensionPath: 'https://example.com/sample', id: 'sprout', tokenize },
+  ])
+})

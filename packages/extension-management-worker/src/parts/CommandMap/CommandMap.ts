@@ -259,7 +259,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getExplorerContextMenuEntries': wrapCommand(getExplorerContextMenuEntries),
   'Extensions.getExtension': getExtension,
   'Extensions.getKeyBindings': getKeyBindings,
-  'Extensions.getLanguages': getLanguages,
+  'Extensions.getLanguages': wrapCommand((state, platform, assetDir) => getLanguages(platform, assetDir, state)),
   'Extensions.getNotificationCount': getNotificationCount,
   'Extensions.getNotifications': getNotifications,
   'Extensions.getOutputChannelProviders': wrapCommand(getOutputChannelProviders),

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 
 import type { Rpc } from '@lvce-editor/rpc'
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import type { ExtensionsState } from '../ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 import { getExtensionId, getRpc } from '../GetIsolatedExtensionHostWorkerRpc/GetIsolatedExtensionHostWorkerRpc.ts'
@@ -21,6 +22,7 @@ interface ExtensionManifest {
   readonly id?: string
   readonly isolated?: boolean
   readonly outputChannels?: readonly OutputChannelContribution[]
+  readonly workspaceTransport?: { readonly scheme?: string }
 }
 
 interface RegisteredOutputChannel {
@@ -96,7 +98,19 @@ const getExtensionOutputChannelProviders = async (
 export const getOutputChannelProviders = async (extensionsState: ExtensionsState): Promise<readonly OutputChannelProvider[]> => {
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform, extensionsState.applicationId)
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
-  const outputExtensions = extensions.filter(hasOutputChannels)
+  const hasWorkspaceTransport = extensions.some((extension) => extension.workspaceTransport?.scheme)
+  let workspaceUri = ''
+  if (hasWorkspaceTransport) {
+    if (extensionsState.applicationId === undefined) {
+      workspaceUri = await RendererWorker.invoke('Workspace.getUri')
+    } else {
+      workspaceUri = await RendererWorker.invoke('Application.execute', extensionsState.applicationId, 'Workspace.getUri')
+    }
+  }
+  const workspaceScheme = typeof workspaceUri === 'string' && URL.canParse(workspaceUri) ? new URL(workspaceUri).protocol.slice(0, -1) : ''
+  const outputExtensions = extensions.filter(
+    (extension) => hasOutputChannels(extension) && (!extension.workspaceTransport?.scheme || extension.workspaceTransport.scheme === workspaceScheme),
+  )
   const providers = await Promise.all(outputExtensions.map((extension) => getExtensionOutputChannelProviders(extension, assetDir, platform)))
   return providers.flat()
 }

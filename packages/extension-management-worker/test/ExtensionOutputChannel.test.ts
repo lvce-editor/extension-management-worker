@@ -166,6 +166,33 @@ test('getOutputChannelProviders rethrows extension errors', async () => {
   await expect(ExtensionOutputChannel.getOutputChannelProviders(extensionsState)).rejects.toThrow('Extension host crashed')
 })
 
+test('getOutputChannelProviders only lists workspace transport channels in the matching workspace', async () => {
+  state.rendererWorker?.[Symbol.dispose]()
+  state.rendererWorker = RendererWorker.registerMockRpc({
+    'Layout.getAssetDir'() {
+      return '/assets'
+    },
+    'Workspace.getUri'() {
+      return 'file:///home/user/project'
+    },
+  })
+  const extensionsState = createExtensionsState([
+    {
+      id: 'builtin.remote-ssh',
+      isolated: true,
+      outputChannels: [{ id: 'remote-ssh', label: 'Remote SSH' }],
+      workspaceTransport: { scheme: 'remote-ssh' },
+    },
+  ])
+  const rpc = createRpc({
+    'ExtensionApi.getOutputChannelRegistrySnapshot': () => ({ outputChannels: [{ id: 'remote-ssh' }] }),
+  })
+  IsolatedExtensionHostWorkerState.set('builtin.remote-ssh', rpc.rpc)
+
+  await expect(ExtensionOutputChannel.getOutputChannelProviders(extensionsState)).resolves.toEqual([])
+  expect(rpc.invocations).toEqual([])
+})
+
 test('readOutputChannel reads from the matching isolated extension worker', async () => {
   const extensionsState = createExtensionsState([
     {
@@ -261,9 +288,18 @@ test('clearOutputChannel rejects an output channel that is not registered', asyn
 test('discovers, reads, and clears channels through the owning application without a global layout', async () => {
   state.rendererWorker?.[Symbol.dispose]()
   state.rendererWorker = RendererWorker.registerMockRpc({
-    'Application.execute': async (_applicationId: string, method: string) => (method === 'Layout.getAssetDir' ? '/assets' : 1),
+    'Application.execute': async (_applicationId: string, method: string) => {
+      if (method === 'Layout.getAssetDir') return '/assets'
+      if (method === 'Workspace.getUri') return 'remote-ssh://host/home'
+      return 1
+    },
   })
-  const manifest = { id: 'sample.output', isolated: true, outputChannels: [{ id: 'build', label: 'Build' }] }
+  const manifest = {
+    id: 'sample.output',
+    isolated: true,
+    outputChannels: [{ id: 'build', label: 'Build' }],
+    workspaceTransport: { scheme: 'remote-ssh' },
+  }
   ExtensionsStateModule.createApplication('preview', 1, [manifest])
   const application = ExtensionsStateModule.get('preview')
   const worker = createRpc({
@@ -279,6 +315,7 @@ test('discovers, reads, and clears channels through the owning application witho
     await ExtensionOutputChannel.clearOutputChannel(application, channels[0].uri)
     expect(state.rendererWorker.invocations).toEqual([
       ['Application.execute', 'preview', 'Layout.getAssetDir'],
+      ['Application.execute', 'preview', 'Workspace.getUri'],
       ['Application.execute', 'preview', 'Layout.getAssetDir'],
       ['Application.execute', 'preview', 'Layout.getAssetDir'],
     ])

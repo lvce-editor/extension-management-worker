@@ -99,16 +99,17 @@ export const getOutputChannelProviders = async (extensionsState: ExtensionsState
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform, extensionsState.applicationId)
   const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform)
   const hasWorkspaceTransport = extensions.some((extension) => extension.workspaceTransport?.scheme)
-  const workspaceUri = hasWorkspaceTransport
-    ? extensionsState.applicationId === undefined
-      ? await RendererWorker.invoke('Workspace.getUri')
-      : await RendererWorker.invoke('Application.execute', extensionsState.applicationId, 'Workspace.getUri')
-    : ''
+  let workspaceUri = ''
+  if (hasWorkspaceTransport) {
+    if (extensionsState.applicationId === undefined) {
+      workspaceUri = await RendererWorker.invoke('Workspace.getUri')
+    } else {
+      workspaceUri = await RendererWorker.invoke('Application.execute', extensionsState.applicationId, 'Workspace.getUri')
+    }
+  }
   const workspaceScheme = typeof workspaceUri === 'string' && URL.canParse(workspaceUri) ? new URL(workspaceUri).protocol.slice(0, -1) : ''
   const outputExtensions = extensions.filter(
-    (extension) =>
-      hasOutputChannels(extension) &&
-      (!extension.workspaceTransport?.scheme || extension.workspaceTransport.scheme === workspaceScheme),
+    (extension) => hasOutputChannels(extension) && (!extension.workspaceTransport?.scheme || extension.workspaceTransport.scheme === workspaceScheme),
   )
   const providers = await Promise.all(outputExtensions.map((extension) => getExtensionOutputChannelProviders(extension, assetDir, platform)))
   return providers.flat()

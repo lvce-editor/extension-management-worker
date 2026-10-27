@@ -59,6 +59,7 @@ import { getExplorerContextMenuEntries } from '../GetExplorerContextMenuEntries/
 import { getExtension } from '../GetExtension/GetExtension.ts'
 import { getAllExtensions } from '../GetExtensions/GetExtensions.ts'
 import { getKeyBindings } from '../GetKeyBindings/GetKeyBindings.ts'
+import { getQuickPickCommands } from '../GetQuickPickCommands/GetQuickPickCommands.ts'
 import { getRemoteUrlForWebView } from '../GetRemoteUrlForWebView/GetRemoteUrlForWebView.ts'
 import { getRpcInfo } from '../GetRpcInfo/GetRpcInfo.ts'
 import { getRunningExtensions } from '../GetRunningExtensions/GetRunningExtensions.ts'
@@ -152,6 +153,8 @@ const invokeForApplication = async (applicationId: string, method: string, ...ar
       return application.webExtensions
     case 'Extensions.getPreference':
       return ApplicationRendererWorker.invoke('Application.execute', applicationId, 'Preferences.get', ...args)
+    case 'Extensions.getQuickPickCommands':
+      return getQuickPickCommands(application, args[0] || '', args[1] ?? application.platform, args[2])
     case 'Extensions.getRpcInfo':
       return ExtensionApplicationServices.getRpcInfo(application, args[0])
     case 'Extensions.getRuntimeStatus':
@@ -264,6 +267,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.getNotifications': getNotifications,
   'Extensions.getOutputChannelProviders': wrapCommand(getOutputChannelProviders),
   'Extensions.getPreference': getPreference,
+  'Extensions.getQuickPickCommands': wrapCommand(getQuickPickCommands),
   'Extensions.getRemoteUrlForWebView': getRemoteUrlForWebView,
   'Extensions.getRpcInfo': getRpcInfo,
   'Extensions.getRunningExtensions': getRunningExtensions,

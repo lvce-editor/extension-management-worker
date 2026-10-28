@@ -39,7 +39,7 @@ test('unmatched provider events do not read global or workspace enablement', asy
 
 test('matching providers keep reading current enablement instead of caching a disabled result', async () => {
   let enabled = false
-  using renderer = RendererWorker.registerMockRpc({
+  using _renderer = RendererWorker.registerMockRpc({
     'WebView.compatSharedProcessInvoke': () => '/config/disabled.json',
     'Workspace.getPath': () => '',
   })
@@ -48,7 +48,7 @@ test('matching providers keep reading current enablement instead of caching a di
     'FileSystem.readFile': () =>
       JSON.stringify({ disabledExtensions: enabled ? [] : ['decoration'], enabledExtensions: enabled ? ['decoration'] : [] }),
   })
-  using shared = SharedProcess.registerMockRpc({
+  using _shared = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions': () => [{ activation: ['onEditorTextDecoration'], disabled: true, id: 'decoration', isolated: true }],
   })
   const query = () => getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
@@ -59,12 +59,12 @@ test('matching providers keep reading current enablement instead of caching a di
 })
 
 test('a newly registered matching manifest is visible after an empty lookup', async () => {
-  using renderer = RendererWorker.registerMockRpc({
+  using _renderer = RendererWorker.registerMockRpc({
     'WebView.compatSharedProcessInvoke': () => '/config/disabled.json',
     'Workspace.getPath': () => '',
   })
-  using files = FileSystemWorker.registerMockRpc({ 'FileSystem.exists': () => false })
-  using shared = SharedProcess.registerMockRpc({ 'ExtensionManagement.getAllExtensions': () => [] })
+  using _files = FileSystemWorker.registerMockRpc({ 'FileSystem.exists': () => false })
+  using _shared = SharedProcess.registerMockRpc({ 'ExtensionManagement.getAllExtensions': () => [] })
   const query = () => getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
   expect(await query()).toEqual([])
   const manifest = { activation: ['onEditorTextDecoration'], id: 'dynamic', isolated: true }
@@ -75,7 +75,7 @@ test('a newly registered matching manifest is visible after an empty lookup', as
 test('application manifest overrides are resolved before filtering activation events', async () => {
   const applicationId = 'event-filter-application'
   ExtensionsState.createApplication(applicationId, PlatformType.Electron, [{ activation: ['other'], id: 'same-id', isolated: true }])
-  using shared = SharedProcess.registerMockRpc({
+  using _shared = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions': () => [{ activation: ['onEditorTextDecoration'], id: 'same-id', isolated: true }],
   })
   try {

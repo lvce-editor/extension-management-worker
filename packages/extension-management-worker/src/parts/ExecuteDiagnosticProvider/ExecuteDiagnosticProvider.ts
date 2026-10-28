@@ -49,15 +49,13 @@ const getMatchingExtensions = async (
   assetDir: string,
   platform: number,
 ): Promise<readonly ExtensionManifest[]> => {
-  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform, languageProviderManifestFields)
-  return extensions.filter(
-    (extension): boolean =>
-      !extension.disabled &&
-      IsExtensionIsolated.isExtensionIsolated(extension) &&
-      (contributesDiagnosticProvider(extension, textDocument.languageId) ||
-        contributesLanguageServer(extension, textDocument.languageId) ||
-        contributesOptionalLanguageServer(extension, textDocument.languageId)),
-  )
+  const matchesManifest = (extension: ExtensionManifest): boolean =>
+    IsExtensionIsolated.isExtensionIsolated(extension) &&
+    (contributesDiagnosticProvider(extension, textDocument.languageId) ||
+      contributesLanguageServer(extension, textDocument.languageId) ||
+      contributesOptionalLanguageServer(extension, textDocument.languageId))
+  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform, languageProviderManifestFields, matchesManifest)
+  return extensions.filter((extension): boolean => !extension.disabled)
 }
 
 const executeRpcDiagnosticProvider = async (rpc: Rpc, textDocument: TextDocument, args: readonly unknown[]): Promise<readonly unknown[]> => {

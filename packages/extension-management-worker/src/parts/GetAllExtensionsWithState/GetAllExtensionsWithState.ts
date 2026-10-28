@@ -82,23 +82,23 @@ const getSharedProcessExtensions = (extensionsState: ExtensionsState, fields?: r
   return extensions
 }
 
-const filterByActivationEvent = (extensions: readonly any[], activationEvent: string | undefined): readonly any[] => {
-  return activationEvent === undefined
-    ? extensions
-    : extensions.filter((extension) => Array.isArray(extension.activation) && extension.activation.includes(activationEvent))
+// Filter static contributions only; effective enablement must still be resolved.
+type ManifestFilter = (extension: any) => boolean
+
+const filterManifests = (extensions: readonly any[], matchesManifest: ManifestFilter | undefined): readonly any[] => {
+  return matchesManifest === undefined ? extensions : extensions.filter(matchesManifest)
 }
 
 const getLocalExtensionsWithState = async (
   extensionsState: ExtensionsState,
   platform: number,
   fields: readonly string[] | undefined,
-  activationEvent: string | undefined,
+  matchesManifest: ManifestFilter | undefined,
 ): Promise<readonly any[]> => {
-  const discoveryFields = activationEvent !== undefined && fields !== undefined ? [...fields, 'activation'] : fields
-  const local = await getSharedProcessExtensions(extensionsState, discoveryFields)
+  const local = await getSharedProcessExtensions(extensionsState, fields)
   const candidates = [...local, ...extensionsState.webExtensions]
   // Application overlays must be resolved before filtering duplicate ids.
-  const matchingCandidates = extensionsState.applicationId === undefined ? filterByActivationEvent(candidates, activationEvent) : candidates
+  const matchingCandidates = extensionsState.applicationId === undefined ? filterManifests(candidates, matchesManifest) : candidates
   return getExtensionsWithState(matchingCandidates, extensionsState, platform)
 }
 
@@ -107,7 +107,7 @@ export const getAllExtensionsWithState = async (
   assetDir: string,
   platform: number,
   fields?: readonly string[],
-  activationEvent?: string,
+  matchesManifest?: ManifestFilter,
 ) => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   Assert.string(resolvedAssetDir)
@@ -139,11 +139,11 @@ export const getAllExtensionsWithState = async (
     }
     extensions = candidates.filter((extension) => isExtensionCompatible(extension, resolvedPlatform, hasWorkspaceTransport))
   } else {
-    extensions = await getLocalExtensionsWithState(extensionsState, resolvedPlatform, fields, activationEvent)
+    extensions = await getLocalExtensionsWithState(extensionsState, resolvedPlatform, fields, matchesManifest)
   }
   // Web discovery must retain unrelated workspace transport extensions until
   // compatibility has been determined; application overlays are resolved above.
-  extensions = filterByActivationEvent(extensions, activationEvent)
+  extensions = filterManifests(extensions, matchesManifest)
   if (fields === undefined) {
     return extensions
   }

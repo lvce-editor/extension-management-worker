@@ -13,14 +13,11 @@ interface ExtensionManifest {
   readonly isolated?: boolean
 }
 
-const matchesEvent = (extension: ExtensionManifest, event: string): boolean => {
-  return (
-    !extension.disabled &&
-    IsExtensionIsolated.isExtensionIsolated(extension) &&
-    Array.isArray(extension.activation) &&
-    extension.activation.includes(event)
-  )
+const contributesEvent = (extension: ExtensionManifest, event: string): boolean => {
+  return IsExtensionIsolated.isExtensionIsolated(extension) && Array.isArray(extension.activation) && extension.activation.includes(event)
 }
+
+const matchesEvent = (extension: ExtensionManifest, event: string): boolean => !extension.disabled && contributesEvent(extension, event)
 
 export const executeProvidersByEvent = async (
   extensionsState: ExtensionsState,
@@ -29,7 +26,9 @@ export const executeProvidersByEvent = async (
   ...params: readonly unknown[]
 ): Promise<readonly unknown[]> => {
   const { assetDir, platform } = await getRuntimeContext('', extensionsState.platform)
-  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform, undefined, event)
+  const extensions = await getAllExtensionsWithState(extensionsState, assetDir, platform, undefined, (extension) =>
+    contributesEvent(extension, event),
+  )
   const matchingExtensions = extensions.filter((extension) => matchesEvent(extension, event))
   const rpcs = await Promise.all(matchingExtensions.map((extension) => getRpc(extension, assetDir, platform)))
   return Promise.all(rpcs.map((rpc) => rpc.invoke(method, ...params)))

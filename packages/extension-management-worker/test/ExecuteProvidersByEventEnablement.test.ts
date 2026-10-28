@@ -5,6 +5,9 @@ import { executeProvidersByEvent } from '../src/parts/ExecuteProvidersByEvent/Ex
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 
+const getTextDecorationExtensions = () =>
+  getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
+
 beforeEach(() => {
   ExtensionsState.reset()
   ExtensionsState.update({ platform: PlatformType.Electron })
@@ -51,10 +54,9 @@ test('matching providers keep reading current enablement instead of caching a di
   using _shared = SharedProcess.registerMockRpc({
     'ExtensionManagement.getAllExtensions': () => [{ activation: ['onEditorTextDecoration'], disabled: true, id: 'decoration', isolated: true }],
   })
-  const query = () => getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
-  expect(await query()).toEqual([expect.objectContaining({ disabled: true, id: 'decoration' })])
+  expect(await getTextDecorationExtensions()).toEqual([expect.objectContaining({ disabled: true, id: 'decoration' })])
   enabled = true
-  expect(await query()).toEqual([expect.objectContaining({ disabled: false, id: 'decoration' })])
+  expect(await getTextDecorationExtensions()).toEqual([expect.objectContaining({ disabled: false, id: 'decoration' })])
   expect(files.invocations.filter(([method]) => method === 'FileSystem.readFile')).toHaveLength(2)
 })
 
@@ -65,11 +67,10 @@ test('a newly registered matching manifest is visible after an empty lookup', as
   })
   using _files = FileSystemWorker.registerMockRpc({ 'FileSystem.exists': () => false })
   using _shared = SharedProcess.registerMockRpc({ 'ExtensionManagement.getAllExtensions': () => [] })
-  const query = () => getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
-  expect(await query()).toEqual([])
+  expect(await getTextDecorationExtensions()).toEqual([])
   const manifest = { activation: ['onEditorTextDecoration'], id: 'dynamic', isolated: true }
   ExtensionsState.addExtension(manifest)
-  expect(await query()).toEqual([manifest])
+  expect(await getTextDecorationExtensions()).toEqual([manifest])
 })
 
 test('application manifest overrides are resolved before filtering activation events', async () => {

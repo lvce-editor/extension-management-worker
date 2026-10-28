@@ -39,7 +39,7 @@ test('unmatched provider events do not read global or workspace enablement', asy
     ).resolves.toEqual([])
   }
   expect(files.invocations).toEqual([])
-  expect(renderer.invocations).toEqual([['Layout.getAssetDir'], ['Layout.getAssetDir'], ['Layout.getAssetDir']])
+  expect(renderer.invocations).toEqual([['Layout.getAssetDir']])
   expect(shared.invocations).toHaveLength(1)
 })
 

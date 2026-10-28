@@ -39,7 +39,7 @@ test('diagnostic requests without a matching language avoid enablement filesyste
   }
   expect(messages).toEqual(Array.from({ length: 3 }, () => [{ providerCount: 0, providerIds: [], type: 'providers' }, { type: 'done' }]).flat())
   expect(files.invocations).toEqual([])
-  expect(renderer.invocations).toEqual([['Layout.getAssetDir'], ['Layout.getAssetDir'], ['Layout.getAssetDir']])
+  expect(renderer.invocations).toEqual([['Layout.getAssetDir']])
   expect(shared.invocations).toHaveLength(1)
 })
 

@@ -82,7 +82,13 @@ const getSharedProcessExtensions = (extensionsState: ExtensionsState, fields?: r
   return extensions
 }
 
-export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number, fields?: readonly string[]) => {
+export const getAllExtensionsWithState = async (
+  extensionsState: ExtensionsState,
+  assetDir: string,
+  platform: number,
+  fields?: readonly string[],
+  activationEvent?: string,
+) => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   Assert.string(resolvedAssetDir)
   Assert.number(resolvedPlatform)
@@ -113,8 +119,19 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
     }
     extensions = candidates.filter((extension) => isExtensionCompatible(extension, resolvedPlatform, hasWorkspaceTransport))
   } else {
-    const local = await getSharedProcessExtensions(extensionsState, fields)
-    extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
+    const discoveryFields = activationEvent !== undefined && fields !== undefined ? [...fields, 'activation'] : fields
+    const local = await getSharedProcessExtensions(extensionsState, discoveryFields)
+    const candidates = [...local, ...meta]
+    // Application overlays must be resolved before filtering duplicate ids. Web
+    // discovery also needs unrelated workspace transport extensions above.
+    const matchingCandidates =
+      activationEvent === undefined || extensionsState.applicationId !== undefined
+        ? candidates
+        : candidates.filter((extension) => Array.isArray(extension.activation) && extension.activation.includes(activationEvent))
+    extensions = await getExtensionsWithState(matchingCandidates, extensionsState, resolvedPlatform)
+  }
+  if (activationEvent !== undefined) {
+    extensions = extensions.filter((extension) => Array.isArray(extension.activation) && extension.activation.includes(activationEvent))
   }
   if (fields === undefined) {
     return extensions

@@ -82,7 +82,33 @@ const getSharedProcessExtensions = (extensionsState: ExtensionsState, fields?: r
   return extensions
 }
 
-export const getAllExtensionsWithState = async (extensionsState: ExtensionsState, assetDir: string, platform: number, fields?: readonly string[]) => {
+const filterByActivationEvent = (extensions: readonly any[], activationEvent: string | undefined): readonly any[] => {
+  return activationEvent === undefined
+    ? extensions
+    : extensions.filter((extension) => Array.isArray(extension.activation) && extension.activation.includes(activationEvent))
+}
+
+const getLocalExtensionsWithState = async (
+  extensionsState: ExtensionsState,
+  platform: number,
+  fields: readonly string[] | undefined,
+  activationEvent: string | undefined,
+): Promise<readonly any[]> => {
+  const discoveryFields = activationEvent !== undefined && fields !== undefined ? [...fields, 'activation'] : fields
+  const local = await getSharedProcessExtensions(extensionsState, discoveryFields)
+  const candidates = [...local, ...extensionsState.webExtensions]
+  // Application overlays must be resolved before filtering duplicate ids.
+  const matchingCandidates = extensionsState.applicationId === undefined ? filterByActivationEvent(candidates, activationEvent) : candidates
+  return getExtensionsWithState(matchingCandidates, extensionsState, platform)
+}
+
+export const getAllExtensionsWithState = async (
+  extensionsState: ExtensionsState,
+  assetDir: string,
+  platform: number,
+  fields?: readonly string[],
+  activationEvent?: string,
+) => {
   const { assetDir: resolvedAssetDir, platform: resolvedPlatform } = await getRuntimeContext(assetDir, platform)
   Assert.string(resolvedAssetDir)
   Assert.number(resolvedPlatform)
@@ -113,9 +139,11 @@ export const getAllExtensionsWithState = async (extensionsState: ExtensionsState
     }
     extensions = candidates.filter((extension) => isExtensionCompatible(extension, resolvedPlatform, hasWorkspaceTransport))
   } else {
-    const local = await getSharedProcessExtensions(extensionsState, fields)
-    extensions = await getExtensionsWithState([...local, ...meta], extensionsState, resolvedPlatform)
+    extensions = await getLocalExtensionsWithState(extensionsState, resolvedPlatform, fields, activationEvent)
   }
+  // Web discovery must retain unrelated workspace transport extensions until
+  // compatibility has been determined; application overlays are resolved above.
+  extensions = filterByActivationEvent(extensions, activationEvent)
   if (fields === undefined) {
     return extensions
   }

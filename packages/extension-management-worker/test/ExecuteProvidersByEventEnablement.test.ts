@@ -5,8 +5,11 @@ import { executeProvidersByEvent } from '../src/parts/ExecuteProvidersByEvent/Ex
 import * as ExtensionsState from '../src/parts/ExtensionsState/ExtensionsState.ts'
 import { getAllExtensionsWithState } from '../src/parts/GetAllExtensionsWithState/GetAllExtensionsWithState.ts'
 
+const isTextDecorationManifest = (manifest: { readonly activation?: readonly string[] }): boolean =>
+  Boolean(manifest.activation?.includes('onEditorTextDecoration'))
+
 const getTextDecorationExtensions = () =>
-  getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration')
+  getAllExtensionsWithState(ExtensionsState.get(), '/assets', PlatformType.Electron, undefined, isTextDecorationManifest)
 
 beforeEach(() => {
   ExtensionsState.reset()
@@ -81,7 +84,7 @@ test('application manifest overrides are resolved before filtering activation ev
   })
   try {
     expect(
-      await getAllExtensionsWithState(ExtensionsState.get(applicationId), '/assets', PlatformType.Electron, undefined, 'onEditorTextDecoration'),
+      await getAllExtensionsWithState(ExtensionsState.get(applicationId), '/assets', PlatformType.Electron, undefined, isTextDecorationManifest),
     ).toEqual([])
   } finally {
     ExtensionsState.removeApplication(applicationId)

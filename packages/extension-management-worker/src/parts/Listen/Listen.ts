@@ -1,3 +1,4 @@
+import { RendererWorker } from '@lvce-editor/rpc-registry'
 import * as CommandMap from '../CommandMap/CommandMap.ts'
 import * as CommandMapRef from '../CommandMapRef/CommandMapRef.ts'
 import { initializeAuthWorker } from '../InitializeAuthWorker/InitializeAuthWorker.ts'
@@ -5,12 +6,11 @@ import { initializeCacheWorker } from '../InitializeCacheWorker/InitializeCacheW
 import { initializeErrorWorker } from '../InitializeErrorWorker/InitializeErrorWorker.ts'
 import { initializeFileSystemWorker } from '../InitializeFileSystemWorker/InitializeFileSystemWorker.ts'
 import { initializeIframeWorker } from '../InitializeIframeWorker/InitializeIframeWorker.ts'
-import { initializeRendererWorker } from '../InitializeRendererWorker/InitializeRendererWorker.ts'
 
 export const listen = async (): Promise<void> => {
   Object.assign(CommandMapRef.commandMapRef, CommandMap.commandMap)
   await Promise.all([
-    initializeRendererWorker(),
+    RendererWorker.initializeRendererWorkerForWorker(CommandMap.commandMap),
     initializeAuthWorker(),
     initializeCacheWorker(),
     initializeErrorWorker(),

@@ -25,6 +25,7 @@ import {
   executeFileSystemProviderReadFile,
   executeFileSystemProviderRemove,
   executeFileSystemProviderRename,
+  executeFileSystemProviderGetDirectoryVersion,
   executeFileSystemProviderStat,
   executeFileSystemProviderWriteFile,
 } from '../ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
@@ -232,6 +233,7 @@ export const commandMap: Record<string, ScopedCommand> = {
   'Extensions.executeCompletionProvider': wrapCommand(executeCompletionProvider),
   'Extensions.executeDiagnosticProvider': wrapCommand(executeDiagnosticProvider),
   'Extensions.executeExtensionCommand': wrapCommand(executeExtensionCommand),
+  'Extensions.executeFileSystemProviderGetDirectoryVersion': wrapCommand(executeFileSystemProviderGetDirectoryVersion),
   'Extensions.executeFileSystemProviderGetOpenExternalPath': wrapCommand(executeFileSystemProviderGetOpenExternalPath),
   'Extensions.executeFileSystemProviderIsReadonly': wrapCommand(executeFileSystemProviderIsReadonly),
   'Extensions.executeFileSystemProviderMkdir': wrapCommand(executeFileSystemProviderMkdir),

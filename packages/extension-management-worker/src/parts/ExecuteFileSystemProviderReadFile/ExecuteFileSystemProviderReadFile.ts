@@ -91,6 +91,14 @@ export const executeFileSystemProviderGetOpenExternalPath = (
   return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderGetOpenExternalPath', providerId, uri)
 }
 
+export const executeFileSystemProviderGetDirectoryVersion = (
+  extensionsState: ExtensionsState,
+  providerId: string,
+  uri: string,
+): Promise<FileSystemProviderResult> => {
+  return executeFileSystemProviderMethod(extensionsState, 'ExtensionApi.executeFileSystemProviderGetDirectoryVersion', providerId, uri)
+}
+
 export const executeFileSystemProviderStat = (
   extensionsState: ExtensionsState,
   providerId: string,

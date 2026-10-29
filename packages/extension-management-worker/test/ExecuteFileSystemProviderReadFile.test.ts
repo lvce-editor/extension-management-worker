@@ -11,6 +11,7 @@ import {
   executeFileSystemProviderReadFile,
   executeFileSystemProviderRemove,
   executeFileSystemProviderRename,
+  executeFileSystemProviderGetDirectoryVersion,
   executeFileSystemProviderStat,
   executeFileSystemProviderWriteFile,
 } from '../src/parts/ExecuteFileSystemProviderReadFile/ExecuteFileSystemProviderReadFile.ts'
@@ -126,6 +127,10 @@ test('executes isolated file system provider metadata and directory operations',
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderIsReadonly',
   })
+  await expect(executeFileSystemProviderGetDirectoryVersion(extensionsState, 'fetch', 'fetch:///workspace')).resolves.toEqual({
+    found: true,
+    result: 'ExtensionApi.executeFileSystemProviderGetDirectoryVersion',
+  })
   await expect(executeFileSystemProviderStat(extensionsState, 'fetch', 'fetch:///workspace/link')).resolves.toEqual({
     found: true,
     result: 'ExtensionApi.executeFileSystemProviderStat',
@@ -137,6 +142,7 @@ test('executes isolated file system provider metadata and directory operations',
   expect(invocations).toEqual([
     ['ExtensionApi.executeFileSystemProviderReadDirWithFileTypes', 'fetch', 'fetch:///workspace'],
     ['ExtensionApi.executeFileSystemProviderIsReadonly', 'fetch'],
+    ['ExtensionApi.executeFileSystemProviderGetDirectoryVersion', 'fetch', 'fetch:///workspace'],
     ['ExtensionApi.executeFileSystemProviderStat', 'fetch', 'fetch:///workspace/link'],
     ['ExtensionApi.executeFileSystemProviderGetOpenExternalPath', 'fetch', 'fetch:///workspace'],
   ])

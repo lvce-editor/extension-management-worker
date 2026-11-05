@@ -204,3 +204,16 @@ test('terminal requests fail closed without a bound runtime', () => {
   const commands = createExtensionCommandMap('runner')
   expect(() => commands['Extensions.runInTerminal']({})).toThrow('unavailable for this extension runtime')
 })
+
+test('clipboard requests fail closed without a bound runtime and keep raw clipboard commands privileged', () => {
+  const commands = createExtensionCommandMap('extension')
+  expect(() => commands['Extensions.writeClipboardText']('copied text')).toThrow('Clipboard access is unavailable')
+  expect(() => commands['Extensions.executeCommand']('ClipBoard.writeText', 'copied text')).toThrow('cannot execute privileged command')
+})
+
+test('clipboard requests use the runtime-bound permission callback', async () => {
+  const writeClipboardText = jest.fn(async (text: unknown) => text)
+  const commands = createExtensionCommandMap('extension', undefined, undefined, writeClipboardText)
+  await expect(commands['Extensions.writeClipboardText']('copied text')).resolves.toBe('copied text')
+  expect(writeClipboardText).toHaveBeenCalledWith('copied text')
+})

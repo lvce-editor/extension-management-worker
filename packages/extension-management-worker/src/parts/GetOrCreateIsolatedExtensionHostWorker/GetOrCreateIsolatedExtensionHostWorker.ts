@@ -17,6 +17,7 @@ import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 import { runInTerminal } from '../RunInTerminal/RunInTerminal.ts'
+import { writeClipboardText } from '../WriteClipboardText/WriteClipboardText.ts'
 import { sendMessagePortToCacheWorker } from '../SendMessagePortToCacheWorker/SendMessagePortToCacheWorker.ts'
 
 interface RpcWithIpc extends Rpc {
@@ -119,7 +120,12 @@ export const createIsolatedExtensionHostWorker = async (
   const execute =
     invokeCommand || ((method: string, ...args: readonly any[]) => (CommandMapRef.commandMapRef as ExtensionCommandMap)[method](...args))
   const commandMap = {
-    ...createExtensionCommandMap(runtimeId, invokeCommand, (options) => runInTerminal(extensionId, options, execute, application, () => disposed)),
+    ...createExtensionCommandMap(
+      runtimeId,
+      invokeCommand,
+      (options) => runInTerminal(extensionId, options, execute, application, () => disposed),
+      (text) => writeClipboardText(extensionId, text, execute, application, () => disposed),
+    ),
     ...workerScope?.commandMap,
   }
   const rpc = await createRpc({

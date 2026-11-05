@@ -82,6 +82,7 @@ export const createExtensionCommandMap = (
   extensionId: string,
   invokeCommand: ExtensionCommand = invokeGlobalCommand,
   runTerminal?: (options: unknown) => Promise<unknown>,
+  writeClipboardText?: (text: unknown) => Promise<unknown>,
 ): ExtensionCommandMap => {
   const terminalCommands = {
     'Extensions.runInTerminal': (options: unknown): Promise<unknown> => {
@@ -101,6 +102,10 @@ export const createExtensionCommandMap = (
     return {
       ...inheritedCommands,
       ...terminalCommands,
+      'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+        if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+        return writeClipboardText(text)
+      },
       'Extensions.createFileSystemWatcher': (clientId: number, options: any) =>
         invokeCommand('Extensions.createFileSystemWatcher', clientId, options),
       'Extensions.disposeFileSystemWatcher': (clientId: number) => invokeCommand('Extensions.disposeFileSystemWatcher', clientId),
@@ -114,6 +119,10 @@ export const createExtensionCommandMap = (
   return {
     ...inheritedCommands,
     ...terminalCommands,
+    'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+      if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+      return writeClipboardText(text)
+    },
     'Extensions.createFileSystemWatcher'(clientId: number, options: any) {
       return ExtensionFileWatcher.create(extensionId, clientId, options)
     },

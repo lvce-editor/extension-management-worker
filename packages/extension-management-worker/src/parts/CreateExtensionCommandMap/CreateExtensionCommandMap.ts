@@ -82,6 +82,7 @@ export const createExtensionCommandMap = (
   extensionId: string,
   invokeCommand: ExtensionCommand = invokeGlobalCommand,
   runTerminal?: (options: unknown) => Promise<unknown>,
+  writeClipboardText?: (text: unknown) => Promise<unknown>,
 ): ExtensionCommandMap => {
   const terminalCommands = {
     'Extensions.runInTerminal': (options: unknown): Promise<unknown> => {
@@ -109,6 +110,10 @@ export const createExtensionCommandMap = (
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),
       'Extensions.sendMessagePortToCacheWorker': (port: MessagePort) => invokeCommand('Extensions.sendMessagePortToCacheWorker', port),
       'Extensions.unregisterFileChangeHandler': () => invokeCommand('Extensions.unregisterFileChangeHandler'),
+      'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+        if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+        return writeClipboardText(text)
+      },
     }
   }
   return {
@@ -158,6 +163,10 @@ export const createExtensionCommandMap = (
     },
     'Extensions.unregisterFileChangeHandler'() {
       FileChangeHandlerRegistry.unregister(extensionId)
+    },
+    'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+      if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+      return writeClipboardText(text)
     },
   }
 }

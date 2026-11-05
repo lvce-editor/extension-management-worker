@@ -17,8 +17,8 @@ import { getCacheFileHandle } from '../GetCacheFileHandle/GetCacheFileHandle.ts'
 import * as IsolatedExtensionHostWorkerState from '../IsolatedExtensionHostWorkerState/IsolatedExtensionHostWorkerState.ts'
 import * as RendererWorker from '../Rpc/Rpc.ts'
 import { runInTerminal } from '../RunInTerminal/RunInTerminal.ts'
-import { writeClipboardText } from '../WriteClipboardText/WriteClipboardText.ts'
 import { sendMessagePortToCacheWorker } from '../SendMessagePortToCacheWorker/SendMessagePortToCacheWorker.ts'
+import { writeClipboardText } from '../WriteClipboardText/WriteClipboardText.ts'
 
 interface RpcWithIpc extends Rpc {
   readonly ipc?: {

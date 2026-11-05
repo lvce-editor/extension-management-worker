@@ -102,10 +102,6 @@ export const createExtensionCommandMap = (
     return {
       ...inheritedCommands,
       ...terminalCommands,
-      'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
-        if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
-        return writeClipboardText(text)
-      },
       'Extensions.createFileSystemWatcher': (clientId: number, options: any) =>
         invokeCommand('Extensions.createFileSystemWatcher', clientId, options),
       'Extensions.disposeFileSystemWatcher': (clientId: number) => invokeCommand('Extensions.disposeFileSystemWatcher', clientId),
@@ -114,15 +110,15 @@ export const createExtensionCommandMap = (
       'Extensions.registerFileChangeHandler': () => invokeCommand('Extensions.registerFileChangeHandler'),
       'Extensions.sendMessagePortToCacheWorker': (port: MessagePort) => invokeCommand('Extensions.sendMessagePortToCacheWorker', port),
       'Extensions.unregisterFileChangeHandler': () => invokeCommand('Extensions.unregisterFileChangeHandler'),
+      'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+        if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+        return writeClipboardText(text)
+      },
     }
   }
   return {
     ...inheritedCommands,
     ...terminalCommands,
-    'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
-      if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
-      return writeClipboardText(text)
-    },
     'Extensions.createFileSystemWatcher'(clientId: number, options: any) {
       return ExtensionFileWatcher.create(extensionId, clientId, options)
     },
@@ -167,6 +163,10 @@ export const createExtensionCommandMap = (
     },
     'Extensions.unregisterFileChangeHandler'() {
       FileChangeHandlerRegistry.unregister(extensionId)
+    },
+    'Extensions.writeClipboardText': (text: unknown): Promise<unknown> => {
+      if (!writeClipboardText) throw new Error('Clipboard access is unavailable for this extension runtime')
+      return writeClipboardText(text)
     },
   }
 }

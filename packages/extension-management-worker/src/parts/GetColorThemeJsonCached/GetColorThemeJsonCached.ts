@@ -1,7 +1,7 @@
 import * as CacheStorage from '../CacheStorage/CacheStorage.ts'
 import * as GetColorThemeJsonCacheKey from '../GetColorThemeJsonCacheKey/GetColorThemeJsonCacheKey.ts'
 
-const cacheName = 'ColorThemes'
+const cacheName = 'color-themes'
 
 export const getColorThemeJsonCached = async (source: string, validator: string, getJson: () => Promise<any>, forceReload = false): Promise<any> => {
   const cacheKey = GetColorThemeJsonCacheKey.getColorThemeJsonCacheKey(source)

@@ -51,12 +51,13 @@ test('getColorThemeJson loads web themes from the asset directory', async () => 
 test('web color theme JSON is reused when the ETag is unchanged', async () => {
   const cache = new Map<string, any>()
   state.cacheWorker = CacheWorker.registerMockRpc({
-    'Cache.getCacheStorageItem'(key: string) {
+    'Cache.getCacheStorageItem'(key: string, name: string) {
+      expect(name).toBe('color-themes')
       const value = cache.get(key)
       return value ? { body: new TextEncoder().encode(JSON.stringify(value)).buffer } : undefined
     },
     'Cache.setCacheStorageItem'(key: string, value: Readonly<ArrayBuffer>, name: string) {
-      expect(name).toBe('ColorThemes')
+      expect(name).toBe('color-themes')
       cache.set(key, JSON.parse(new TextDecoder().decode(value)))
       return { success: true }
     },
@@ -117,12 +118,13 @@ test('remote color theme JSON is reused from persistent cache while file metadat
   const cache = new Map<string, any>()
   let readCount = 0
   state.cacheWorker = CacheWorker.registerMockRpc({
-    'Cache.getCacheStorageItem'(key: string) {
+    'Cache.getCacheStorageItem'(key: string, name: string) {
+      expect(name).toBe('color-themes')
       const value = cache.get(key)
       return value ? { body: new TextEncoder().encode(JSON.stringify(value)).buffer } : undefined
     },
     'Cache.setCacheStorageItem'(key: string, value: Readonly<ArrayBuffer>, name: string) {
-      expect(name).toBe('ColorThemes')
+      expect(name).toBe('color-themes')
       cache.set(key, JSON.parse(new TextDecoder().decode(value)))
       return { success: true }
     },
